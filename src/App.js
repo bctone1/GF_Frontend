@@ -13,18 +13,25 @@ import UserWorkflow from './UserComponents/UserWorkflow';
 import UserHistory from './UserComponents/UserHistory';
 import UserProfile from './UserComponents/UserProfile';
 
-import PartnerComponent from './PartnerComponents/Partner';
-import ManagerComponent from './ManagerComponents/Manager';
+
+import PartnerDashboard from './PartnerComponents/PartnerDashboard';
+
+
+import ManagerDashboard from './ManagerComponents/ManagerDashboard';
 
 export default function App() {
   return (
     <>
       <Routes>
+
+
+
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup/student" element={<StudentSignup />} />
         <Route path="/signup/partner" element={<PartnerSignup />} />
 
+        {/* 유저 컴포넌트 */}
         <Route path="/user/dashboard" element={<UserDashboard />} />
         <Route path="/user/practice" element={<UserPractice />} />
         <Route path="/user/project" element={<UserProject />} />
@@ -35,9 +42,15 @@ export default function App() {
         <Route path="/user/profile" element={<UserProfile />} />
 
 
+        {/* 파트너 컴포넌트 */}
+        <Route path="/partner/dashboard" element={<PartnerDashboard />} />
 
-        <Route path="/partner" element={<PartnerComponent />} />
-        <Route path="/manager" element={<ManagerComponent />} />
+
+        {/* 매니저 컴포넌트 */}
+        <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+
+
+
       </Routes>
     </>
   );
