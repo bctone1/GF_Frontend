@@ -82,28 +82,36 @@ export default function UserSidebar() {
                                 <span>내 에이전트</span>
                             </Link>
                         </li>
+
                         <li className="sidebar__menu-item">
-                            <a className="sidebar__menu-link">
+                            <Link
+                                to="/user/workflow"
+                                className={`sidebar__menu-link ${currentMenu === 'workflow' ? 'sidebar__menu-link--active' : ''}`}
+                            >
                                 <span className="sidebar__menu-icon">🔀</span>
                                 <span>워크플로우</span>
-                            </a>
+                            </Link>
                         </li>
 
                         <li className="sidebar__menu-item">
-                            <a className="sidebar__menu-link">
+                            <Link
+                                to="/user/history"
+                                className={`sidebar__menu-link ${currentMenu === 'history' ? 'sidebar__menu-link--active' : ''}`}
+                            >
                                 <span className="sidebar__menu-icon">📊</span>
                                 <span>내 기록</span>
-                            </a>
+                            </Link>
                         </li>
+
                         <li className="sidebar__menu-item">
-                            <a className="sidebar__menu-link">
+                            <Link
+                                to="/user/profile"
+                                className={`sidebar__menu-link ${currentMenu === 'profile' ? 'sidebar__menu-link--active' : ''}`}
+                            >
                                 <span className="sidebar__menu-icon">⚙️</span>
                                 <span>설정</span>
-                            </a>
+                            </Link>
                         </li>
-
-
-
 
                     </ul>
                 </nav>

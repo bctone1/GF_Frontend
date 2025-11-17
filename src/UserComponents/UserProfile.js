@@ -4,11 +4,39 @@ import UserSidebar from './UserSidebar';
 import './UserProfile.css';
 
 export default function UserDashboard() {
-    const [activeSection, setActiveSection] = useState('profile');
+    const [activeSection, setActiveSection] = useState('enrolled');
 
     const showSection = (section) => {
         setActiveSection(section);
     };
+
+    const classes = {
+        'class-1': {
+            id: 'class-1',
+            name: '2025 AI 심화과정',
+            status: 'active',
+            startDate: '2025-11-01',
+            endDate: '2025-12-31',
+            instructor: '김강사'
+        },
+        'class-2': {
+            id: 'class-2',
+            name: '프롬프트엔지니어링',
+            status: 'active',
+            startDate: '2025-11-01',
+            endDate: '2025-12-15',
+            instructor: '이강사'
+        },
+        'class-3': {
+            id: 'class-3',
+            name: '2024 AI 기초과정',
+            status: 'ended',
+            startDate: '2024-09-01',
+            endDate: '2024-10-31',
+            instructor: '박강사'
+        }
+    };
+    const classArray = Object.values(classes);
 
     return (
         <>
@@ -28,6 +56,14 @@ export default function UserDashboard() {
 
                             <div className="settings-sidebar">
                                 <nav className="settings-nav">
+                                    <div
+                                        className={`settings-nav__item ${activeSection === 'enrolled' ? 'settings-nav__item--active' : ''}`}
+                                        onClick={() => showSection('enrolled')}
+                                    >
+                                        <span className="settings-nav__icon">📚</span>
+                                        <span>수강 강의</span>
+                                    </div>
+
                                     <div
                                         className={`settings-nav__item ${activeSection === 'profile' ? 'settings-nav__item--active' : ''}`}
                                         onClick={() => showSection('profile')}
@@ -75,6 +111,67 @@ export default function UserDashboard() {
 
 
                             <div className="settings-content">
+
+                                <div id="enrolled-section" className={`settings-section ${activeSection === 'enrolled' ? 'settings-section--active' : ''}`}>
+                                    <h2 class="settings-section__title">수강 중인 강의</h2>
+                                    <p class="settings-section__desc">현재 수강 중인 강의 목록을 관리하세요</p>
+                                    <div class="enrolled-classes-section">
+                                        <div class="enrolled-classes-header">
+                                            <div class="enrolled-classes-title">내 강의 목록</div>
+                                            <button class="btn-add-class" onclick="openAddClassModal()">
+                                                <span>+</span>
+                                                <span>새 강의 등록</span>
+                                            </button>
+                                        </div>
+
+                                        <div id="classList" class="class-list">
+
+                                            {classArray.map((classInfo) => {
+                                                const isActive = classInfo.status === 'active';
+                                                const statusBadge = isActive ? (
+                                                    <span className="class-card__badge class-card__badge--active">진행 중</span>
+                                                ) : (
+                                                    <span className="class-card__badge class-card__badge--ended">종료됨</span>
+                                                );
+
+                                                return (
+                                                    <div className="class-card" key={classInfo.id}>
+                                                        <div className="class-card__header">
+                                                            <div className="class-card__icon">📚</div>
+                                                            {statusBadge}
+                                                        </div>
+
+                                                        <h3 className="class-card__title">{classInfo.name}</h3>
+
+                                                        <div className="class-card__info">
+                                                            <div className="class-card__info-item">
+                                                                <span className="class-card__info-icon">👨‍🏫</span>
+                                                                <span>{classInfo.instructor}</span>
+                                                            </div>
+
+                                                            <div className="class-card__info-item">
+                                                                <span className="class-card__info-icon">📅</span>
+                                                                <span>{classInfo.startDate} ~ {classInfo.endDate}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="class-card__actions">
+                                                            <button className="class-card__action-btn">
+                                                                실습하기
+                                                            </button>
+
+                                                            <button className="class-card__action-btn class-card__action-btn--danger">
+                                                                삭제
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+
+                                        </div>
+                                    </div>
+                                </div>
+
 
                                 <div id="profileSection" className={`settings-section ${activeSection === 'profile' ? 'settings-section--active' : ''}`}>
                                     <h2 className="settings-section__title">프로필 설정</h2>

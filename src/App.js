@@ -8,6 +8,9 @@ import UserDashboard from './UserComponents/UserDashboard';
 import UserPractice from './UserComponents/UserPractice';
 import UserProject from './UserComponents/UserProject';
 import UserKnowledge from './UserComponents/UserKnowledge';
+import UserAgent from './UserComponents/UserAgent';
+import UserWorkflow from './UserComponents/UserWorkflow';
+import UserHistory from './UserComponents/UserHistory';
 import UserProfile from './UserComponents/UserProfile';
 
 import PartnerComponent from './PartnerComponents/Partner';
@@ -26,14 +29,14 @@ export default function App() {
         <Route path="/user/practice" element={<UserPractice />} />
         <Route path="/user/project" element={<UserProject />} />
         <Route path="/user/knowledge" element={<UserKnowledge />} />
+        <Route path="/user/agent" element={<UserAgent />} />
+        <Route path="/user/workflow" element={<UserWorkflow />} />
+        <Route path="/user/history" element={<UserHistory />} />
         <Route path="/user/profile" element={<UserProfile />} />
 
 
 
         <Route path="/partner" element={<PartnerComponent />} />
-
-
-
         <Route path="/manager" element={<ManagerComponent />} />
       </Routes>
     </>
