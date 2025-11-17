@@ -15,6 +15,10 @@ import UserProfile from './UserComponents/UserProfile';
 
 
 import PartnerDashboard from './PartnerComponents/PartnerDashboard';
+import PartnerProjectManagement from './PartnerComponents/PartnerProjectManagement';
+import PartnerStudentManagement from './PartnerComponents/PartnerStudentManagement';
+import PartnerCostAnalytics from './PartnerComponents/PartnerCostAnalytics';
+import PartnerSettings from './PartnerComponents/PartnerSettings';
 
 
 import ManagerDashboard from './ManagerComponents/ManagerDashboard';
@@ -44,6 +48,10 @@ export default function App() {
 
         {/* 파트너 컴포넌트 */}
         <Route path="/partner/dashboard" element={<PartnerDashboard />} />
+        <Route path="/partner/project-management" element={<PartnerProjectManagement />} />
+        <Route path="/partner/student-management" element={<PartnerStudentManagement />} />
+        <Route path="/partner/cost-analytics" element={<PartnerCostAnalytics />} />
+        <Route path="/partner/settings" element={<PartnerSettings />} />
 
 
         {/* 매니저 컴포넌트 */}
