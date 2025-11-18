@@ -1,8 +1,10 @@
 import { Routes, Route } from 'react-router-dom';
 import Main from './Main';
 import Login from './LoginComponents/Login';
-import StudentSignup from './LoginComponents/StudentSignup';
+
+import UserSignup from './LoginComponents/UserSignup';
 import PartnerSignup from './LoginComponents/PartnerSignup';
+import OrganizationSignup from './LoginComponents/OrganizationSignup';
 
 import UserDashboard from './UserComponents/UserDashboard';
 import UserPractice from './UserComponents/UserPractice';
@@ -32,8 +34,9 @@ export default function App() {
 
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/signup/student" element={<StudentSignup />} />
+        <Route path="/signup/user" element={<UserSignup />} />
         <Route path="/signup/partner" element={<PartnerSignup />} />
+        <Route path="/signup/organization" element={<OrganizationSignup />} />
 
         {/* 유저 컴포넌트 */}
         <Route path="/user/dashboard" element={<UserDashboard />} />
@@ -52,6 +55,9 @@ export default function App() {
         <Route path="/partner/student-management" element={<PartnerStudentManagement />} />
         <Route path="/partner/cost-analytics" element={<PartnerCostAnalytics />} />
         <Route path="/partner/settings" element={<PartnerSettings />} />
+
+        {/* 조직(관리자) 컴포넌트 */}
+        <Route path="/organization/dashboard" element={<PartnerDashboard />} />
 
 
         {/* 매니저 컴포넌트 */}

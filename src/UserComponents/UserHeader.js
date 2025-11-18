@@ -6,7 +6,7 @@ export default function UserHeader() {
                     <button id="menuToggle" className="header__icon-button hidden-desktop">
                         <span>☰</span>
                     </button>
-                    <a href="dashboard.html" className="header__logo">
+                    <a href="/user/dashboard" className="header__logo">
                         <span className="header__logo-icon">🌱</span>
                         <span>GrowFit</span>
                     </a>

@@ -293,6 +293,26 @@
     transform: none;
 }
 
+.btn-cancel {
+    width: 100%;
+    padding: 14px;
+    background: var(--gray-100);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    margin-top: 10px;
+}
+
+.btn-cancel:hover {
+    background: var(--gray-200);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
 .partner-warning-box {
     background: #fef3c7;
     border: 1px solid #fcd34d;

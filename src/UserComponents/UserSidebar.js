@@ -21,9 +21,9 @@ export default function UserSidebar() {
                     <div className="sidebar__class-selector">
                         <select id="classSelector" className="sidebar__class-select">
                             <option value="">📚 과목을 선택하세요</option>
-                            <option value="class-1">🟢 2025 AI 심화과정</option>
-                            <option value="class-2">🟢 프롬프트엔지니어링</option>
-                            <option value="class-ended">⚪ 2024 AI 기초과정 (종료)</option>
+                            <option value="class-1">🟢 딥러닝 모델 이해</option>
+                            <option value="class-2">🟢 생성형AI 활용</option>
+                            <option value="class-ended">⚪ AI Agent 제작 기초 (종료)</option>
                         </select>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
  /* 역할 선택 탭 스타일 */
  .role-tabs {
      display: grid;
-     grid-template-columns: repeat(3, 1fr);
+     grid-template-columns: repeat(2, 1fr);
      gap: 8px;
      margin-bottom: 32px;
      background: var(--gray-100);
