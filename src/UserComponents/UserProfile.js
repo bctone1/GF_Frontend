@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserProfile.css';
 
 export default function UserDashboard() {
     const [activeSection, setActiveSection] = useState('enrolled');

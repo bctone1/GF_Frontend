@@ -1,6 +1,6 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserProject.css';
+
 
 export default function UserProject() {
     return (

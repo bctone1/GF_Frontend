@@ -1,6 +1,5 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserWorkflow.css';
 
 export default function UserWorkflow() {
     return (

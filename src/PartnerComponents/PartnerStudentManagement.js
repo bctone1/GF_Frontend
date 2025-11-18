@@ -1,6 +1,6 @@
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
-import './PartnerStudentManagement.css';
+
 
 export default function PartnerStudentManagement() {
     return (

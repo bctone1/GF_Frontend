@@ -1,6 +1,6 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserHistory.css';
+
 
 
 export default function UserHistory() {

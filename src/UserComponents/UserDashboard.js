@@ -1,6 +1,5 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserDashboard.css';
 
 export default function UserDashboard() {
     return (

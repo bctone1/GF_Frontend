@@ -1,6 +1,5 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserAgent.css';
 
 export default function UserAgent() {
     return (

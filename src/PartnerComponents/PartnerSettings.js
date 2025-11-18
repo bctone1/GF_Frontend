@@ -1,6 +1,6 @@
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
-import './PartnerSettings.css';
+
 
 export default function PartnerSettings() {
     return (

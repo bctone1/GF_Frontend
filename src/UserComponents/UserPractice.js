@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserPractice.css';
+
 
 export default function UserPractice() {
     return (

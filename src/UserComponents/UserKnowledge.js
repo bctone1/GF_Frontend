@@ -1,6 +1,6 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import './UserKnowledge.css';
+
 
 
 export default function UserKnowledge() {
