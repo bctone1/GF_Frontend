@@ -4,6 +4,14 @@
    =================================== */
 
 /* ========== Auth Container ========== */
+.auth-logo-icon-header {
+    width: 60px;
+}
+
+.auth-logo-icon-login {
+    width: 80px;
+    border-radius: var(--radius-md);
+}
 
 .auth-wrapper {
     min-height: 100vh;

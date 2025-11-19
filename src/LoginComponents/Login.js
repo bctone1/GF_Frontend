@@ -78,8 +78,10 @@ export default function Login() {
                     {/* Header */}
                     <div className="auth-header">
                         <div className="auth-logo">
-                            <div className="auth-logo-icon">🎓</div>
-                            <span>GrowFit</span>
+                            {/* <div className="auth-logo-icon">🎓</div>
+                            <span>GrowFit</span> */}
+                            <img className="auth-logo-icon-login" src="/GrowFit.png" alt="GrowFit" />
+
                         </div>
                         <p className="auth-subtitle">AI 실습 플랫폼에 오신 것을 환영합니다</p>
                     </div>

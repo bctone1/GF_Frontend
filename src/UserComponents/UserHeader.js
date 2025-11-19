@@ -7,8 +7,9 @@ export default function UserHeader() {
                         <span>☰</span>
                     </button>
                     <a href="/user/dashboard" className="header__logo">
-                        <span className="header__logo-icon">🌱</span>
-                        <span>GrowFit</span>
+                        {/* <span className="header__logo-icon">🌱</span>
+                        <span>GrowFit</span> */}
+                        <img className="auth-logo-icon-header" src="/GrowFit.png" alt="GrowFit" />
                     </a>
                 </div>
 
