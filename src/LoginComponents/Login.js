@@ -55,20 +55,20 @@ export default function Login() {
             signupText: '사용자 회원가입',
         },
         organization: {
-            title: '🏢 조직 로그인',
+            title: '🏢 기업 로그인',
             description: '회원가입 후 플랫폼 관리자의 승인을 받아야 교육과정을 개설할 수 있습니다.',
             showSignup: true,
             alertType: 'info',
-            alertTitle: '조직 계정이 필요하신가요?',
+            alertTitle: '기업 계정이 필요하신가요?',
             alertContent: '회원가입 후 관리자 승인을 받으면 교육과정을 개설할 수 있습니다.',
             signupLink: '/signup/organization',
-            signupText: '관리자 회원가입',
+            signupText: '기업 회원가입',
         },
     };
     const currentRoleInfo = roleDescriptions[selectedRole];
     const loginButtonText = {
         student: '사용자 로그인',
-        organization: '관리자 로그인'
+        organization: '기업 로그인'
     };
 
     return (
@@ -103,7 +103,7 @@ export default function Login() {
                                 onClick={() => handleRoleSelect('organization')}
                             >
                                 <span className="role-tab__icon">⚙️</span>
-                                <span>관리자</span>
+                                <span>기업</span>
                             </button>
                         </div>
 

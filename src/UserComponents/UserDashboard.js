@@ -404,7 +404,7 @@ export default function UserDashboard() {
                             </select>
                         </div>
 
-                        <div className="checkbox-group">
+                        {/* <div className="checkbox-group">
                             <input
                                 type="checkbox"
                                 className="checkbox-input"
@@ -418,7 +418,7 @@ export default function UserDashboard() {
                                 GrowFit 서비스 이용에 동의합니다 (필수)
                             </label>
                         </div>
-                        {errors.agreeTerms && <span className="form-error active">{errors.agreeTerms}</span>}
+                        {errors.agreeTerms && <span className="form-error active">{errors.agreeTerms}</span>} */}
 
                         <button type="submit" className="btn-submit">
                             가입신청
