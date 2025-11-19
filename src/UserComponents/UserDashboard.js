@@ -47,19 +47,6 @@ export default function UserDashboard() {
     const [timer, setTimer] = useState(180);
     const [timerActive, setTimerActive] = useState(false);
 
-    // 타이머 효과
-    useEffect(() => {
-        let interval = null;
-        if (timerActive && timer > 0) {
-            interval = setInterval(() => {
-                setTimer(timer => timer - 1);
-            }, 1000);
-        } else if (timer === 0) {
-            setTimerActive(false);
-            setShowVerifyCode(false);
-        }
-        return () => clearInterval(interval);
-    }, [timerActive, timer]);
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -170,43 +157,6 @@ export default function UserDashboard() {
         }
     };
 
-    const sendVerificationCode = () => {
-        if (!formData.email.trim()) {
-            setErrors(prev => ({ ...prev, email: '이메일을 입력해주세요.' }));
-            return;
-        }
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            setErrors(prev => ({ ...prev, email: '올바른 이메일 형식이 아닙니다.' }));
-            return;
-        }
-
-        // 인증번호 발송 시뮬레이션
-        console.log('인증번호 발송:', formData.email);
-        setShowVerifyCode(true);
-        setTimerActive(true);
-        setTimer(180);
-        setSuccess(prev => ({ ...prev, emailSend: true }));
-        setErrors(prev => ({ ...prev, email: '' }));
-    };
-
-    const verifyCode = () => {
-        if (!formData.verifyCode.trim()) {
-            setErrors(prev => ({ ...prev, verifyCode: '인증번호를 입력해주세요.' }));
-            return;
-        }
-
-        // 인증번호 확인 시뮬레이션 (실제로는 서버와 통신)
-        if (formData.verifyCode.length === 6) {
-            setEmailVerified(true);
-            setTimerActive(false);
-            setSuccess(prev => ({ ...prev, verify: true }));
-            setErrors(prev => ({ ...prev, verifyCode: '' }));
-        } else {
-            setErrors(prev => ({ ...prev, verifyCode: '인증번호가 일치하지 않습니다.' }));
-        }
-    };
-
     const validateForm = () => {
         const newErrors = {};
 
@@ -218,20 +168,12 @@ export default function UserDashboard() {
             newErrors.email = '이메일을 입력해주세요.';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = '올바른 이메일 형식이 아닙니다.';
-        } else if (!emailVerified) {
-            newErrors.email = '이메일 인증을 완료해주세요.';
         }
 
         if (!formData.password) {
             newErrors.password = '비밀번호를 입력해주세요.';
         } else if (formData.password.length < 8) {
             newErrors.password = '비밀번호는 8자 이상이어야 합니다.';
-        }
-
-        if (!formData.passwordConfirm) {
-            newErrors.passwordConfirm = '비밀번호 확인을 입력해주세요.';
-        } else if (formData.password !== formData.passwordConfirm) {
-            newErrors.passwordConfirm = '비밀번호가 일치하지 않습니다.';
         }
 
         if (!formData.phone.trim()) {
@@ -331,23 +273,21 @@ export default function UserDashboard() {
                     </div>
 
                     <form onSubmit={handlePartnerSignupSubmit}>
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="name">
-                                이름 <span className="required">*</span>
+                        {/* <div className="form-group">
+                            <label className="form-label" htmlFor="email">
+                                이메일 <span className="required">*</span>
                             </label>
                             <input
-                                type="text"
-                                className={`form-input ${errors.name ? 'form-input--error' : ''}`}
-                                id="name"
-                                name="name"
-                                value={formData.name}
+                                type="email"
+                                className={`form-input ${errors.email ? 'form-input--error' : ''}`}
+                                id="email"
+                                name="email"
+                                value={formData.email}
                                 onChange={handleInputChange}
-                                placeholder="홍길동"
+                                placeholder="growfit@gmail.com"
                                 required
-                                minLength="2"
-                                maxLength="50"
                             />
-                            {errors.name && <span className="form-error active">{errors.name}</span>}
+                            {errors.email && <span className="form-error active">{errors.email}</span>}
                         </div>
 
                         <div className="form-group">
@@ -375,7 +315,7 @@ export default function UserDashboard() {
                                 </span>
                             </div>
                             {errors.password && <span className="form-error active">{errors.password}</span>}
-                        </div>
+                        </div> */}
 
 
 
