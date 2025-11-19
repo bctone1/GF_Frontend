@@ -1,3 +1,5 @@
+import axios from "axios";
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -125,25 +127,32 @@ export default function StudentSignup() {
             setPasswordConfirmVisible(!passwordConfirmVisible);
         }
     };
+    const [verificationToken, setVerificationToken] = useState('');
 
     const sendVerificationCode = () => {
         if (!formData.email.trim()) {
             setErrors(prev => ({ ...prev, email: '이메일을 입력해주세요.' }));
             return;
         }
-
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             setErrors(prev => ({ ...prev, email: '올바른 이메일 형식이 아닙니다.' }));
             return;
         }
 
-        // 인증번호 발송 시뮬레이션
-        console.log('인증번호 발송:', formData.email);
-        setShowVerifyCode(true);
-        setTimerActive(true);
-        setTimer(180);
-        setSuccess(prev => ({ ...prev, emailSend: true }));
-        setErrors(prev => ({ ...prev, email: '' }));
+        axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/email/send-code`, {
+            email: formData.email
+        }).then(response => {
+            const data = response.data;
+            console.log(data);
+            setVerificationToken(data.verification_token);
+            setShowVerifyCode(true);
+            setTimerActive(true);
+            setTimer(180);
+            setSuccess(prev => ({ ...prev, emailSend: true }));
+            setErrors(prev => ({ ...prev, email: '' }));
+        }).catch(error => {
+            console.log(error);
+        });
     };
 
     const verifyCode = () => {
@@ -152,15 +161,21 @@ export default function StudentSignup() {
             return;
         }
 
-        // 인증번호 확인 시뮬레이션 (실제로는 서버와 통신)
-        if (formData.verifyCode.length === 6) {
+        axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/email/verify-code`, {
+            email: formData.email,
+            code: formData.verifyCode,
+            verification_token: verificationToken
+        }).then(response => {
+            const data = response.data;
+            console.log(data);
             setEmailVerified(true);
             setTimerActive(false);
             setSuccess(prev => ({ ...prev, verify: true }));
             setErrors(prev => ({ ...prev, verifyCode: '' }));
-        } else {
+        }).catch(error => {
             setErrors(prev => ({ ...prev, verifyCode: '인증번호가 일치하지 않습니다.' }));
-        }
+            console.log(error);
+        });
     };
 
     const validateForm = () => {
@@ -200,10 +215,41 @@ export default function StudentSignup() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
         if (validateForm()) {
-            console.log('Signup attempt:', { ...formData, role: 'student' });
-            navigate('/login');
+            // 이메일 인증 토큰 확인
+            if (!verificationToken || verificationToken.trim() === '') {
+                setErrors(prev => ({ ...prev, email: '이메일 인증을 완료해주세요.' }));
+                return;
+            }
+
+            const requestData = {
+                email: formData.email,
+                password: formData.password,
+                full_name: formData.name,
+                status: 'active',
+                default_role: "member",
+                email_verified_token: verificationToken
+            };
+
+            console.log('회원가입 요청 데이터:', requestData);
+
+            axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/signup`, requestData)
+                .then(response => {
+                    console.log('회원가입 성공:', response.data);
+                    navigate('/login');
+                })
+                .catch(error => {
+                    console.error('회원가입 에러:', error);
+                    console.error('에러 응답:', error.response);
+                    if (error.response) {
+                        console.error('에러 데이터:', error.response.data);
+                        console.error('에러 상태:', error.response.status);
+                        const errorMessage = error.response.data?.message || error.response.data?.detail || '회원가입에 실패했습니다.';
+                        alert(errorMessage);
+                    } else {
+                        alert('네트워크 오류가 발생했습니다.');
+                    }
+                });
         }
     };
 

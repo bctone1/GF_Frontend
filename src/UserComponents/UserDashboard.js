@@ -496,16 +496,7 @@ export default function UserDashboard() {
                         </div>
                     </form>
                 </div>
-
             </div>
-
-
-
-
-
-
-
-
 
             <div id="app">
                 <UserHeader />
@@ -513,8 +504,8 @@ export default function UserDashboard() {
                     <UserSidebar />
                     <main className="main">
                         <div className="page-header">
-                            <h1 className="page-header__title">🏠 대시보드</h1>
-                            <p className="page-header__subtitle">안녕하세요, 김직원님! 오늘도 좋은 하루 되세요 ☀️</p>
+                            {/* <h1 className="page-header__title">🏠 대시보드</h1>
+                            <p className="page-header__subtitle">안녕하세요, 김직원님! 오늘도 좋은 하루 되세요 ☀️</p> */}
                         </div>
 
 

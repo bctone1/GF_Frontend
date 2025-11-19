@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -24,13 +25,22 @@ export default function Login() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Login attempt:', { ...formData, role: selectedRole });
+        axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/login`, {
+            email: formData.email,
+            password: formData.password,
+        }).then(response => {
+            console.log(response.data);
+            sessionStorage.setItem("email", formData.email);
 
-        if (selectedRole === 'student') {
-            navigate('/user/dashboard');
-        } else if (selectedRole === 'organization') {
-            navigate('/organization/dashboard');
-        }
+            if (selectedRole === 'student') {
+                navigate('/user/dashboard');
+            } else if (selectedRole === 'organization') {
+                navigate('/organization/dashboard');
+            }
+        }).catch(error => {
+            alert(error.response.data.detail);
+            // console.log(error.response.data.detail);
+        });
     };
 
     const roleDescriptions = {
@@ -161,8 +171,9 @@ export default function Login() {
                                     <label htmlFor="rememberMe">로그인 상태 유지</label>
                                 </div>
                                 <Link
-                                    to="/forgot-password"
+                                    // to="/forgot-password"
                                     style={{ fontSize: '14px', color: 'var(--primary-600)', textDecoration: 'none' }}
+                                    onClick={() => alert("관리자에게 문의해주세요")}
                                 >
                                     비밀번호 찾기
                                 </Link>

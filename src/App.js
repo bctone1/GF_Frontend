@@ -3,7 +3,6 @@ import Main from './Main';
 import Login from './LoginComponents/Login';
 
 import UserSignup from './LoginComponents/UserSignup';
-import PartnerSignup from './LoginComponents/PartnerSignup';
 import OrganizationSignup from './LoginComponents/OrganizationSignup';
 
 import UserDashboard from './UserComponents/UserDashboard';
@@ -35,7 +34,6 @@ export default function App() {
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup/user" element={<UserSignup />} />
-        <Route path="/signup/partner" element={<PartnerSignup />} />
         <Route path="/signup/organization" element={<OrganizationSignup />} />
 
         {/* 유저 컴포넌트 */}
