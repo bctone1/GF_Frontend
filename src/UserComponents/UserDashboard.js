@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
@@ -19,51 +20,24 @@ export default function UserDashboard() {
         setPartnerSignupStatus(true);
     };
 
-
-
-    // 
-
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        password: '',
-        passwordConfirm: '',
-        phone: '',
         organization: '',
         teachingField: '',
-        referralSource: '',
-        verifyCode: '',
-        agreeTerms: false,
-        agreeMarketing: false
     });
     const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState({});
-    const [emailVerified, setEmailVerified] = useState(false);
-    const [showVerifyCode, setShowVerifyCode] = useState(false);
-    const [passwordVisible, setPasswordVisible] = useState(false);
-    const [passwordConfirmVisible, setPasswordConfirmVisible] = useState(false);
-    const [passwordStrength, setPasswordStrength] = useState({ level: '', text: '', width: 0 });
-    const [timer, setTimer] = useState(180);
-    const [timerActive, setTimerActive] = useState(false);
 
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
 
-        // 전화번호 포맷팅
-        if (name === 'phone') {
-            const formatted = formatPhoneNumber(value);
-            setFormData(prev => ({
-                ...prev,
-                [name]: formatted
-            }));
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                [name]: type === 'checkbox' ? checked : value
-            }));
-        }
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
 
         // 에러 초기화
         if (errors[name]) {
@@ -78,82 +52,6 @@ export default function UserDashboard() {
                 ...prev,
                 [name]: false
             }));
-        }
-
-        // 비밀번호 강도 체크
-        if (name === 'password') {
-            checkPasswordStrength(value);
-            // 비밀번호가 변경되면 비밀번호 확인도 다시 체크
-            if (formData.passwordConfirm) {
-                checkPasswordMatch(formData.passwordConfirm, value);
-            }
-        }
-
-        // 비밀번호 확인 체크
-        if (name === 'passwordConfirm') {
-            checkPasswordMatch(value, formData.password);
-        }
-    };
-
-    const formatPhoneNumber = (value) => {
-        const numbers = value.replace(/\D/g, '');
-        if (numbers.length <= 3) return numbers;
-        if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-        return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
-    };
-
-    const checkPasswordStrength = (password) => {
-        if (!password) {
-            setPasswordStrength({ level: '', text: '', width: 0 });
-            return;
-        }
-
-        let strength = 0;
-        if (password.length >= 8) strength++;
-        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-        if (/\d/.test(password)) strength++;
-        if (/[^a-zA-Z\d]/.test(password)) strength++;
-
-        let level = '';
-        let text = '';
-        let width = 0;
-
-        if (strength <= 1) {
-            level = 'weak';
-            text = '약함';
-            width = 33;
-        } else if (strength === 2) {
-            level = 'medium';
-            text = '보통';
-            width = 66;
-        } else {
-            level = 'strong';
-            text = '강함';
-            width = 100;
-        }
-
-        setPasswordStrength({ level, text, width });
-    };
-
-    const checkPasswordMatch = (passwordConfirm, password = formData.password) => {
-        if (!passwordConfirm) {
-            setSuccess(prev => ({ ...prev, passwordConfirm: false }));
-            return;
-        }
-
-        if (password === passwordConfirm) {
-            setSuccess(prev => ({ ...prev, passwordConfirm: true }));
-            setErrors(prev => ({ ...prev, passwordConfirm: '' }));
-        } else {
-            setSuccess(prev => ({ ...prev, passwordConfirm: false }));
-        }
-    };
-
-    const togglePassword = (field) => {
-        if (field === 'password') {
-            setPasswordVisible(!passwordVisible);
-        } else if (field === 'passwordConfirm') {
-            setPasswordConfirmVisible(!passwordConfirmVisible);
         }
     };
 
@@ -170,24 +68,8 @@ export default function UserDashboard() {
             newErrors.email = '올바른 이메일 형식이 아닙니다.';
         }
 
-        if (!formData.password) {
-            newErrors.password = '비밀번호를 입력해주세요.';
-        } else if (formData.password.length < 8) {
-            newErrors.password = '비밀번호는 8자 이상이어야 합니다.';
-        }
-
-        if (!formData.phone.trim()) {
-            newErrors.phone = '전화번호를 입력해주세요.';
-        } else if (!/^010-\d{4}-\d{4}$/.test(formData.phone)) {
-            newErrors.phone = '올바른 전화번호 형식이 아닙니다. (010-0000-0000)';
-        }
-
         if (!formData.organization.trim()) {
             newErrors.organization = '소속 기관명을 입력해주세요.';
-        }
-
-        if (!formData.agreeTerms) {
-            newErrors.agreeTerms = '이용약관에 동의해주세요.';
         }
 
         setErrors(newErrors);
@@ -197,15 +79,14 @@ export default function UserDashboard() {
     const handlePartnerSignupSubmit = (e) => {
         e.preventDefault();
         if (validateForm()) {
+            axios.post(`${process.env.REACT_APP_API_URL}/user/account/partner-promotion-requests`, {
+                name: formData.name,
+                email: formData.email,
+                organization: formData.organization,
+                teachingField: formData.teachingField,
+            });
             console.log('Signup attempt:', { ...formData, role: 'instructor' });
-            navigate('/login');
         }
-    };
-
-    const formatTimer = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -273,7 +154,26 @@ export default function UserDashboard() {
                     </div>
 
                     <form onSubmit={handlePartnerSignupSubmit}>
-                        {/* <div className="form-group">
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="name">
+                                이름 <span className="required">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                className={`form-input ${errors.name ? 'form-input--error' : ''}`}
+                                id="name"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                placeholder="홍길동"
+                                required
+                            />
+                            {errors.name && <span className="form-error active">{errors.name}</span>}
+                        </div>
+
+
+                        <div className="form-group">
                             <label className="form-label" htmlFor="email">
                                 이메일 <span className="required">*</span>
                             </label>
@@ -290,55 +190,6 @@ export default function UserDashboard() {
                             {errors.email && <span className="form-error active">{errors.email}</span>}
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="password">
-                                비밀번호 <span className="required">*</span>
-                            </label>
-                            <div className="input-group">
-                                <input
-                                    type={passwordVisible ? 'text' : 'password'}
-                                    className={`form-input ${errors.password ? 'form-input--error' : ''}`}
-                                    id="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleInputChange}
-                                    placeholder="8자 이상, 영문/숫자/특수문자 포함"
-                                    required
-                                    minLength="8"
-                                />
-                                <span
-                                    className="input-icon password-toggle"
-                                    onClick={() => togglePassword('password')}
-                                    style={{ cursor: 'pointer' }}
-                                >
-                                    {passwordVisible ? '🙈' : '👁️'}
-                                </span>
-                            </div>
-                            {errors.password && <span className="form-error active">{errors.password}</span>}
-                        </div> */}
-
-
-
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="phone">
-                                전화번호 <span className="required">*</span>
-                            </label>
-                            <input
-                                type="tel"
-                                className={`form-input ${errors.phone ? 'form-input--error' : ''}`}
-                                id="phone"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                placeholder="010-0000-0000"
-                                required
-                            />
-                            <div className="form-hint">
-                                <span>💡</span>
-                                <span>010-0000-0000 형식으로 자동 변환됩니다</span>
-                            </div>
-                            {errors.phone && <span className="form-error active">{errors.phone}</span>}
-                        </div>
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="organization">
@@ -383,26 +234,6 @@ export default function UserDashboard() {
                             </select>
                         </div>
 
-                        <div className="form-group">
-                            <label className="form-label" htmlFor="referralSource">
-                                GrowFit을 어떻게 알게 되셨나요?
-                            </label>
-                            <select
-                                className="form-select"
-                                id="referralSource"
-                                name="referralSource"
-                                value={formData.referralSource}
-                                onChange={handleInputChange}
-                            >
-                                <option value="">선택하세요</option>
-                                <option value="search">검색 엔진</option>
-                                <option value="sns">SNS</option>
-                                <option value="friend">지인 추천</option>
-                                <option value="blog">블로그/기사</option>
-                                <option value="ad">광고</option>
-                                <option value="other">기타</option>
-                            </select>
-                        </div>
 
                         {/* <div className="checkbox-group">
                             <input

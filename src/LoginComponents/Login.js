@@ -30,7 +30,11 @@ export default function Login() {
             password: formData.password,
         }).then(response => {
             console.log(response.data);
+            sessionStorage.setItem("access_token", response.data.access_token);
+            sessionStorage.setItem("refresh_token", response.data.refresh_token);
+            sessionStorage.setItem("token_type", response.data.token_type);
             sessionStorage.setItem("email", formData.email);
+
 
             if (selectedRole === 'student') {
                 navigate('/user/dashboard');

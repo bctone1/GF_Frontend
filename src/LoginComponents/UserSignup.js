@@ -423,6 +423,30 @@ export default function StudentSignup() {
                         )}
                     </div>
 
+                    <div className="section-divider">추가 정보 (선택)</div>
+
+                    <div className="form-group">
+                        <label className="form-label" htmlFor="referralSource">
+                            GrowFit을 어떻게 알게 되셨나요?
+                        </label>
+                        <select
+                            className="form-select"
+                            id="referralSource"
+                            name="referralSource"
+                            value={formData.referralSource}
+                            onChange={handleInputChange}
+                        >
+                            <option value="">선택하세요</option>
+                            <option value="search">검색 엔진</option>
+                            <option value="sns">SNS</option>
+                            <option value="friend">지인 추천</option>
+                            <option value="blog">블로그/기사</option>
+                            <option value="ad">광고</option>
+                            <option value="other">기타</option>
+                        </select>
+                    </div>
+
+
                     <div className="checkbox-group">
                         <input
                             type="checkbox"
