@@ -10,6 +10,8 @@ import './css/login.css';
 import './css/UserSignup.css';
 import './css/PartnerSignup.css';
 
+import './css/ManagerInstructor.css';
+
 
 import './css/PartnerCostAnalytics.css';
 import './css/PartnerSettings.css';

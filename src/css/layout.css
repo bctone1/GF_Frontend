@@ -77,6 +77,89 @@ body {
     gap: var(--space-3);
 }
 
+.header__mode-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-1);
+}
+
+.mode-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--transition-base) var(--ease-in-out);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.mode-toggle-btn:hover {
+    background: var(--gray-100);
+    color: var(--text-primary);
+}
+
+.mode-toggle-btn--active {
+    background: var(--employee-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.mode-toggle-btn--active:hover {
+    background: var(--employee-primary-dark);
+    color: white;
+}
+
+.mode-toggle-btn__icon {
+    font-size: var(--text-base);
+}
+
+.mode-toggle-btn__text {
+    font-size: var(--text-sm);
+}
+
+
+.mode-toggle-btn-partner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--transition-base) var(--ease-in-out);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.mode-toggle-btn-partner:hover {
+    background: var(--gray-100);
+    color: var(--text-primary);
+}
+
+.mode-toggle-btn-partner--active {
+    background: var(--partner-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+.mode-toggle-btn-partner--active:hover {
+    background: var(--partner-primary-dark);
+    color: white;
+}
+
 .header__icon-button {
     position: relative;
     width: 40px;

@@ -23,6 +23,7 @@ import PartnerSettings from './PartnerComponents/PartnerSettings';
 
 
 import ManagerDashboard from './ManagerComponents/ManagerDashboard';
+import ManagerInstructor from './ManagerComponents/ManagerInstructor';
 
 export default function App() {
   return (
@@ -60,6 +61,7 @@ export default function App() {
 
         {/* 매니저 컴포넌트 */}
         <Route path="/manager/dashboard" element={<ManagerDashboard />} />
+        <Route path="/manager/instructor" element={<ManagerInstructor />} />
 
 
 

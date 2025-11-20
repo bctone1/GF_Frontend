@@ -14,6 +14,19 @@ export default function UserHeader() {
                 </div>
 
                 <div className="header__right">
+
+                    <div className="header__mode-toggle">
+                        <button className="mode-toggle-btn mode-toggle-btn--active">
+                            <span className="mode-toggle-btn__icon">👨‍🎓</span>
+                            <span className="mode-toggle-btn__text">수강생 모드</span>
+                        </button>
+                        <button className="mode-toggle-btn" onClick={() => window.location.href = '/partner/dashboard'}>
+                            <span className="mode-toggle-btn__icon">👨‍🏫</span>
+                            <span className="mode-toggle-btn__text">강사 모드</span>
+                        </button>
+                    </div>
+
+
                     <button id="notificationBtn" className="header__icon-button">
                         <span>🔔</span>
                         <span className="header__badge">3</span>
