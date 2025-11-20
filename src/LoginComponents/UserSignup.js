@@ -11,7 +11,8 @@ export default function StudentSignup() {
         password: '',
         passwordConfirm: '',
         verifyCode: '',
-        agreeToTerms: false
+        agreeToTerms: false,
+        referralSource: ''
     });
     const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState({});
@@ -222,34 +223,32 @@ export default function StudentSignup() {
                 return;
             }
 
-            const requestData = {
-                email: formData.email,
-                password: formData.password,
-                full_name: formData.name,
-                status: 'active',
-                default_role: "member",
-                email_verified_token: verificationToken
-            };
-
-            console.log('회원가입 요청 데이터:', requestData);
-
-            axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/signup`, requestData)
-                .then(response => {
-                    console.log('회원가입 성공:', response.data);
-                    navigate('/login');
-                })
-                .catch(error => {
-                    console.error('회원가입 에러:', error);
-                    console.error('에러 응답:', error.response);
-                    if (error.response) {
-                        console.error('에러 데이터:', error.response.data);
-                        console.error('에러 상태:', error.response.status);
-                        const errorMessage = error.response.data?.message || error.response.data?.detail || '회원가입에 실패했습니다.';
-                        alert(errorMessage);
-                    } else {
-                        alert('네트워크 오류가 발생했습니다.');
-                    }
-                });
+            axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/signup`,
+                {
+                    email: formData.email,
+                    password: formData.password,
+                    full_name: formData.name,
+                    status: 'active',
+                    default_role: "member",
+                    // email_verified_token: verificationToken
+                    referral_source: formData.referralSource
+                }
+            ).then(response => {
+                console.log('회원가입 성공:', response.data);
+                navigate('/login');
+            }
+            ).catch(error => {
+                console.error('회원가입 에러:', error);
+                console.error('에러 응답:', error.response);
+                if (error.response) {
+                    console.error('에러 데이터:', error.response.data);
+                    console.error('에러 상태:', error.response.status);
+                    const errorMessage = error.response.data?.message || error.response.data?.detail || '회원가입에 실패했습니다.';
+                    alert(errorMessage);
+                } else {
+                    alert('네트워크 오류가 발생했습니다.');
+                }
+            });
         }
     };
 
@@ -261,7 +260,6 @@ export default function StudentSignup() {
 
     return (
         <div className='signup-wrapper'>
-
 
             <div className="signup-container">
                 <div className="signup-header">

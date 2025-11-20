@@ -7,9 +7,20 @@ import UserSidebar from './UserSidebar';
 
 
 export default function UserDashboard() {
+    const navigate = useNavigate();
     const [inviteStatus, setInviteStatus] = useState(true);
     const [partnerSignupStatus, setPartnerSignupStatus] = useState(false);
+    const [myprofile, setMyprofile] = useState(null);
+    const [myaccount, setMyaccount] = useState(null);
 
+    // UserHeader에서 받아온 데이터를 처리하는 콜백 함수들
+    const handleAccountData = (accountData) => {
+        setMyaccount(accountData);
+    };
+
+    const handleProfileData = (profileData) => {
+        setMyprofile(profileData);
+    };
 
     const handleSubmit = (e) => {
         alert("초대코드 등록");
@@ -20,10 +31,10 @@ export default function UserDashboard() {
         setPartnerSignupStatus(true);
     };
 
-    const navigate = useNavigate();
+
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
+        name: myprofile?.full_name || '',
+        email: myaccount?.email || '',
         organization: '',
         teachingField: '',
     });
@@ -58,15 +69,15 @@ export default function UserDashboard() {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.name.trim()) {
-            newErrors.name = '이름을 입력해주세요.';
-        }
+        // if (!formData.name.trim()) {
+        //     newErrors.name = '이름을 입력해주세요.';
+        // }
 
-        if (!formData.email.trim()) {
-            newErrors.email = '이메일을 입력해주세요.';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = '올바른 이메일 형식이 아닙니다.';
-        }
+        // if (!formData.email.trim()) {
+        //     newErrors.email = '이메일을 입력해주세요.';
+        // } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        //     newErrors.email = '올바른 이메일 형식이 아닙니다.';
+        // }
 
         if (!formData.organization.trim()) {
             newErrors.organization = '소속 기관명을 입력해주세요.';
@@ -76,16 +87,33 @@ export default function UserDashboard() {
         return Object.keys(newErrors).length === 0;
     };
 
+    const accessToken = sessionStorage.getItem("access_token");
+
     const handlePartnerSignupSubmit = (e) => {
+        // alert(accessToken);
         e.preventDefault();
         if (validateForm()) {
-            axios.post(`${process.env.REACT_APP_API_URL}/user/account/partner-promotion-requests`, {
-                name: formData.name,
-                email: formData.email,
-                organization: formData.organization,
-                teachingField: formData.teachingField,
+            axios.post(
+                `${process.env.REACT_APP_API_URL}/user/account/partner-promotion-requests`,
+                {
+                    name: myprofile.full_name,
+                    email: myaccount.email,
+                    org_name: formData.organization,
+                    edu_category: formData.teachingField,
+                    target_role: "partner_admin"
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            ).then(response => {
+                console.log(response.data);
+                setPartnerSignupStatus(false);
+            }).catch(error => {
+                console.log(error);
             });
-            console.log('Signup attempt:', { ...formData, role: 'instructor' });
         }
     };
 
@@ -164,7 +192,8 @@ export default function UserDashboard() {
                                 className={`form-input ${errors.name ? 'form-input--error' : ''}`}
                                 id="name"
                                 name="name"
-                                value={formData.name}
+                                // value={formData.name}
+                                value={myprofile?.full_name || ""}
                                 onChange={handleInputChange}
                                 placeholder="홍길동"
                                 required
@@ -182,7 +211,8 @@ export default function UserDashboard() {
                                 className={`form-input ${errors.email ? 'form-input--error' : ''}`}
                                 id="email"
                                 name="email"
-                                value={formData.email}
+                                // value={formData.email}
+                                value={myaccount?.email || ""}
                                 onChange={handleInputChange}
                                 placeholder="growfit@gmail.com"
                                 required
@@ -270,7 +300,10 @@ export default function UserDashboard() {
             </div>
 
             <div id="app">
-                <UserHeader />
+                <UserHeader 
+                    onAccountData={handleAccountData}
+                    onProfileData={handleProfileData}
+                />
                 <div className="container">
                     <UserSidebar />
                     <main className="main">

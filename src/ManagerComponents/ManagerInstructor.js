@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import axios from 'axios';
+import { useState, useEffect } from 'react';
 import ManagerHeader from './ManagerHeader';
 import ManagerSidebar from './ManagerSidebar';
 import { showToast } from '../utill/utill';
@@ -10,6 +11,35 @@ export default function ManagerInstructor() {
         showToast('교육과정 관리 탭이 클릭되었습니다', 'info');
         setActiveTab(tab);
     };
+    const [partnerList, setPartnerList] = useState([]);
+
+    const getPartnerList = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/supervisor/core/promotions/partner-requests?status=pending`)
+            .then(response => {
+                console.log(response.data);
+                setPartnerList(response.data);
+            }).catch(error => {
+                console.log(error);
+            });
+    }
+
+    useEffect(() => {
+        getPartnerList();
+    }, []);
+
+    const handleApprove = (request_id) => {
+        axios.post(`${process.env.REACT_APP_API_URL}/supervisor/core/promotions/partner-requests/${request_id}/approve`, {
+            target_role: 'partner_admin'
+        })
+            .then(response => {
+                console.log(response.data);
+                showToast('승인되었습니다', 'success');
+                getPartnerList();
+            }).catch(error => {
+                console.log(error);
+                showToast('승인에 실패했습니다', 'error');
+            });
+    }
 
     return (
         <>
@@ -225,139 +255,31 @@ export default function ManagerInstructor() {
 
 
                             <div id="approvals-tab" className={`tab-content ${activeTab === 'approvals' ? 'tab-content--active' : ''}`}>
-                                <div className="approval-list">
-                                    <div className="approval-item">
-                                        <div className="approval-item__left">
-                                            <div className="approval-item__avatar">김</div>
-                                            <div className="approval-item__info">
-                                                <div className="approval-item__name">김태현</div>
-                                                <div className="approval-item__email">kim@example.com</div>
-                                                <div className="approval-item__org">신청 조직: 네이버 | 신청일: 2025.10.25</div>
-                                            </div>
-                                        </div>
-                                        <div className="approval-item__actions">
-                                            <button className="btn btn--success" >
-                                                ✓ 승인
-                                            </button>
-                                            <button className="btn btn--danger" >
-                                                ✗ 거절
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div className="approval-list" style={{ minHeight: '500px' }}>
 
-                                    <div className="approval-item">
-                                        <div className="approval-item__left">
-                                            <div className="approval-item__avatar">이</div>
-                                            <div className="approval-item__info">
-                                                <div className="approval-item__name">이서연</div>
-                                                <div className="approval-item__email">lee@example.com</div>
-                                                <div className="approval-item__org">신청 조직: 카카오 | 신청일: 2025.10.24</div>
+                                    {partnerList.map((partner) => (
+                                        <div className="approval-item">
+                                            <div className="approval-item__left">
+                                                <div className="approval-item__avatar">{partner.name.charAt(0)}</div>
+                                                <div className="approval-item__info">
+                                                    <div className="approval-item__name">{partner.name}</div>
+                                                    <div className="approval-item__email">{partner.email}</div>
+                                                    <div className="approval-item__org">신청 조직: {partner.org_name} | 신청일: {partner.requested_at.split('T')[0]}</div>
+                                                </div>
+                                            </div>
+                                            <div className="approval-item__actions">
+                                                <button className="btn btn--success"
+                                                    onClick={() => handleApprove(partner.request_id)}
+                                                >
+                                                    ✓ 승인
+                                                </button>
+                                                <button className="btn btn--danger" >
+                                                    ✗ 거절
+                                                </button>
                                             </div>
                                         </div>
-                                        <div className="approval-item__actions">
-                                            <button className="btn btn--success" >
-                                                ✓ 승인
-                                            </button>
-                                            <button className="btn btn--danger" >
-                                                ✗ 거절
-                                            </button>
-                                        </div>
-                                    </div>
+                                    ))}
 
-                                    <div className="approval-item">
-                                        <div className="approval-item__left">
-                                            <div className="approval-item__avatar">박</div>
-                                            <div className="approval-item__info">
-                                                <div className="approval-item__name">박준영</div>
-                                                <div className="approval-item__email">park@example.com</div>
-                                                <div className="approval-item__org">신청 조직: 쿠팡 | 신청일: 2025.10.23</div>
-                                            </div>
-                                        </div>
-                                        <div className="approval-item__actions">
-                                            <button className="btn btn--success" >
-                                                ✓ 승인
-                                            </button>
-                                            <button className="btn btn--danger" >
-                                                ✗ 거절
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="approval-item">
-                                        <div className="approval-item__left">
-                                            <div className="approval-item__avatar">최</div>
-                                            <div className="approval-item__info">
-                                                <div className="approval-item__name">최민지</div>
-                                                <div className="approval-item__email">choi@example.com</div>
-                                                <div className="approval-item__org">신청 조직: 토스 | 신청일: 2025.10.22</div>
-                                            </div>
-                                        </div>
-                                        <div className="approval-item__actions">
-                                            <button className="btn btn--success" >
-                                                ✓ 승인
-                                            </button>
-                                            <button className="btn btn--danger" >
-                                                ✗ 거절
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="approval-item">
-                                        <div className="approval-item__left">
-                                            <div className="approval-item__avatar">정</div>
-                                            <div className="approval-item__info">
-                                                <div className="approval-item__name">정하늘</div>
-                                                <div className="approval-item__email">jung@example.com</div>
-                                                <div className="approval-item__org">신청 조직: 배달의민족 | 신청일: 2025.10.21</div>
-                                            </div>
-                                        </div>
-                                        <div className="approval-item__actions">
-                                            <button className="btn btn--success" >
-                                                ✓ 승인
-                                            </button>
-                                            <button className="btn btn--danger" >
-                                                ✗ 거절
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="approval-item">
-                                        <div className="approval-item__left">
-                                            <div className="approval-item__avatar">강</div>
-                                            <div className="approval-item__info">
-                                                <div className="approval-item__name">강지원</div>
-                                                <div className="approval-item__email">kang@example.com</div>
-                                                <div className="approval-item__org">신청 조직: 당근마켓 | 신청일: 2025.10.20</div>
-                                            </div>
-                                        </div>
-                                        <div className="approval-item__actions">
-                                            <button className="btn btn--success" >
-                                                ✓ 승인
-                                            </button>
-                                            <button className="btn btn--danger" >
-                                                ✗ 거절
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="approval-item">
-                                        <div className="approval-item__left">
-                                            <div className="approval-item__avatar">윤</div>
-                                            <div className="approval-item__info">
-                                                <div className="approval-item__name">윤서아</div>
-                                                <div className="approval-item__email">yoon@example.com</div>
-                                                <div className="approval-item__org">신청 조직: 라인 | 신청일: 2025.10.19</div>
-                                            </div>
-                                        </div>
-                                        <div className="approval-item__actions">
-                                            <button className="btn btn--success" >
-                                                ✓ 승인
-                                            </button>
-                                            <button className="btn btn--danger" >
-                                                ✗ 거절
-                                            </button>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
