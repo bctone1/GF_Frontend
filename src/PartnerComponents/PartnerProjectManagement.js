@@ -112,7 +112,7 @@ export default function PartnerProjectManagement() {
                         </div>
 
 
-                        <div style={{ marginBottom: '24px' }}>
+                        {/* <div style={{ marginBottom: '24px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
                                 🔗 초대 링크
                             </label>
@@ -153,7 +153,7 @@ export default function PartnerProjectManagement() {
                                         id="createdTotalCost">313,200원</span>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="modal__footer">
