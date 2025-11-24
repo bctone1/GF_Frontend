@@ -1,37 +1,203 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
 
 export default function PartnerProjectManagement() {
-
     const [showModal, setShowModal] = useState(false);
+    const [showCourseCreatedModal, setShowCourseCreatedModal] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [trainingDays, setTrainingDays] = useState(0);
+
+    const handleCreateProject = (e) => {
+        e.preventDefault();
+        console.log('create project');
+        setShowCourseCreatedModal(true);
+        setShowModal(false);
+    }
+
+    // 교육 기간 계산 함수
+    const calculateTrainingDays = (start, end) => {
+        if (!start || !end) {
+            return 0;
+        }
+
+        const startDateObj = new Date(start);
+        const endDateObj = new Date(end);
+
+        // 종료일이 시작일보다 이전이면 0 반환
+        if (endDateObj < startDateObj) {
+            return 0;
+        }
+
+        // 날짜 차이 계산 (밀리초를 일로 변환)
+        const diffTime = endDateObj - startDateObj;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 시작일 포함
+
+        return diffDays;
+    };
+
+    // 시작일 또는 종료일이 변경될 때마다 기간 계산
+    useEffect(() => {
+        const days = calculateTrainingDays(startDate, endDate);
+        setTrainingDays(days);
+    }, [startDate, endDate]);
+
+    const handleStartDateChange = (e) => {
+        setStartDate(e.target.value);
+    };
+
+    const handleEndDateChange = (e) => {
+        setEndDate(e.target.value);
+    };
+
     return (
         <>
+            <div className={`modal ${showCourseCreatedModal ? 'modal--active' : ''}`} id="courseCreatedModal">
+                <div className="modal__content" style={{ maxWidth: '600px' }}>
+                    <div className="modal__header">
+                        <h2 className="modal__title">🎉 강의가 성공적으로 생성되었습니다!</h2>
+                        <button className="modal__close" onClick={() => setShowCourseCreatedModal(false)}>✕</button>
+                    </div>
+
+                    <div className="modal__body">
+                        <div className="alert alert--success" style={{ marginBottom: '24px' }}>
+                            <div className="alert__content">
+                                <div className="alert__title">학생 초대 준비 완료</div>
+                                <div className="alert__message">아래 정보를 학생들에게 공유해주세요</div>
+                            </div>
+                        </div>
+
+
+                        <div
+                            style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: '16px', marginBottom: '20px' }}>
+                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                                생성된 강의
+                            </div>
+                            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: 'var(--text-primary)', marginBottom: '12px' }}
+                                id="createdCourseName">
+                                2025 AI 기초과정
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: 'var(--text-sm)' }}>
+                                <div>
+                                    <span style={{ color: 'var(--text-secondary)' }}>📅 교육 기간:</span>
+                                    <span style={{ fontWeight: 'var(--font-semibold)', marginLeft: '4px' }}
+                                        id="createdCourseDates">3일</span>
+                                </div>
+                                <div>
+                                    <span style={{ color: 'var(--text-secondary)' }}>👥 예상 학생:</span>
+                                    <span style={{ fontWeight: 'var(--font-semibold)', marginLeft: '4px' }}
+                                        id="createdStudentCount">20명</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
+                                📋 초대 코드
+                            </label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <input type="text" id="generatedInviteCode" value="GF2K4M" readOnly style={{
+                                    flex: 1, padding: '12px 16px', border: '2px solid var(--primary-300)',
+                                    borderRadius: 'var(--radius-md)', fontSize: '18px', fontWeight: 'bold',
+                                    textAlign: 'center', background: 'var(--primary-50)', color: 'var(--primary-700)',
+                                    fontFamily: 'var(--font-mono)', letterSpacing: '2px'
+                                }} />
+                                <button className="btn btn--primary" style={{ minWidth: '80px' }}>
+                                    복사
+                                </button>
+                            </div>
+                        </div>
+
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
+                                🔗 초대 링크
+                            </label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <input type="text" id="generatedInviteUrl" value="https://growfit.com/join?code=GF2K4M" readOnly
+                                    style={{
+                                        flex: 1, padding: '12px 16px', border: '1px solid var(--border)',
+                                        borderRadius: 'var(--radius-md)', fontSize: 'var(--text-sm)',
+                                        background: 'var(--gray-50)'
+                                    }} />
+                                <button className="btn btn--outline" style={{ minWidth: '80px' }}>
+                                    복사
+                                </button>
+                            </div>
+                        </div>
+
+
+                        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+                            <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', marginBottom: '12px' }}>
+                                💰 예상 비용 정보
+                            </div>
+                            <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: '12px' }}>
+                                <div
+                                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', marginBottom: '8px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>플랫폼 사용료</span>
+                                    <span style={{ fontWeight: 'var(--font-semibold)' }} id="createdPlatformFee">100,000원</span>
+                                </div>
+                                <div
+                                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', marginBottom: '12px' }}>
+                                    <span style={{ color: 'var(--text-secondary)' }}>API 사용료 (예상)</span>
+                                    <span style={{ fontWeight: 'var(--font-semibold)' }} id="createdAPIFee">213,200원</span>
+                                </div>
+                                <div
+                                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-base)', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
+                                    <span style={{ fontWeight: 'var(--font-bold)' }}>총 예상 비용</span>
+                                    <span
+                                        style={{ fontWeight: 'var(--font-bold)', color: 'var(--primary-600)', fontSize: 'var(--text-lg)' }}
+                                        id="createdTotalCost">313,200원</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="modal__footer">
+                        <button className="btn btn--outline">
+                            📄 초대 정보 다운로드
+                        </button>
+                        <button className="btn btn--primary" type="button" onClick={() => setShowCourseCreatedModal(false)}>
+                            확인
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div id="createProjectModal" className={`modal ${showModal ? 'modal--active' : ''}`}>
                 <div className="modal__content modal__content--large">
                     <div className="modal__header">
                         <h2 className="modal__title">📁 신규 강의 생성</h2>
-                        <button className="modal__close" onClick={() => setShowModal(false)}>✕</button>
+                        <button className="modal__close" onClick={() => {
+                            setShowModal(false);
+                            setStartDate('');
+                            setEndDate('');
+                            setTrainingDays(0);
+                        }}>✕</button>
                     </div>
                     <div className="modal__body">
-                        <form id="createProjectForm">
+                        <form id="createProjectForm" onSubmit={handleCreateProject}>
 
                             <div className="form-section">
                                 <h3 className="form-section-title">📋 기본 정보</h3>
                                 <div className="form-group">
-                                    <label for="projectName">강의명 <span className="required">*</span></label>
-                                    <input type="text" id="projectName" placeholder="예: 2025 AI 기초과정" />
+                                    <label htmlFor="projectName">강의명 <span className="required">*</span></label>
+                                    <input type="text" id="projectName" placeholder="Rag 구축" />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="projectName">과정명 <span className="required">*</span></label>
+                                    <input type="text" id="projectName" placeholder="AI 기초과정" />
                                 </div>
                             </div>
-
 
                             <div className="form-section">
                                 <h3 className="form-section-title">🤖 사용할 LLM 모델</h3>
                                 <div className="llm-selection">
                                     <label className="llm-checkbox">
-                                        <input type="checkbox" name="llm" value="chatgpt" checked
-                                            onchange="updateCostEstimate()" />
+                                        <input type="checkbox" name="llm" value="chatgpt" />
                                         <div className="llm-card">
                                             <div className="llm-icon">🟢</div>
                                             <div className="llm-info">
@@ -41,8 +207,7 @@ export default function PartnerProjectManagement() {
                                         </div>
                                     </label>
                                     <label className="llm-checkbox">
-                                        <input type="checkbox" name="llm" value="claude" checked
-                                            onchange="updateCostEstimate()" />
+                                        <input type="checkbox" name="llm" value="claude" />
                                         <div className="llm-card">
                                             <div className="llm-icon">🟣</div>
                                             <div className="llm-info">
@@ -52,8 +217,7 @@ export default function PartnerProjectManagement() {
                                         </div>
                                     </label>
                                     <label className="llm-checkbox">
-                                        <input type="checkbox" name="llm" value="gemini" checked
-                                            onchange="updateCostEstimate()" />
+                                        <input type="checkbox" name="llm" value="gemini" />
                                         <div className="llm-card">
                                             <div className="llm-icon">🔵</div>
                                             <div className="llm-info">
@@ -69,24 +233,38 @@ export default function PartnerProjectManagement() {
                             <div className="form-section">
                                 <h3 className="form-section-title">📅 교육 설정</h3>
                                 <div className="form-group">
-                                    <label for="studentCount">수강 학생 수 <span className="required">*</span></label>
-                                    <input type="number" id="studentCount" placeholder="20" min="1" required
-                                        oninput="updateCostEstimate()" />
+                                    <label htmlFor="studentCount">수강 학생 수 <span className="required">*</span></label>
+                                    <input type="number" id="studentCount" placeholder="20" min="1" required />
                                 </div>
                                 <div className="form-group form-group--inline">
                                     <div>
-                                        <label for="startDate">교육 시작일 <span className="required">*</span></label>
-                                        <input type="date" id="startDate" required onchange="updateCostEstimate()" />
+                                        <label htmlFor="startDate">교육 시작일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="startDate"
+                                            value={startDate}
+                                            onChange={handleStartDateChange}
+                                            required
+                                        />
                                     </div>
                                     <div>
-                                        <label for="endDate">교육 종료일 <span className="required">*</span></label>
-                                        <input type="date" id="endDate" required onchange="updateCostEstimate()" />
+                                        <label htmlFor="endDate">교육 종료일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="endDate"
+                                            value={endDate}
+                                            onChange={handleEndDateChange}
+                                            min={startDate || ''}
+                                            required
+                                        />
                                     </div>
                                 </div>
-                                <div className="training-days-info" id="trainingDaysInfo" style={{ display: "none" }}>
-                                    <span className="training-days-icon">📆</span>
-                                    <span className="training-days-text">총 교육 기간: <strong id="trainingDays">0</strong>일</span>
-                                </div>
+                                {trainingDays > 0 && (
+                                    <div className="training-days-info" id="trainingDaysInfo">
+                                        <span className="training-days-icon">📆</span>
+                                        <span className="training-days-text">총 교육 기간: <strong id="trainingDays">{trainingDays}</strong>일</span>
+                                    </div>
+                                )}
                             </div>
 
 
@@ -157,8 +335,13 @@ export default function PartnerProjectManagement() {
                         </form>
                     </div>
                     <div className="modal__footer">
-                        <button className="btn btn--outline" >취소</button>
-                        <button className="btn btn--primary" >
+                        <button className="btn btn--outline" onClick={() => {
+                            setShowModal(false);
+                            setStartDate('');
+                            setEndDate('');
+                            setTrainingDays(0);
+                        }}>취소</button>
+                        <button className="btn btn--primary" type="submit" form="createProjectForm">
                             <span>✓</span> 강의 생성
                         </button>
                     </div>

@@ -348,6 +348,49 @@
     text-decoration: underline;
 }
 
+/* ========== Autocomplete ========== */
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: var(--z-dropdown);
+    margin-top: 4px;
+}
+
+.autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    transition: background-color var(--transition-base);
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item--selected {
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+}
+
+.autocomplete-item:active {
+    background-color: var(--primary-100);
+}
+
 @media (max-width: 375px) {
     .signup-container {
         padding: 24px;

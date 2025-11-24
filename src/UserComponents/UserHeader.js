@@ -68,7 +68,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
 
                 <div className="header__right">
 
-                    {myaccount?.default_role !== "member" && (
+                    {myaccount?.is_partner && (
                         <div className="header__mode-toggle">
                             <button className="mode-toggle-btn mode-toggle-btn--active">
                                 <span className="mode-toggle-btn__icon">👨‍🎓</span>

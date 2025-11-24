@@ -118,6 +118,135 @@ export default function UserDashboard() {
         }
     };
 
+    const [organizations, setOrganizations] = useState([
+        { id: 1, name: "천강", code: "00001", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 2, name: "천둥", code: "00002", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 3, name: "천벌", code: "00003", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 4, name: "천국", code: "00004", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 5, name: "천사", code: "00005", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 6, name: "천지", code: "00006", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 7, name: "천주", code: "00007", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 8, name: "천명", code: "00008", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 9, name: "서울우유", code: "00009", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 10, name: "부산우유", code: "000010", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 11, name: "서울역1번출구", code: "00011", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
+        { id: 12, name: "서울역12번출구", code: "00012", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" }
+    ]);
+
+    // 자동완성 관련 state
+    const [filteredOrganizations, setFilteredOrganizations] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+
+    // 한글 초성 추출 함수
+    const getInitialConsonant = (char) => {
+        const code = char.charCodeAt(0);
+        if (code >= 0xAC00 && code <= 0xD7A3) {
+            const initial = (code - 0xAC00) / 28 / 21;
+            const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+            return initials[initial];
+        }
+        return char;
+    };
+
+    // 문자열의 초성 추출
+    const getInitials = (str) => {
+        return str.split('').map(char => getInitialConsonant(char)).join('');
+    };
+
+    // 검색어와 매칭되는지 확인 (초성 검색 포함)
+    const matchesSearch = (text, searchTerm) => {
+        const lowerText = text.toLowerCase();
+        const lowerSearch = searchTerm.toLowerCase();
+
+        // 1) 일반 문자열 검색(가장 정확)
+        if (lowerText.includes(lowerSearch)) {
+            return true;
+        }
+
+        // 2) 검색어가 "초성만"으로 이루어진 경우만 초성 검색 허용
+        const isSearchInitialsOnly = /^[ㄱ-ㅎ]+$/.test(searchTerm);
+
+        if (isSearchInitialsOnly) {
+            const textInitials = getInitials(text);
+
+            // 2-1) 전체 초성 매칭
+            if (textInitials.includes(searchTerm)) {
+                return true;
+            }
+
+            // 2-2) 첫 글자 초성만 매칭
+            const firstInitial = getInitialConsonant(text[0]);
+            if (firstInitial === searchTerm[0]) {
+                return true;
+            }
+        }
+
+        return false;
+    };
+
+
+    // 기관명 입력 변경 핸들러
+    const handleOrganizationChange = (e) => {
+        const value = e.target.value;
+        setFormData(prev => ({
+            ...prev,
+            organization: value
+        }));
+
+        // 에러 초기화
+        if (errors.organization) {
+            setErrors(prev => ({
+                ...prev,
+                organization: ''
+            }));
+        }
+
+        // 검색어가 있으면 필터링
+        if (value.trim()) {
+            const filtered = organizations.filter(org =>
+                matchesSearch(org.name, value)
+            );
+            setFilteredOrganizations(filtered);
+            setShowSuggestions(true);
+            setSelectedIndex(-1);
+        } else {
+            setFilteredOrganizations([]);
+            setShowSuggestions(false);
+        }
+    };
+
+    // 기관명 선택 핸들러
+    const handleSelectOrganization = (orgName) => {
+        setFormData(prev => ({
+            ...prev,
+            organization: orgName
+        }));
+        setShowSuggestions(false);
+        setFilteredOrganizations([]);
+        setSelectedIndex(-1);
+    };
+
+    // 키보드 네비게이션 핸들러
+    const handleOrganizationKeyDown = (e) => {
+        if (!showSuggestions || filteredOrganizations.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setSelectedIndex(prev =>
+                prev < filteredOrganizations.length - 1 ? prev + 1 : prev
+            );
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            handleSelectOrganization(filteredOrganizations[selectedIndex].name);
+        } else if (e.key === 'Escape') {
+            setShowSuggestions(false);
+        }
+    };
+
     return (
         <>
             <div className={`invite-overlay ${inviteStatus && !myaccount?.is_partner ? '' : 'invite-overlay--hidden'}`} id="inviteOverlay">
@@ -226,18 +355,45 @@ export default function UserDashboard() {
                             <label className="form-label" htmlFor="organization">
                                 소속 기관명 <span className="required">*</span>
                             </label>
-                            <input
-                                type="text"
-                                className={`form-input ${errors.organization ? 'form-input--error' : ''}`}
-                                id="organization"
-                                name="organization"
-                                value={formData.organization}
-                                onChange={handleInputChange}
-                                placeholder="예: 서울대학교, ABC 기업교육센터"
-                                required
-                                minLength="2"
-                                maxLength="200"
-                            />
+                            <div className="autocomplete-wrapper">
+                                <input
+                                    type="text"
+                                    className={`form-input ${errors.organization ? 'form-input--error' : ''}`}
+                                    id="organization"
+                                    name="organization"
+                                    value={formData.organization}
+                                    onChange={handleOrganizationChange}
+                                    onKeyDown={handleOrganizationKeyDown}
+                                    onFocus={() => {
+                                        if (formData.organization.trim() && filteredOrganizations.length > 0) {
+                                            setShowSuggestions(true);
+                                        }
+                                    }}
+                                    onBlur={() => {
+                                        // 약간의 지연을 두어 클릭 이벤트가 먼저 처리되도록
+                                        setTimeout(() => setShowSuggestions(false), 200);
+                                    }}
+                                    placeholder="예: 서울대학교, ABC 기업교육센터 (초성 검색 가능: ㅊ 입력 시 천강, 천둥 등)"
+                                    required
+                                    minLength="2"
+                                    maxLength="200"
+                                    autoComplete="off"
+                                />
+                                {showSuggestions && filteredOrganizations.length > 0 && (
+                                    <div className="autocomplete-dropdown">
+                                        {filteredOrganizations.map((org, index) => (
+                                            <div
+                                                key={org.id}
+                                                className={`autocomplete-item ${index === selectedIndex ? 'autocomplete-item--selected' : ''}`}
+                                                onClick={() => handleSelectOrganization(org.name)}
+                                                onMouseEnter={() => setSelectedIndex(index)}
+                                            >
+                                                {org.name}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             {errors.organization && <span className="form-error active">{errors.organization}</span>}
                         </div>
 
