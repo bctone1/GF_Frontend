@@ -29,7 +29,7 @@ export default function ManagerInstructor() {
 
     const handleApprove = (request_id) => {
         axios.post(`${process.env.REACT_APP_API_URL}/supervisor/core/promotions/partner-requests/${request_id}/approve`, {
-            target_role: 'partner_admin'
+            target_role: 'partner'
         })
             .then(response => {
                 console.log(response.data);

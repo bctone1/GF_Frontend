@@ -56,7 +56,7 @@ export default function PartnerSidebar() {
                             to="/partner/settings"
                             className={`sidebar__menu-link ${currentMenu === 'settings' ? 'sidebar__menu-link--active' : ''}`}
                         >
-                            <span class="sidebar__menu-icon">⚙️</span>
+                            <span className="sidebar__menu-icon">⚙️</span>
                             <span>설정</span>
                         </Link>
                     </ul>

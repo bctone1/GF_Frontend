@@ -112,18 +112,18 @@ export default function UserDashboard() {
                             <div className="settings-content">
 
                                 <div id="enrolled-section" className={`settings-section ${activeSection === 'enrolled' ? 'settings-section--active' : ''}`}>
-                                    <h2 class="settings-section__title">수강 중인 강의</h2>
-                                    <p class="settings-section__desc">현재 수강 중인 강의 목록을 관리하세요</p>
-                                    <div class="enrolled-classes-section">
-                                        <div class="enrolled-classes-header">
-                                            <div class="enrolled-classes-title">내 강의 목록</div>
-                                            <button class="btn-add-class" onclick="openAddClassModal()">
+                                    <h2 className="settings-section__title">수강 중인 강의</h2>
+                                    <p className="settings-section__desc">현재 수강 중인 강의 목록을 관리하세요</p>
+                                    <div className="enrolled-classes-section">
+                                        <div className="enrolled-classes-header">
+                                            <div className="enrolled-classes-title">내 강의 목록</div>
+                                            <button className="btn-add-class" >
                                                 <span>+</span>
                                                 <span>새 강의 등록</span>
                                             </button>
                                         </div>
 
-                                        <div id="classList" class="class-list">
+                                        <div id="classList" className="class-list">
 
                                             {classArray.map((classInfo) => {
                                                 const isActive = classInfo.status === 'active';

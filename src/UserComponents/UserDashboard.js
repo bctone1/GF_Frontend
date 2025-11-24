@@ -16,10 +16,12 @@ export default function UserDashboard() {
     // UserHeader에서 받아온 데이터를 처리하는 콜백 함수들
     const handleAccountData = (accountData) => {
         setMyaccount(accountData);
+        console.log(accountData.is_partner);
     };
 
     const handleProfileData = (profileData) => {
         setMyprofile(profileData);
+        console.log(profileData);
     };
 
     const handleSubmit = (e) => {
@@ -30,7 +32,6 @@ export default function UserDashboard() {
         setInviteStatus(false);
         setPartnerSignupStatus(true);
     };
-
 
     const [formData, setFormData] = useState({
         name: myprofile?.full_name || '',
@@ -119,7 +120,7 @@ export default function UserDashboard() {
 
     return (
         <>
-            <div className={`invite-overlay ${inviteStatus ? '' : 'invite-overlay--hidden'}`} id="inviteOverlay">
+            <div className={`invite-overlay ${inviteStatus && !myaccount?.is_partner ? '' : 'invite-overlay--hidden'}`} id="inviteOverlay">
                 <div className="invite-modal">
                     <div className="invite-modal__header">
                         <div className="invite-modal__icon">🎓</div>
@@ -300,7 +301,7 @@ export default function UserDashboard() {
             </div>
 
             <div id="app">
-                <UserHeader 
+                <UserHeader
                     onAccountData={handleAccountData}
                     onProfileData={handleProfileData}
                 />

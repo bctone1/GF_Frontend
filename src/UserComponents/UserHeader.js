@@ -12,7 +12,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
                 Authorization: `Bearer ${accessToken}`,
             },
         }).then(response => {
-            console.log(response.data);
+            // console.log(response.data);
             setMyaccount(response.data);
             // 부모 컴포넌트로 데이터 전달
             if (onAccountData) {
@@ -29,7 +29,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
                 Authorization: `Bearer ${accessToken}`,
             },
         }).then(response => {
-            console.log(response.data);
+            // console.log(response.data);
             setMyprofile(response.data);
             // 부모 컴포넌트로 데이터 전달
             if (onProfileData) {
@@ -44,6 +44,13 @@ export default function UserHeader({ onAccountData, onProfileData }) {
         getMyAccount();
         getMyProfile();
     }, []);
+
+    const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+    const handleLogout = () => {
+        sessionStorage.removeItem("access_token");
+        window.location.href = "/login";
+    }
 
     return (
         <>
@@ -80,11 +87,33 @@ export default function UserHeader({ onAccountData, onProfileData }) {
                         <span className="header__badge">3</span>
                     </button>
 
-                    <div id="profileBtn" className="header__profile">
+                    <div id="profileBtn" className="header__profile"
+                        onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    >
                         <div className="header__avatar" style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)" }}>{myprofile?.full_name?.charAt(0)}</div>
                         <span className="hidden-mobile">{myprofile?.full_name}</span>
                         <span className="hidden-mobile">▼</span>
                     </div>
+
+                    <div id="profileDropdown" className={`dropdown dropdown--profile ${profileDropdownOpen ? 'dropdown--open' : ''}`}>
+                        <div className="dropdown__body">
+                            <a href="#" className="dropdown__item">
+                                <span className="dropdown__item-icon">👤</span>
+                                <span>내 프로필</span>
+                            </a>
+                            <a href="#" className="dropdown__item">
+                                <span className="dropdown__item-icon">⚙️</span>
+                                <span>설정</span>
+                            </a>
+                            <div className="divider"></div>
+                            <a href="#" className="dropdown__item dropdown__item--danger" onClick={handleLogout}>
+                                <span className="dropdown__item-icon">🚪</span>
+                                <span>로그아웃</span>
+                            </a>
+                        </div>
+                    </div>
+
+
                 </div>
             </header>
         </>

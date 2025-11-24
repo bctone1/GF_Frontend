@@ -65,13 +65,13 @@ export default function PartnerStudentManagement() {
 
 
                             <div className="tabs">
-                                <button className="tab tab--active" data-tab="all" onclick="switchTab('all')">
+                                <button className="tab tab--active" data-tab="all" onClick="switchTab('all')">
                                     전체 학생 <span style={{ opacity: 0.7 }}>(127)</span>
                                 </button>
-                                <button className="tab" data-tab="active" onclick="switchTab('active')">
+                                <button className="tab" data-tab="active" onClick="switchTab('active')">
                                     활성 <span style={{ opacity: 0.7 }}>(98)</span>
                                 </button>
-                                <button className="tab" data-tab="inactive" onclick="switchTab('inactive')">
+                                <button className="tab" data-tab="inactive" onClick="switchTab('inactive')">
                                     비활성 <span style={{ opacity: 0.7 }}>(29)</span>
                                 </button>
                             </div>
@@ -81,8 +81,8 @@ export default function PartnerStudentManagement() {
                                 <div className="filter-section__header">
                                     <h3 className="filter-section__title">🔍 필터</h3>
                                     <div className="action-buttons">
-                                        <button className="btn btn--sm btn--outline" onclick="resetFilters()">초기화</button>
-                                        <button className="btn btn--sm btn--primary" onclick="applyFilters()">적용</button>
+                                        <button className="btn btn--sm btn--outline" onClick="resetFilters()">초기화</button>
+                                        <button className="btn btn--sm btn--primary" onClick="applyFilters()">적용</button>
                                     </div>
                                 </div>
 
@@ -134,10 +134,10 @@ export default function PartnerStudentManagement() {
                                     <input type="text" id="searchInput" placeholder="학생 이름 또는 이메일 검색..." />
                                 </div>
                                 <div className="action-buttons">
-                                    <button className="btn btn--outline" onclick="importStudents()">
+                                    <button className="btn btn--outline" onClick="importStudents()">
                                         📥 CSV 일괄 등록
                                     </button>
-                                    <button className="btn btn--primary" onclick="addNewStudent()">
+                                    <button className="btn btn--primary" onClick="addNewStudent()">
                                         ➕ 학생 추가
                                     </button>
                                 </div>
@@ -197,9 +197,9 @@ export default function PartnerStudentManagement() {
                                             <td>방금 전</td>
                                             <td>
                                                 <div className="actions-cell">
-                                                    <button className="action-btn" onclick="viewStudentDetail('std-1')">👁️</button>
-                                                    <button className="action-btn" onclick="editStudent('std-1')">✏️</button>
-                                                    <button className="action-btn" onclick="openStudentMenu('std-1')">⋮</button>
+                                                    <button className="action-btn" onClick="viewStudentDetail('std-1')">👁️</button>
+                                                    <button className="action-btn" onClick="editStudent('std-1')">✏️</button>
+                                                    <button className="action-btn" onClick="openStudentMenu('std-1')">⋮</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -238,9 +238,9 @@ export default function PartnerStudentManagement() {
                                             <td>2분 전</td>
                                             <td>
                                                 <div className="actions-cell">
-                                                    <button className="action-btn" onclick="viewStudentDetail('std-2')">👁️</button>
-                                                    <button className="action-btn" onclick="editStudent('std-2')">✏️</button>
-                                                    <button className="action-btn" onclick="openStudentMenu('std-2')">⋮</button>
+                                                    <button className="action-btn" onClick="viewStudentDetail('std-2')">👁️</button>
+                                                    <button className="action-btn" onClick="editStudent('std-2')">✏️</button>
+                                                    <button className="action-btn" onClick="openStudentMenu('std-2')">⋮</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -279,9 +279,9 @@ export default function PartnerStudentManagement() {
                                             <td>15분 전</td>
                                             <td>
                                                 <div className="actions-cell">
-                                                    <button className="action-btn" onclick="viewStudentDetail('std-3')">👁️</button>
-                                                    <button className="action-btn" onclick="editStudent('std-3')">✏️</button>
-                                                    <button className="action-btn" onclick="openStudentMenu('std-3')">⋮</button>
+                                                    <button className="action-btn" onClick="viewStudentDetail('std-3')">👁️</button>
+                                                    <button className="action-btn" onClick="editStudent('std-3')">✏️</button>
+                                                    <button className="action-btn" onClick="openStudentMenu('std-3')">⋮</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -320,9 +320,9 @@ export default function PartnerStudentManagement() {
                                             <td>1시간 전</td>
                                             <td>
                                                 <div className="actions-cell">
-                                                    <button className="action-btn" onclick="viewStudentDetail('std-4')">👁️</button>
-                                                    <button className="action-btn" onclick="editStudent('std-4')">✏️</button>
-                                                    <button className="action-btn" onclick="openStudentMenu('std-4')">⋮</button>
+                                                    <button className="action-btn" onClick="viewStudentDetail('std-4')">👁️</button>
+                                                    <button className="action-btn" onClick="editStudent('std-4')">✏️</button>
+                                                    <button className="action-btn" onClick="openStudentMenu('std-4')">⋮</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -361,9 +361,9 @@ export default function PartnerStudentManagement() {
                                             <td>2시간 전</td>
                                             <td>
                                                 <div className="actions-cell">
-                                                    <button className="action-btn" onclick="viewStudentDetail('std-5')">👁️</button>
-                                                    <button className="action-btn" onclick="editStudent('std-5')">✏️</button>
-                                                    <button className="action-btn" onclick="openStudentMenu('std-5')">⋮</button>
+                                                    <button className="action-btn" onClick="viewStudentDetail('std-5')">👁️</button>
+                                                    <button className="action-btn" onClick="editStudent('std-5')">✏️</button>
+                                                    <button className="action-btn" onClick="openStudentMenu('std-5')">⋮</button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -402,9 +402,9 @@ export default function PartnerStudentManagement() {
                                             <td>2025-10-05</td>
                                             <td>
                                                 <div className="actions-cell">
-                                                    <button className="action-btn" onclick="viewStudentDetail('std-6')">👁️</button>
-                                                    <button className="action-btn" onclick="editStudent('std-6')">✏️</button>
-                                                    <button className="action-btn" onclick="openStudentMenu('std-6')">⋮</button>
+                                                    <button className="action-btn" onClick="viewStudentDetail('std-6')">👁️</button>
+                                                    <button className="action-btn" onClick="editStudent('std-6')">✏️</button>
+                                                    <button className="action-btn" onClick="openStudentMenu('std-6')">⋮</button>
                                                 </div>
                                             </td>
                                         </tr>
