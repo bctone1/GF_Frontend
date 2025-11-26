@@ -71,12 +71,12 @@ export default function UserHeader({ onAccountData, onProfileData }) {
                     {myaccount?.is_partner && (
                         <div className="header__mode-toggle">
                             <button className="mode-toggle-btn mode-toggle-btn--active">
-                                <span className="mode-toggle-btn__icon">👨‍🎓</span>
-                                <span className="mode-toggle-btn__text">수강생 모드</span>
+                                {/* <span className="mode-toggle-btn__icon">👨‍🎓</span> */}
+                                <span className="mode-toggle-btn__text">수강생</span>
                             </button>
                             <button className="mode-toggle-btn" onClick={() => window.location.href = '/partner/dashboard'}>
-                                <span className="mode-toggle-btn__icon">👨‍🏫</span>
-                                <span className="mode-toggle-btn__text">강사 모드</span>
+                                {/* <span className="mode-toggle-btn__icon">👨‍🏫</span> */}
+                                <span className="mode-toggle-btn__text">강사</span>
                             </button>
                         </div>
                     )}

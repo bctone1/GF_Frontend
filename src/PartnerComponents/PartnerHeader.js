@@ -1,6 +1,39 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function PartnerHeader() {
+    const accessToken = sessionStorage.getItem("access_token");
+    const [myprofile, setMyprofile] = useState(null);
+    const [myaccount, setMyaccount] = useState(null);
+
+    const getMyAccount = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/account/my`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            setMyaccount(response.data);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+
+    const getMyProfile = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/account/my/profile`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            setMyprofile(response.data);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+
+    useEffect(() => {
+        getMyAccount();
+        getMyProfile();
+    }, []);
 
 
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -28,12 +61,12 @@ export default function PartnerHeader() {
 
                     <div className="header__mode-toggle">
                         <button className="mode-toggle-btn-partner" onClick={() => window.location.href = '/user/dashboard'}>
-                            <span className="mode-toggle-btn__icon">👨‍🎓</span>
-                            <span className="mode-toggle-btn__text">수강생 모드</span>
+                            {/* <span className="mode-toggle-btn__icon">👨‍🎓</span> */}
+                            <span className="mode-toggle-btn__text">수강생</span>
                         </button>
                         <button className="mode-toggle-btn-partner mode-toggle-btn-partner--active">
-                            <span className="mode-toggle-btn__icon">👨‍🏫</span>
-                            <span className="mode-toggle-btn__text">강사 모드</span>
+                            {/* <span className="mode-toggle-btn__icon">👨‍🏫</span> */}
+                            <span className="mode-toggle-btn__text">강사</span>
                         </button>
                     </div>
 
@@ -46,9 +79,8 @@ export default function PartnerHeader() {
                     <div id="profileBtn" className="header__profile"
                         onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                     >
-                        <div className="header__avatar"
-                            style={{ background: "linear-gradient(135deg, #0ea5e9, #38bdf8)" }}>박</div>
-                        <span className="hidden-mobile">박강사</span>
+                        <div className="header__avatar" style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)" }}>{myprofile?.full_name?.charAt(0)}</div>
+                        <span className="hidden-mobile">{myprofile?.full_name}</span>
                         <span className="hidden-mobile">▼</span>
                     </div>
 

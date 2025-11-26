@@ -170,7 +170,7 @@ export default function PartnerProjectManagement() {
             <div id="createProjectModal" className={`modal ${showModal ? 'modal--active' : ''}`}>
                 <div className="modal__content modal__content--large">
                     <div className="modal__header">
-                        <h2 className="modal__title">신규강의 정보</h2>
+                        <h2 className="modal__title">📁 신규 강의 생성</h2>
                         <button className="modal__close" onClick={() => {
                             setShowModal(false);
                             setStartDate('');
@@ -182,7 +182,7 @@ export default function PartnerProjectManagement() {
                         <form id="createProjectForm" onSubmit={handleCreateProject}>
 
                             <div className="form-section">
-                                <h3 className="form-section-title">기본 정보</h3>
+                                <h3 className="form-section-title">📋 기본 정보</h3>
                                 <div className="form-group">
                                     <label htmlFor="projectName">강의명 <span className="required">*</span></label>
                                     <input type="text" id="projectName" placeholder="Rag 구축" />
@@ -194,7 +194,7 @@ export default function PartnerProjectManagement() {
                             </div>
 
                             <div className="form-section">
-                                <h3 className="form-section-title">사용할 LLM 모델</h3>
+                                <h3 className="form-section-title">🤖 사용할 LLM 모델</h3>
                                 <div className="llm-selection">
                                     <label className="llm-checkbox">
                                         <input type="checkbox" name="llm" value="chatgpt" />
@@ -231,7 +231,7 @@ export default function PartnerProjectManagement() {
 
 
                             <div className="form-section">
-                                <h3 className="form-section-title">교육 설정</h3>
+                                <h3 className="form-section-title">📅 교육 설정</h3>
                                 <div className="form-group">
                                     <label htmlFor="studentCount">수강 학생 수 <span className="required">*</span></label>
                                     <input type="number" id="studentCount" placeholder="20" min="1" required />
@@ -261,6 +261,7 @@ export default function PartnerProjectManagement() {
                                 </div>
                                 {trainingDays > 0 && (
                                     <div className="training-days-info" id="trainingDaysInfo">
+                                        <span className="training-days-icon">📆</span>
                                         <span className="training-days-text">총 교육 기간: <strong id="trainingDays">{trainingDays}</strong>일</span>
                                     </div>
                                 )}
@@ -268,7 +269,7 @@ export default function PartnerProjectManagement() {
 
 
                             <div className="form-section">
-                                <h3 className="form-section-title"> 강의 설명 (선택)</h3>
+                                <h3 className="form-section-title">📝 강의 설명 (선택)</h3>
                                 <div className="form-group">
                                     <textarea id="projectDescription" placeholder="강의에 대한 간단한 설명을 입력하세요..." rows="3"></textarea>
                                 </div>
@@ -341,7 +342,7 @@ export default function PartnerProjectManagement() {
                             setTrainingDays(0);
                         }}>취소</button>
                         <button className="btn btn--primary" type="submit" form="createProjectForm">
-                            강의 생성
+                            <span>✓</span> 강의 생성
                         </button>
                     </div>
                 </div>
@@ -363,6 +364,7 @@ export default function PartnerProjectManagement() {
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-6)' }}>
                                 <button className="btn btn--primary" onClick={() => setShowModal(true)}>
+                                    <span>➕</span>
                                     <span>신규 강의 생성</span>
                                 </button>
                             </div>
@@ -437,7 +439,7 @@ export default function PartnerProjectManagement() {
                                     <div className="project-settlement">
                                         <div className="settlement-row">
                                             <span className="settlement-label">
-
+                                                <span className="cost-icon">💳</span>
                                                 플랫폼 사용료
                                             </span>
                                             <span className="settlement-value">100,000원</span>
@@ -448,7 +450,7 @@ export default function PartnerProjectManagement() {
 
                                         <div className="settlement-row">
                                             <span className="settlement-label">
-
+                                                <span className="cost-icon">🤖</span>
                                                 API 사용료 (예상)
                                             </span>
                                             <span className="settlement-value">1,200,000원</span>
@@ -513,7 +515,7 @@ export default function PartnerProjectManagement() {
                                     <div className="project-settlement">
                                         <div className="settlement-row">
                                             <span className="settlement-label">
-
+                                                <span className="cost-icon">💳</span>
                                                 플랫폼 사용료
                                             </span>
                                             <span className="settlement-value">75,000원</span>
@@ -524,6 +526,7 @@ export default function PartnerProjectManagement() {
 
                                         <div className="settlement-row">
                                             <span className="settlement-label">
+                                                <span className="cost-icon">🤖</span>
                                                 API 사용료 (예상)
                                             </span>
                                             <span className="settlement-value">850,000원</span>
@@ -588,7 +591,7 @@ export default function PartnerProjectManagement() {
                                     <div className="project-settlement">
                                         <div className="settlement-row">
                                             <span className="settlement-label">
-
+                                                <span className="cost-icon">💳</span>
                                                 플랫폼 사용료
                                             </span>
                                             <span className="settlement-value">150,000원</span>
@@ -599,7 +602,7 @@ export default function PartnerProjectManagement() {
 
                                         <div className="settlement-row">
                                             <span className="settlement-label">
-
+                                                <span className="cost-icon">🤖</span>
                                                 API 사용료 (예상)
                                             </span>
                                             <span className="settlement-value">1,890,000원</span>
