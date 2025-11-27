@@ -1,10 +1,85 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
+import { useState } from 'react';
 
 
 export default function UserProject() {
+    const handleCreateProject = (e) => {
+        e.preventDefault();
+        console.log('create project');
+        setModalStatus(false);
+    }
+
+    const [modalStatus, setModalStatus] = useState(false);
+
+
+
     return (
         <>
+            <div id="createProjectModal" className={`modal-overlay ${modalStatus ? 'modal-overlay--active' : ''}`}>
+                <div className="modal-container">
+                    <div className="modal-header">
+                        <h2 className="modal-title">새 프로젝트 만들기</h2>
+                        <button className="modal-close" onClick={() => setModalStatus(false)}>✕</button>
+                    </div>
+                    <div className="modal-body">
+                        <form id="createProjectForm" onSubmit={handleCreateProject}>
+
+                            <div className="form-group">
+                                <label className="form-label">
+                                    프로젝트 이름 <span className="required">*</span>
+                                </label>
+                                <input type="text" id="projectName" className="form-input" placeholder="예: Python 기초 학습" required="" maxLength="50" />
+                                <div className="form-hint">프로젝트를 대표하는 이름을 입력하세요 (최대 50자)</div>
+                            </div>
+
+
+                            <div className="form-group">
+                                <label className="form-label">프로젝트 설명</label>
+                                <textarea id="projectDescription" className="form-textarea" placeholder="이 프로젝트에 대해 간단히 설명해주세요..." rows="3" maxLength="200" />
+                                <div className="form-hint">프로젝트의 목적과 내용을 설명하세요 (최대 200자)</div>
+                            </div>
+
+
+                            <div className="form-group">
+                                <label className="form-label">프로젝트 유형</label>
+                                <div className="radio-group">
+                                    <label className="radio-option">
+                                        <input type="radio" name="projectType" value="personal" checked="" />
+                                        <span className="radio-label">
+                                            <span className="radio-icon">🙋</span>
+                                            <span>
+                                                <div className="radio-title">개인 프로젝트</div>
+                                                <div className="radio-desc">나만 사용하는 프로젝트</div>
+                                            </span>
+                                        </span>
+                                    </label>
+                                    <label className="radio-option">
+                                        <input type="radio" name="projectType" value="team" />
+                                        <span className="radio-label">
+                                            <span className="radio-icon">👥</span>
+                                            <span>
+                                                <div className="radio-title">팀 프로젝트</div>
+                                                <div className="radio-desc">팀원과 함께 작업</div>
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn--secondary" onClick={() => setModalStatus(false)}>
+                            취소
+                        </button>
+                        <button type="submit" form="createProjectForm" className="btn btn--primary" style={{ background: 'var(--employee-primary)' }} >
+                            프로젝트 생성
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+
             <div id="app">
                 <UserHeader />
                 <div className="container">
@@ -14,7 +89,7 @@ export default function UserProject() {
                     <main className="main">
 
                         <div className="page-header">
-                            <div>
+                            {/* <div>
                                 <h1 className="page-title">📁 내 프로젝트</h1>
                                 <p className="page-subtitle">AI 실습을 프로젝트별로 조직화하고 관리하세요</p>
                             </div>
@@ -23,34 +98,34 @@ export default function UserProject() {
                                     📥 가져오기
                                 </button>
                                 <button className="btn btn--primary" style={{ background: 'var(--employee-primary)' }} >
-                                    ➕ 새 프로젝트
+                                    새 프로젝트
                                 </button>
-                            </div>
+                            </div> */}
                         </div>
 
 
                         <div className="project-tabs">
                             <button className="project-tab project-tab--active" data-tab="all" >
-                                <span>전체 프로젝트</span>
+                                <span> 프로젝트</span>
                                 <span className="project-tab__badge">8</span>
                             </button>
                             <button className="project-tab" data-tab="personal" >
-                                <span>🙋 개인 프로젝트</span>
+                                <span>개인 프로젝트</span>
                                 <span className="project-tab__badge">5</span>
                             </button>
                             <button className="project-tab" data-tab="team" >
-                                <span>👥 팀 프로젝트</span>
+                                <span>팀 프로젝트</span>
                                 <span className="project-tab__badge">3</span>
                             </button>
                             <button className="project-tab" data-tab="archived" >
-                                <span>📦 보관됨</span>
+                                <span>보관됨</span>
                                 <span className="project-tab__badge">2</span>
                             </button>
                         </div>
 
 
                         <div className="filter-bar">
-                            <div className="filter-group">
+                            <div className="user-project-filter-group">
                                 <select className="filter-select" id="sortBy" onchange="sortProjects(this.value)">
                                     <option value="recent">최근 수정순</option>
                                     <option value="name">이름순</option>
@@ -67,7 +142,7 @@ export default function UserProject() {
                             <input
                                 type="text"
                                 className="search-input"
-                                placeholder="🔍 프로젝트 검색..."
+                                placeholder="프로젝트 검색..."
                                 id="searchInput"
                                 onkeyup="searchProjects(this.value)"
                             />
@@ -84,7 +159,7 @@ export default function UserProject() {
 
                         <div id="projectsGrid" className="projects-grid">
 
-                            <div className="project-card project-card--empty" >
+                            <div className="project-card project-card--empty" onClick={() => setModalStatus(true)}>
                                 <div className="project-card--empty__icon">➕</div>
                                 <div className="project-card--empty__text">새 프로젝트 만들기</div>
                                 <div className="project-card--empty__desc">AI 실습을 시작하세요</div>
