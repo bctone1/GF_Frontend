@@ -12,6 +12,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
                 Authorization: `Bearer ${accessToken}`,
             },
         }).then(response => {
+            sessionStorage.setItem("partner_id", response.data.partner_id);
             // console.log(response.data);
             setMyaccount(response.data);
             // 부모 컴포넌트로 데이터 전달
@@ -68,7 +69,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
 
                 <div className="header__right">
 
-                    {myaccount?.is_partner && (
+                    {myaccount?.partner_id && (
                         <div className="header__mode-toggle">
                             <button className="mode-toggle-btn mode-toggle-btn--active">
                                 {/* <span className="mode-toggle-btn__icon">👨‍🎓</span> */}

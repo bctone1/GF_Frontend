@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { showToast } from '../utill/utill';
 
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
@@ -16,7 +17,7 @@ export default function UserDashboard() {
     // UserHeader에서 받아온 데이터를 처리하는 콜백 함수들
     const handleAccountData = (accountData) => {
         setMyaccount(accountData);
-        console.log(accountData.is_partner);
+        console.log(accountData);
     };
 
     const handleProfileData = (profileData) => {
@@ -25,7 +26,24 @@ export default function UserDashboard() {
     };
 
     const handleSubmit = (e) => {
-        alert("초대코드 등록");
+        e.preventDefault();
+        const code = inviteCodeRefs.current.map(ref => ref?.value || '').join('');
+        if (code.length === 6) {
+            axios.post(`${process.env.REACT_APP_API_URL}/user/account/class/invites/redeem`, {
+                code: code
+            }, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            }).then(response => {
+                console.log(response.data);
+                setInviteStatus(false);
+                showToast(`강의가 등록되었습니다!`, 'info');
+            }).catch(error => {
+                console.log(error);
+            });
+        }
     };
 
     const showPartnerSignupModal = () => {
@@ -69,17 +87,6 @@ export default function UserDashboard() {
 
     const validateForm = () => {
         const newErrors = {};
-
-        // if (!formData.name.trim()) {
-        //     newErrors.name = '이름을 입력해주세요.';
-        // }
-
-        // if (!formData.email.trim()) {
-        //     newErrors.email = '이메일을 입력해주세요.';
-        // } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        //     newErrors.email = '올바른 이메일 형식이 아닙니다.';
-        // }
-
         if (!formData.organization.trim()) {
             newErrors.organization = '소속 기관명을 입력해주세요.';
         }
@@ -91,7 +98,6 @@ export default function UserDashboard() {
     const accessToken = sessionStorage.getItem("access_token");
 
     const handlePartnerSignupSubmit = (e) => {
-        // alert(accessToken);
         e.preventDefault();
         if (validateForm()) {
             axios.post(
@@ -247,9 +253,66 @@ export default function UserDashboard() {
         }
     };
 
+
+    const inviteCodeRefs = useRef([]);
+
+    // 초대코드 입력 필드 초기화
+    if (inviteCodeRefs.current.length !== 6) {
+        inviteCodeRefs.current = Array(6).fill().map((_, i) => inviteCodeRefs.current[i] || null);
+    }
+
+    const handleInviteCodeChange = (index, value) => {
+        // 영문자와 숫자만 허용
+        const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+        // 현재 필드에 값 설정
+        if (inviteCodeRefs.current[index]) {
+            inviteCodeRefs.current[index].value = sanitizedValue;
+        }
+
+        // 값이 입력되었고 다음 필드가 있으면 다음 필드로 이동
+        if (sanitizedValue && index < 5) {
+            inviteCodeRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleInviteCodeKeyDown = (index, e) => {
+        // 백스페이스 키를 눌렀을 때
+        if (e.key === 'Backspace' && !inviteCodeRefs.current[index].value && index > 0) {
+            inviteCodeRefs.current[index - 1]?.focus();
+        }
+        // 화살표 키로 이동
+        else if (e.key === 'ArrowLeft' && index > 0) {
+            e.preventDefault();
+            inviteCodeRefs.current[index - 1]?.focus();
+        }
+        else if (e.key === 'ArrowRight' && index < 5) {
+            e.preventDefault();
+            inviteCodeRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleInviteCodePaste = (e) => {
+        e.preventDefault();
+        const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+        const sanitizedData = pastedData.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+
+        // 각 필드에 값 설정
+        sanitizedData.split('').forEach((char, i) => {
+            if (i < 6 && inviteCodeRefs.current[i]) {
+                inviteCodeRefs.current[i].value = char;
+            }
+        });
+
+        // 마지막 입력된 필드 다음으로 포커스 이동
+        const nextIndex = Math.min(sanitizedData.length, 5);
+        inviteCodeRefs.current[nextIndex]?.focus();
+    };
+
+
     return (
         <>
-            <div className={`invite-overlay ${inviteStatus && !myaccount?.is_partner ? '' : 'invite-overlay--hidden'}`} id="inviteOverlay">
+            <div className={`invite-overlay ${inviteStatus && !myaccount?.partner_id ? '' : 'invite-overlay--hidden'}`} id="inviteOverlay">
                 <div className="invite-modal">
                     <div className="invite-modal__header">
                         <div className="invite-modal__icon">🎓</div>
@@ -263,12 +326,78 @@ export default function UserDashboard() {
                             <div className="invite-code-input-group">
                                 <label className="invite-code-label">초대코드 (6자리)</label>
                                 <div className="invite-code-inputs" id="inviteCodeInputs">
-                                    <input type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required autoComplete="off" />
-                                    <input type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required autoComplete="off" />
-                                    <input type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required autoComplete="off" />
-                                    <input type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required autoComplete="off" />
-                                    <input type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required autoComplete="off" />
-                                    <input type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required autoComplete="off" />
+                                    <input
+                                        ref={el => inviteCodeRefs.current[0] = el}
+                                        type="text"
+                                        className="invite-code-input"
+                                        maxLength="1"
+                                        pattern="[A-Za-z0-9]"
+                                        required
+                                        autoComplete="off"
+                                        onChange={(e) => handleInviteCodeChange(0, e.target.value)}
+                                        onKeyDown={(e) => handleInviteCodeKeyDown(0, e)}
+                                        onPaste={handleInviteCodePaste}
+                                    />
+                                    <input
+                                        ref={el => inviteCodeRefs.current[1] = el}
+                                        type="text"
+                                        className="invite-code-input"
+                                        maxLength="1"
+                                        pattern="[A-Za-z0-9]"
+                                        required
+                                        autoComplete="off"
+                                        onChange={(e) => handleInviteCodeChange(1, e.target.value)}
+                                        onKeyDown={(e) => handleInviteCodeKeyDown(1, e)}
+                                        onPaste={handleInviteCodePaste}
+                                    />
+                                    <input
+                                        ref={el => inviteCodeRefs.current[2] = el}
+                                        type="text"
+                                        className="invite-code-input"
+                                        maxLength="1"
+                                        pattern="[A-Za-z0-9]"
+                                        required
+                                        autoComplete="off"
+                                        onChange={(e) => handleInviteCodeChange(2, e.target.value)}
+                                        onKeyDown={(e) => handleInviteCodeKeyDown(2, e)}
+                                        onPaste={handleInviteCodePaste}
+                                    />
+                                    <input
+                                        ref={el => inviteCodeRefs.current[3] = el}
+                                        type="text"
+                                        className="invite-code-input"
+                                        maxLength="1"
+                                        pattern="[A-Za-z0-9]"
+                                        required
+                                        autoComplete="off"
+                                        onChange={(e) => handleInviteCodeChange(3, e.target.value)}
+                                        onKeyDown={(e) => handleInviteCodeKeyDown(3, e)}
+                                        onPaste={handleInviteCodePaste}
+                                    />
+                                    <input
+                                        ref={el => inviteCodeRefs.current[4] = el}
+                                        type="text"
+                                        className="invite-code-input"
+                                        maxLength="1"
+                                        pattern="[A-Za-z0-9]"
+                                        required
+                                        autoComplete="off"
+                                        onChange={(e) => handleInviteCodeChange(4, e.target.value)}
+                                        onKeyDown={(e) => handleInviteCodeKeyDown(4, e)}
+                                        onPaste={handleInviteCodePaste}
+                                    />
+                                    <input
+                                        ref={el => inviteCodeRefs.current[5] = el}
+                                        type="text"
+                                        className="invite-code-input"
+                                        maxLength="1"
+                                        pattern="[A-Za-z0-9]"
+                                        required
+                                        autoComplete="off"
+                                        onChange={(e) => handleInviteCodeChange(5, e.target.value)}
+                                        onKeyDown={(e) => handleInviteCodeKeyDown(5, e)}
+                                        onPaste={handleInviteCodePaste}
+                                    />
                                 </div>
                                 <p className="invite-code-help">영문자와 숫자만 입력 가능합니다</p>
 

@@ -338,7 +338,6 @@ export default function UserPractice() {
                                 <div className="chat-sidebar__header">
                                     <h2 className="chat-sidebar__title">최근 대화</h2>
                                     <button className="chat-sidebar__new-chat" onClick={startNewChat}>
-                                        <span>➕</span>
                                         <span>새 대화</span>
                                     </button>
                                 </div>

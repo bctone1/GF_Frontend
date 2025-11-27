@@ -8,14 +8,14 @@ export default function UserSidebar() {
         <>
             <aside className="sidebar sidebar--open">
                 <div className="sidebar__user">
-                    <div className="sidebar__user-info">
+                    {/* <div className="sidebar__user-info">
                         <div className="sidebar__user-avatar"
                             style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)" }}>김</div>
                         <div className="sidebar__user-details">
                             <div className="sidebar__user-name">김직원</div>
                             <div className="sidebar__user-role">AI 실습생</div>
                         </div>
-                    </div>
+                    </div> */}
 
 
                     <div className="sidebar__class-selector">

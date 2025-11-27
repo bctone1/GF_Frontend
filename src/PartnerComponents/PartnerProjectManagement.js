@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import axios from 'axios';
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
 
@@ -9,12 +9,109 @@ export default function PartnerProjectManagement() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [trainingDays, setTrainingDays] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [newClass, setNewClass] = useState(null);
+    const partnerId = sessionStorage.getItem("partner_id");
+    const accessToken = sessionStorage.getItem("access_token");
+    const courseId = 1;
 
-    const handleCreateProject = (e) => {
+    const handleCreateClass = async (e) => {
         e.preventDefault();
-        console.log('create project');
-        setShowCourseCreatedModal(true);
-        setShowModal(false);
+        setError(null);
+        setIsLoading(true);
+
+        try {
+            // FormData로 폼 데이터 가져오기
+            const formData = new FormData(e.target);
+
+            // 단일 값 가져오기
+            const className = formData.get('ClassName')?.trim();
+            const courseName = formData.get('courseName')?.trim();
+            const studentCount = parseInt(formData.get('studentCount'), 10);
+            const startDateValue = formData.get('startDate');
+            const endDateValue = formData.get('endDate');
+            const classDescription = formData.get('ClassDescription')?.trim() || '';
+
+            // 다중 선택 값 가져오기 (LLM 체크박스)
+            const selectedLLMs = formData.getAll('llm');
+
+            // 유효성 검사
+            if (!className) {
+                throw new Error('강의명을 입력해주세요.');
+            }
+            if (!courseName) {
+                throw new Error('과정명을 입력해주세요.');
+            }
+            if (!studentCount || studentCount < 1) {
+                throw new Error('수강 학생 수를 올바르게 입력해주세요.');
+            }
+            if (!startDateValue || !endDateValue) {
+                throw new Error('교육 시작일과 종료일을 모두 입력해주세요.');
+            }
+            if (selectedLLMs.length === 0) {
+                throw new Error('최소 하나의 LLM 모델을 선택해주세요.');
+            }
+
+            // 백엔드로 전송할 데이터 구성
+            const requestData = {
+                name: className,
+                description: classDescription,
+                status: "planned",
+                start_at: startDateValue,
+                end_at: endDateValue,
+                capacity: studentCount,
+                timezone: "UTC",
+                location: "string",
+                online_url: "string",
+                invite_only: false,
+                // LLM 정보도 함께 전송 (필요한 경우)
+                llms: selectedLLMs
+            };
+
+            console.log('전송할 데이터:', requestData);
+
+            // axios를 사용한 POST 요청
+            const response = await axios.post(
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/course/${courseId}/classes`,
+                requestData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            console.log('응답 데이터:', response.data);
+            setNewClass(response.data);
+
+            // 성공 시 모달 표시
+            setShowCourseCreatedModal(true);
+            setShowModal(false);
+
+            // 폼 초기화
+            e.target.reset();
+            setStartDate('');
+            setEndDate('');
+
+        } catch (error) {
+            console.error('에러 발생:', error);
+
+            // 에러 메시지 설정
+            if (error.response) {
+                // 서버에서 응답이 온 경우
+                const errorMessage = error.response.data?.message || error.response.data?.error || '서버 오류가 발생했습니다.';
+                setError(errorMessage);
+            } else if (error.request) {
+                // 요청은 보냈지만 응답을 받지 못한 경우
+                setError('서버에 연결할 수 없습니다. 네트워크를 확인해주세요.');
+            } else {
+                // 에러 메시지가 있는 경우
+                setError(error.message || '알 수 없는 오류가 발생했습니다.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     // 교육 기간 계산 함수
@@ -38,7 +135,6 @@ export default function PartnerProjectManagement() {
         return diffDays;
     };
 
-    // 시작일 또는 종료일이 변경될 때마다 기간 계산
     useEffect(() => {
         const days = calculateTrainingDays(startDate, endDate);
         setTrainingDays(days);
@@ -51,6 +147,8 @@ export default function PartnerProjectManagement() {
     const handleEndDateChange = (e) => {
         setEndDate(e.target.value);
     };
+
+    
 
     return (
         <>
@@ -77,18 +175,18 @@ export default function PartnerProjectManagement() {
                             </div>
                             <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: 'var(--text-primary)', marginBottom: '12px' }}
                                 id="createdCourseName">
-                                2025 AI 기초과정
+                                {newClass?.name}
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: 'var(--text-sm)' }}>
                                 <div>
                                     <span style={{ color: 'var(--text-secondary)' }}>📅 교육 기간:</span>
                                     <span style={{ fontWeight: 'var(--font-semibold)', marginLeft: '4px' }}
-                                        id="createdCourseDates">3일</span>
+                                        id="createdCourseDates">{trainingDays}일</span>
                                 </div>
                                 <div>
                                     <span style={{ color: 'var(--text-secondary)' }}>👥 예상 학생:</span>
                                     <span style={{ fontWeight: 'var(--font-semibold)', marginLeft: '4px' }}
-                                        id="createdStudentCount">20명</span>
+                                        id="createdStudentCount">{newClass?.capacity}명</span>
                                 </div>
                             </div>
                         </div>
@@ -99,7 +197,7 @@ export default function PartnerProjectManagement() {
                                 📋 초대 코드
                             </label>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <input type="text" id="generatedInviteCode" value="GF2K4M" readOnly style={{
+                                <input type="text" id="generatedInviteCode" value={newClass?.invite_codes?.[0]?.code} readOnly style={{
                                     flex: 1, padding: '12px 16px', border: '2px solid var(--primary-300)',
                                     borderRadius: 'var(--radius-md)', fontSize: '18px', fontWeight: 'bold',
                                     textAlign: 'center', background: 'var(--primary-50)', color: 'var(--primary-700)',
@@ -112,7 +210,7 @@ export default function PartnerProjectManagement() {
                         </div>
 
 
-                        {/* <div style={{ marginBottom: '24px' }}>
+                        <div style={{ marginBottom: '24px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
                                 🔗 초대 링크
                             </label>
@@ -153,13 +251,13 @@ export default function PartnerProjectManagement() {
                                         id="createdTotalCost">313,200원</span>
                                 </div>
                             </div>
-                        </div> */}
+                        </div>
                     </div>
 
                     <div className="modal__footer">
-                        <button className="btn btn--outline">
+                        {/* <button className="btn btn--outline">
                             📄 초대 정보 다운로드
-                        </button>
+                        </button> */}
                         <button className="btn btn--primary" type="button" onClick={() => setShowCourseCreatedModal(false)}>
                             확인
                         </button>
@@ -179,17 +277,16 @@ export default function PartnerProjectManagement() {
                         }}>✕</button>
                     </div>
                     <div className="modal__body">
-                        <form id="createProjectForm" onSubmit={handleCreateProject}>
-
+                        <form id="createClassForm" onSubmit={handleCreateClass}>
                             <div className="form-section">
                                 <h3 className="form-section-title">기본 정보</h3>
                                 <div className="form-group">
-                                    <label htmlFor="projectName">강의명 <span className="required">*</span></label>
-                                    <input type="text" id="projectName" placeholder="Rag 구축" />
+                                    <label htmlFor="ClassName">강의명 <span className="required">*</span></label>
+                                    <input type="text" id="ClassName" name="ClassName" placeholder="Rag 구축" required />
                                 </div>
                                 <div className="form-group">
-                                    <label htmlFor="projectName">과정명 <span className="required">*</span></label>
-                                    <input type="text" id="projectName" placeholder="AI 기초과정" />
+                                    <label htmlFor="courseName">과정명 <span className="required">*</span></label>
+                                    <input type="text" id="courseName" name="courseName" placeholder="AI 기초과정" required />
                                 </div>
                             </div>
 
@@ -234,7 +331,7 @@ export default function PartnerProjectManagement() {
                                 <h3 className="form-section-title">교육 설정</h3>
                                 <div className="form-group">
                                     <label htmlFor="studentCount">수강 학생 수 <span className="required">*</span></label>
-                                    <input type="number" id="studentCount" placeholder="20" min="1" required />
+                                    <input type="number" id="studentCount" name="studentCount" placeholder="20" min="1" required />
                                 </div>
                                 <div className="form-group form-group--inline">
                                     <div>
@@ -242,6 +339,7 @@ export default function PartnerProjectManagement() {
                                         <input
                                             type="date"
                                             id="startDate"
+                                            name="startDate"
                                             value={startDate}
                                             onChange={handleStartDateChange}
                                             required
@@ -252,6 +350,7 @@ export default function PartnerProjectManagement() {
                                         <input
                                             type="date"
                                             id="endDate"
+                                            name="endDate"
                                             value={endDate}
                                             onChange={handleEndDateChange}
                                             min={startDate || ''}
@@ -270,9 +369,19 @@ export default function PartnerProjectManagement() {
                             <div className="form-section">
                                 <h3 className="form-section-title"> 강의 설명 (선택)</h3>
                                 <div className="form-group">
-                                    <textarea id="projectDescription" placeholder="강의에 대한 간단한 설명을 입력하세요..." rows="3"></textarea>
+                                    <textarea id="ClassDescription" name="ClassDescription" placeholder="강의에 대한 간단한 설명을 입력하세요..." rows="3"></textarea>
                                 </div>
                             </div>
+
+                            {/* 에러 메시지 표시 */}
+                            {error && (
+                                <div className="alert alert--error" style={{ marginTop: '16px' }}>
+                                    <div className="alert__content">
+                                        <div className="alert__title">오류</div>
+                                        <div className="alert__message">{error}</div>
+                                    </div>
+                                </div>
+                            )}
 
 
                             {/* <div className="cost-estimate-section">
@@ -334,14 +443,26 @@ export default function PartnerProjectManagement() {
                         </form>
                     </div>
                     <div className="modal__footer">
-                        <button className="btn btn--outline" onClick={() => {
-                            setShowModal(false);
-                            setStartDate('');
-                            setEndDate('');
-                            setTrainingDays(0);
-                        }}>취소</button>
-                        <button className="btn btn--primary" type="submit" form="createProjectForm">
-                            강의 생성
+                        <button
+                            className="btn btn--outline"
+                            onClick={() => {
+                                setShowModal(false);
+                                setStartDate('');
+                                setEndDate('');
+                                setTrainingDays(0);
+                                setError(null);
+                            }}
+                            disabled={isLoading}
+                        >
+                            취소
+                        </button>
+                        <button
+                            className="btn btn--primary"
+                            type="submit"
+                            form="createClassForm"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? '생성 중...' : '강의 생성'}
                         </button>
                     </div>
                 </div>
