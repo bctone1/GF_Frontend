@@ -1,9 +1,29 @@
 import { Link, useLocation } from 'react-router-dom';
-
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function UserSidebar() {
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
+
+    const [myClasses, setMyClasses] = useState([]);
+    const accessToken = sessionStorage.getItem("access_token");
+    const fetchMyClasses = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/classes`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            console.log(response.data.items);
+            setMyClasses(response.data.items);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+    useEffect(() => {
+        fetchMyClasses();
+    }, []);
+
     return (
         <>
             <aside className="sidebar sidebar--open">
@@ -21,9 +41,9 @@ export default function UserSidebar() {
                     <div className="sidebar__class-selector">
                         <select id="classSelector" className="sidebar__class-select">
                             <option value="">📚 과목을 선택하세요</option>
-                            <option value="class-1">🟢 딥러닝 모델 이해</option>
-                            <option value="class-2">🟢 생성형AI 활용</option>
-                            <option value="class-ended">⚪ AI Agent 제작 기초 (종료)</option>
+                            {myClasses.map((myClass) => (
+                                <option value={myClass.id} key={myClass.class_id}>{myClass.name}</option>
+                            ))}
                         </select>
                     </div>
                 </div>

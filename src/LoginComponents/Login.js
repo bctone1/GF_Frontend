@@ -25,7 +25,7 @@ export default function Login() {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/login`, {
+        axios.post(`${process.env.REACT_APP_API_URL}/user/login`, {
             email: formData.email,
             password: formData.password,
         }).then(response => {
@@ -34,7 +34,6 @@ export default function Login() {
             sessionStorage.setItem("refresh_token", response.data.refresh_token);
             sessionStorage.setItem("token_type", response.data.token_type);
             sessionStorage.setItem("email", formData.email);
-
 
             if (selectedRole === 'student') {
                 navigate('/user/dashboard');

@@ -7,7 +7,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
     const [myaccount, setMyaccount] = useState(null);
 
     const getMyAccount = () => {
-        axios.get(`${process.env.REACT_APP_API_URL}/user/account/my`, {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/my`, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
@@ -25,7 +25,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
     }
 
     const getMyProfile = () => {
-        axios.get(`${process.env.REACT_APP_API_URL}/user/account/my/profile`, {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/my/profile`, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },

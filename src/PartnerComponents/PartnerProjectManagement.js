@@ -70,10 +70,11 @@ export default function PartnerProjectManagement() {
             };
 
             console.log('전송할 데이터:', requestData);
+            console.log("선택한 코스 아이디", courseId);
 
             // axios를 사용한 POST 요청
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/course/${courseId}/classes`,
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes`,
                 requestData,
                 {
                     headers: {
@@ -93,6 +94,8 @@ export default function PartnerProjectManagement() {
             e.target.reset();
             setStartDate('');
             setEndDate('');
+            setCourseNameInput('');
+            setShowSuggestions(false);
 
         } catch (error) {
             console.error('에러 발생:', error);
@@ -140,6 +143,164 @@ export default function PartnerProjectManagement() {
         setTrainingDays(days);
     }, [startDate, endDate]);
 
+    const fetchCourse = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/course`);
+        console.log(response.data.items);
+        setCourses(response.data.items);
+    }
+    const [courses, setCourses] = useState([]);
+    const [filteredCourse, setFilteredCourse] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [courseNameInput, setCourseNameInput] = useState('');
+
+    const getInitialConsonant = (char) => {
+        // char가 유효하지 않은 경우 빈 문자열 반환
+        if (!char || typeof char !== 'string' || char.length === 0) {
+            return '';
+        }
+        const code = char.charCodeAt(0);
+        if (code >= 0xAC00 && code <= 0xD7A3) {
+            const initial = (code - 0xAC00) / 28 / 21;
+            const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+            return initials[Math.floor(initial)];
+        }
+        return char;
+    };
+
+    const getInitials = (str) => {
+        if (!str || typeof str !== 'string') {
+            return '';
+        }
+        return str.split('').map(char => getInitialConsonant(char)).join('');
+    };
+
+    const matchesSearch = (text, searchTerm) => {
+        // 입력값이 유효하지 않은 경우 false 반환
+        if (!text || typeof text !== 'string' || !searchTerm || typeof searchTerm !== 'string') {
+            return false;
+        }
+
+        const lowerText = text.toLowerCase();
+        const lowerSearch = searchTerm.toLowerCase();
+
+        // 1) 일반 문자열 검색(가장 정확)
+        if (lowerText.includes(lowerSearch)) {
+            return true;
+        }
+
+        // 2) 검색어가 "초성만"으로 이루어진 경우만 초성 검색 허용
+        const isSearchInitialsOnly = /^[ㄱ-ㅎ]+$/.test(searchTerm);
+
+        if (isSearchInitialsOnly) {
+            const textInitials = getInitials(text);
+
+            // 2-1) 전체 초성 매칭
+            if (textInitials.includes(searchTerm)) {
+                return true;
+            }
+
+            // 2-2) 첫 글자 초성만 매칭
+            if (text.length > 0) {
+                const firstInitial = getInitialConsonant(text[0]);
+                if (firstInitial === searchTerm[0]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    const [myClasses, setMyClasses] = useState([]);
+    const fetchMyClasses = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            console.log(response.data.items);
+            setMyClasses(response.data.items);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+
+
+    useEffect(() => {
+        fetchMyClasses();
+        fetchCourse();
+    }, []);
+
+    // 과정명 자동완성 필터링
+    useEffect(() => {
+        if (!courseNameInput || courseNameInput.trim() === '') {
+            setFilteredCourse([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        if (!courses || courses.length === 0) {
+            setFilteredCourse([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const filtered = courses.filter(course => {
+            if (!course || !course.title) return false;
+            return matchesSearch(course.title, courseNameInput);
+        });
+        setFilteredCourse(filtered);
+        setShowSuggestions(filtered.length > 0);
+        setSelectedIndex(-1);
+    }, [courseNameInput, courses]);
+
+    const handleCourseNameChange = (e) => {
+        const value = e.target.value;
+        setCourseNameInput(value);
+    };
+
+    const handleCourseNameSelect = (courseName) => {
+        setCourseNameInput(courseName);
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+
+        // 폼의 courseName 필드도 업데이트
+        const form = document.getElementById('createClassForm');
+        if (form) {
+            const courseNameInput = form.querySelector('[name="courseName"]');
+            if (courseNameInput) {
+                courseNameInput.value = courseName;
+            }
+        }
+    };
+
+    const handleCourseNameKeyDown = (e) => {
+        if (!showSuggestions || filteredCourse.length === 0) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                setSelectedIndex(prev =>
+                    prev < filteredCourse.length - 1 ? prev + 1 : prev
+                );
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < filteredCourse.length) {
+                    handleCourseNameSelect(filteredCourse[selectedIndex].title);
+                }
+                break;
+            case 'Escape':
+                setShowSuggestions(false);
+                setSelectedIndex(-1);
+                break;
+        }
+    };
+
     const handleStartDateChange = (e) => {
         setStartDate(e.target.value);
     };
@@ -148,7 +309,7 @@ export default function PartnerProjectManagement() {
         setEndDate(e.target.value);
     };
 
-    
+
 
     return (
         <>
@@ -197,7 +358,7 @@ export default function PartnerProjectManagement() {
                                 📋 초대 코드
                             </label>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <input type="text" id="generatedInviteCode" value={newClass?.invite_codes?.[0]?.code} readOnly style={{
+                                <input type="text" id="generatedInviteCode" value={newClass?.invite_codes?.[0]?.code ?? ""} readOnly style={{
                                     flex: 1, padding: '12px 16px', border: '2px solid var(--primary-300)',
                                     borderRadius: 'var(--radius-md)', fontSize: '18px', fontWeight: 'bold',
                                     textAlign: 'center', background: 'var(--primary-50)', color: 'var(--primary-700)',
@@ -274,6 +435,9 @@ export default function PartnerProjectManagement() {
                             setStartDate('');
                             setEndDate('');
                             setTrainingDays(0);
+                            setCourseNameInput('');
+                            setShowSuggestions(false);
+                            setError(null);
                         }}>✕</button>
                     </div>
                     <div className="modal__body">
@@ -284,9 +448,42 @@ export default function PartnerProjectManagement() {
                                     <label htmlFor="ClassName">강의명 <span className="required">*</span></label>
                                     <input type="text" id="ClassName" name="ClassName" placeholder="Rag 구축" required />
                                 </div>
-                                <div className="form-group">
+                                <div className="form-group" style={{ position: 'relative' }}>
                                     <label htmlFor="courseName">과정명 <span className="required">*</span></label>
-                                    <input type="text" id="courseName" name="courseName" placeholder="AI 기초과정" required />
+                                    <input
+                                        type="text"
+                                        id="courseName"
+                                        name="courseName"
+                                        placeholder="AI 기초과정"
+                                        value={courseNameInput}
+                                        onChange={handleCourseNameChange}
+                                        onKeyDown={handleCourseNameKeyDown}
+                                        onFocus={() => {
+                                            if (filteredCourse.length > 0) {
+                                                setShowSuggestions(true);
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            setTimeout(() => {
+                                                setShowSuggestions(false);
+                                            }, 200);
+                                        }}
+                                        required
+                                    />
+                                    {showSuggestions && filteredCourse.length > 0 && (
+                                        <div className="autocomplete-dropdown">
+                                            {filteredCourse.map((course, index) => (
+                                                <div
+                                                    key={course.id || index}
+                                                    className={`autocomplete-item ${index === selectedIndex ? 'autocomplete-item--selected' : ''}`}
+                                                    onClick={() => handleCourseNameSelect(course.title)}
+                                                    onMouseEnter={() => setSelectedIndex(index)}
+                                                >
+                                                    {course.title}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -450,6 +647,8 @@ export default function PartnerProjectManagement() {
                                 setStartDate('');
                                 setEndDate('');
                                 setTrainingDays(0);
+                                setCourseNameInput('');
+                                setShowSuggestions(false);
                                 setError(null);
                             }}
                             disabled={isLoading}
@@ -523,232 +722,95 @@ export default function PartnerProjectManagement() {
 
                             <div className="projects-grid">
 
-                                <div className="project-card" data-project-id="proj-1" data-status="active">
-                                    <div className="project-card__header">
+                                {myClasses.map((myclass) => (
+                                    <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
+                                        <div className="project-card__header">
 
-                                        <div className="project-card__status project-card__status--active">
-                                            <span className="status-dot"></span>
-                                            진행 중
+                                            <div className="project-card__status project-card__status--active">
+                                                <span className="status-dot"></span>
+                                                {myclass.status}
+                                            </div>
+                                        </div>
+
+                                        <h3 className="project-card__title">{myclass.name}</h3>
+
+                                        <div className="project-card__meta">
+                                            <div className="project-card__meta-item">
+                                                <span>💰</span>
+                                                <span>20,000,000원</span>
+                                            </div>
+                                            <div className="project-card__meta-item">
+                                                <span>👥</span>
+                                                <span>{myclass.capacity}명</span>
+                                            </div>
+                                        </div>
+                                        <div className="project-card__meta">
+                                            <div className="project-card__meta-item">
+                                                <span>📅</span>
+                                                <span>{myclass.start_at.split('T')[0]} ~ {myclass.end_at.split('T')[0]}</span>
+                                            </div>
+                                            <div className="project-card__meta-item">
+                                                <span>⏰</span>
+                                                <span>
+                                                    {(() => {
+                                                        const daysLeft = Math.floor((new Date(myclass.end_at) - new Date()) / (1000 * 60 * 60 * 24));
+                                                        return daysLeft < 0 ? '종료' : `D-${daysLeft} 남음`;
+                                                    })()}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="project-settlement">
+                                            <div className="settlement-row">
+                                                <span className="settlement-label">
+
+                                                    플랫폼 사용료
+                                                </span>
+                                                <span className="settlement-value">100,000원</span>
+                                            </div>
+                                            <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × 20명</p>
+
+                                            <div className="cost-divider"></div>
+
+                                            <div className="settlement-row">
+                                                <span className="settlement-label">
+
+                                                    API 사용료 (예상)
+                                                </span>
+                                                <span className="settlement-value">1,200,000원</span>
+                                            </div>
+                                            <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × 59일 (70% 사용률 가정)
+                                            </p>
+
+                                            <div className="cost-divider"></div>
+
+                                            <div className="settlement-row settlement-row--total">
+                                                <span className="settlement-label">
+
+                                                    총 예상 비용
+                                                </span>
+                                                <span className="settlement-value">1,300,000원</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="project-card__actions">
+                                            <button className="project-action-btn project-action-btn--primary"
+                                                onClick={() => alert(myclass.invite_codes[0].code)}
+                                            >
+                                                코드확인
+                                            </button>
+                                            <button className="project-action-btn"
+                                                // onClick={() => navigate(`/partner/project-management/${myclass.id}`)}
+                                                onClick={() => alert('학생관리')}
+                                            >
+                                                학생관리
+                                            </button>
                                         </div>
                                     </div>
-
-                                    <h3 className="project-card__title">2025 AI 기초과정</h3>
-
-                                    <div className="project-card__meta">
-                                        <div className="project-card__meta-item">
-                                            <span>💰</span>
-                                            <span>20,000,000원</span>
-                                        </div>
-                                        <div className="project-card__meta-item">
-                                            <span>👥</span>
-                                            <span>20명</span>
-                                        </div>
-                                    </div>
-                                    <div className="project-card__meta">
-                                        <div className="project-card__meta-item">
-                                            <span>📅</span>
-                                            <span>2025-01-01 ~ 2025-02-28</span>
-                                        </div>
-                                        <div className="project-card__meta-item">
-                                            <span>⏰</span>
-                                            <span>D-15 남음</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="project-settlement">
-                                        <div className="settlement-row">
-                                            <span className="settlement-label">
-
-                                                플랫폼 사용료
-                                            </span>
-                                            <span className="settlement-value">100,000원</span>
-                                        </div>
-                                        <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × 20명</p>
-
-                                        <div className="cost-divider"></div>
-
-                                        <div className="settlement-row">
-                                            <span className="settlement-label">
-
-                                                API 사용료 (예상)
-                                            </span>
-                                            <span className="settlement-value">1,200,000원</span>
-                                        </div>
-                                        <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × 59일 (70% 사용률 가정)
-                                        </p>
-
-                                        <div className="cost-divider"></div>
-
-                                        <div className="settlement-row settlement-row--total">
-                                            <span className="settlement-label">
-
-                                                총 예상 비용
-                                            </span>
-                                            <span className="settlement-value">1,300,000원</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="project-card__actions">
-                                        <button className="project-action-btn project-action-btn--primary">
-                                            코드확인
-                                        </button>
-                                        <button className="project-action-btn" >
-                                            학생관리
-                                        </button>
-                                    </div>
-                                </div>
-
-
-                                <div className="project-card" data-project-id="proj-2" data-status="active">
-                                    <div className="project-card__header">
-
-                                        <div className="project-card__status project-card__status--active">
-                                            <span className="status-dot"></span>
-                                            진행 중
-                                        </div>
-                                    </div>
-
-                                    <h3 className="project-card__title">2025 AI 심화과정</h3>
-
-                                    <div className="project-card__meta">
-                                        <div className="project-card__meta-item">
-                                            <span>💰</span>
-                                            <span>15,000,000원</span>
-                                        </div>
-                                        <div className="project-card__meta-item">
-                                            <span>👥</span>
-                                            <span>15명</span>
-                                        </div>
-                                    </div>
-                                    <div className="project-card__meta">
-                                        <div className="project-card__meta-item">
-                                            <span>📅</span>
-                                            <span>2025-01-15 ~ 2025-03-15</span>
-                                        </div>
-                                        <div className="project-card__meta-item">
-                                            <span>⏰</span>
-                                            <span>D-48 남음</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="project-settlement">
-                                        <div className="settlement-row">
-                                            <span className="settlement-label">
-
-                                                플랫폼 사용료
-                                            </span>
-                                            <span className="settlement-value">75,000원</span>
-                                        </div>
-                                        <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × 15명</p>
-
-                                        <div className="cost-divider"></div>
-
-                                        <div className="settlement-row">
-                                            <span className="settlement-label">
-                                                API 사용료 (예상)
-                                            </span>
-                                            <span className="settlement-value">850,000원</span>
-                                        </div>
-                                        <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × 60일 (70% 사용률 가정)
-                                        </p>
-
-                                        <div className="cost-divider"></div>
-
-                                        <div className="settlement-row settlement-row--total">
-                                            <span className="settlement-label">
-
-                                                총 예상 비용
-                                            </span>
-                                            <span className="settlement-value">925,000원</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="project-card__actions">
-                                        <button className="project-action-btn project-action-btn--primary">
-                                            코드확인
-                                        </button>
-                                        <button className="project-action-btn" >
-                                            학생관리
-                                        </button>
-                                    </div>
-                                </div>
-
-
-                                <div className="project-card" data-project-id="proj-3" data-status="active">
-                                    <div className="project-card__header">
-
-                                        <div className="project-card__status project-card__status--active">
-                                            <span className="status-dot"></span>
-                                            진행 중
-                                        </div>
-                                    </div>
-
-                                    <h3 className="project-card__title">프롬프트 엔지니어링</h3>
-
-                                    <div className="project-card__meta">
-                                        <div className="project-card__meta-item">
-                                            <span>💰</span>
-                                            <span>25,000,000원</span>
-                                        </div>
-                                        <div className="project-card__meta-item">
-                                            <span>👥</span>
-                                            <span>30명</span>
-                                        </div>
-                                    </div>
-                                    <div className="project-card__meta">
-                                        <div className="project-card__meta-item">
-                                            <span>📅</span>
-                                            <span>2025-02-01 ~ 2025-04-30</span>
-                                        </div>
-                                        <div className="project-card__meta-item">
-                                            <span>⏰</span>
-                                            <span>D-95 남음</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="project-settlement">
-                                        <div className="settlement-row">
-                                            <span className="settlement-label">
-
-                                                플랫폼 사용료
-                                            </span>
-                                            <span className="settlement-value">150,000원</span>
-                                        </div>
-                                        <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × 30명</p>
-
-                                        <div className="cost-divider"></div>
-
-                                        <div className="settlement-row">
-                                            <span className="settlement-label">
-
-                                                API 사용료 (예상)
-                                            </span>
-                                            <span className="settlement-value">1,890,000원</span>
-                                        </div>
-                                        <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × 89일 (70% 사용률 가정)
-                                        </p>
-
-                                        <div className="cost-divider"></div>
-
-                                        <div className="settlement-row settlement-row--total">
-                                            <span className="settlement-label">
-
-                                                총 예상 비용
-                                            </span>
-                                            <span className="settlement-value">2,040,000원</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="project-card__actions">
-                                        <button className="project-action-btn project-action-btn--primary">
-                                            코드확인
-                                        </button>
-                                        <button className="project-action-btn" >
-                                            학생관리
-                                        </button>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
+
+
                         </div>
                     </main>
 

@@ -29,7 +29,7 @@ export default function UserDashboard() {
         e.preventDefault();
         const code = inviteCodeRefs.current.map(ref => ref?.value || '').join('');
         if (code.length === 6) {
-            axios.post(`${process.env.REACT_APP_API_URL}/user/account/class/invites/redeem`, {
+            axios.post(`${process.env.REACT_APP_API_URL}/user/class/invites/redeem`, {
                 code: code
             }, {
                 headers: {
@@ -309,6 +309,25 @@ export default function UserDashboard() {
         inviteCodeRefs.current[nextIndex]?.focus();
     };
 
+    const EnterClass = () => {
+        const code = inviteCodeRefs.current.map(ref => ref?.value || '').join('');
+        if (code.length === 6) {
+            axios.post(`${process.env.REACT_APP_API_URL}/user/class/invites/redeem`, {
+                code: code
+            }, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            }).then(response => {
+                console.log(response.data);
+                showToast('강의가 등록되었습니다.', 'success');
+                setInviteStatus(false);
+            });
+        } else {
+            showToast('초대코드를 6자리 이상 입력해주세요', 'error');
+        }
+    }
 
     return (
         <>
@@ -409,7 +428,7 @@ export default function UserDashboard() {
 
                             <div className="invite-modal__actions">
                                 <button type="button" className="btn-invite btn-invite--secondary" onClick={() => setInviteStatus(false)}>나중에</button>
-                                <button type="submit" className="btn-invite btn-invite--primary" id="submitBtn">입장하기 →</button>
+                                <button type="submit" className="btn-invite btn-invite--primary" id="submitBtn" onClick={() => EnterClass()}>입장하기 →</button>
                             </div>
 
                             <div className="invite-modal__actions" style={{ marginTop: '10px' }}>

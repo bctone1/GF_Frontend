@@ -140,7 +140,7 @@ export default function StudentSignup() {
             return;
         }
 
-        axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/email/send-code`, {
+        axios.post(`${process.env.REACT_APP_API_URL}/user/email/send-code`, {
             email: formData.email
         }).then(response => {
             const data = response.data;
@@ -162,7 +162,7 @@ export default function StudentSignup() {
             return;
         }
 
-        axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/email/verify-code`, {
+        axios.post(`${process.env.REACT_APP_API_URL}/user/email/verify-code`, {
             email: formData.email,
             code: formData.verifyCode,
             verification_token: verificationToken
@@ -223,7 +223,7 @@ export default function StudentSignup() {
                 return;
             }
 
-            axios.post(`${process.env.REACT_APP_API_URL}/user/account/user/signup`,
+            axios.post(`${process.env.REACT_APP_API_URL}/user/signup`,
                 {
                     email: formData.email,
                     password: formData.password,

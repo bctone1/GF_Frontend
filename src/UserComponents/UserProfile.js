@@ -100,7 +100,7 @@ export default function UserDashboard() {
         e.preventDefault();
         const code = inviteCodeRefs.current.map(ref => ref?.value || '').join('');
         if (code.length === 6) {
-            axios.post(`${process.env.REACT_APP_API_URL}/user/account/class/invites/redeem`, {
+            axios.post(`${process.env.REACT_APP_API_URL}/user/class/invites/redeem`, {
                 code: code
             }, {
                 headers: {
