@@ -110,7 +110,7 @@ export default function UserDashboard() {
             }).then(response => {
                 console.log(response.data);
                 setInviteStatus(false);
-                showToast(`강의가 등록되었습니다!`, 'info');
+                showToast(`강의가 등록되었습니다!`, 'success');
             }).catch(error => {
                 console.log(error);
             });

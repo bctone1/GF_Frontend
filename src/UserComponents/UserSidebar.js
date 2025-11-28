@@ -14,7 +14,7 @@ export default function UserSidebar() {
                 Authorization: `Bearer ${accessToken}`,
             },
         }).then(response => {
-            console.log(response.data.items);
+            // console.log(response.data.items);
             setMyClasses(response.data.items);
         }).catch(error => {
             console.log(error);

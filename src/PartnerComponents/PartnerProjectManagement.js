@@ -389,7 +389,7 @@ export default function PartnerProjectManagement() {
                         </div>
 
 
-                        <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
+                        {/* <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
                             <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', marginBottom: '12px' }}>
                                 💰 예상 비용 정보
                             </div>
@@ -412,14 +412,23 @@ export default function PartnerProjectManagement() {
                                         id="createdTotalCost">313,200원</span>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </div>
 
                     <div className="modal__footer">
                         {/* <button className="btn btn--outline">
                             📄 초대 정보 다운로드
                         </button> */}
-                        <button className="btn btn--primary" type="button" onClick={() => setShowCourseCreatedModal(false)}>
+                        <button className="btn btn--primary" type="button" onClick={() => {
+                            setShowCourseCreatedModal(false);
+                            fetchMyClasses();
+                            setStartDate('');
+                            setEndDate('');
+                            setTrainingDays(0);
+                            setCourseNameInput('');
+                            setShowSuggestions(false);
+                            setError(null);
+                        }}>
                             확인
                         </button>
                     </div>
@@ -760,7 +769,7 @@ export default function PartnerProjectManagement() {
                                             </div>
                                         </div>
 
-                                        <div className="project-settlement">
+                                        {/* <div className="project-settlement">
                                             <div className="settlement-row">
                                                 <span className="settlement-label">
 
@@ -791,7 +800,7 @@ export default function PartnerProjectManagement() {
                                                 </span>
                                                 <span className="settlement-value">1,300,000원</span>
                                             </div>
-                                        </div>
+                                        </div> */}
 
                                         <div className="project-card__actions">
                                             <button className="project-action-btn project-action-btn--primary"

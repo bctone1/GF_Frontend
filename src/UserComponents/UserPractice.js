@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
+import axios from 'axios';
+import { showToast } from '../utill/utill';
 
 const projects = [
     { id: 1, name: 'AI 실습 기초', icon: '📁', color: '#9333ea' },
@@ -38,6 +40,51 @@ export default function UserPractice() {
     const modelDisplayRef = useRef(null);
     const messagesEndRef = useRef(null);
     const compareMessagesRefs = useRef({});
+    const accessToken = sessionStorage.getItem("access_token");
+    const [sessions, setSessions] = useState([]);
+    const fetchSessions = () => {
+        axios.get(
+            `${process.env.REACT_APP_API_URL}/user/practice/sessions`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                }
+            }
+        ).then(res => {
+            console.log(res.data.items);
+            setSessions(res.data.items);
+        }
+        ).catch(err => {
+            console.log(err);
+        }
+        )
+    }
+    useEffect(() => {
+        fetchSessions();
+    }, []);
+
+    const [currentSession, setCurrentSession] = useState(null);
+    const CreateSession = () => {
+        axios.post(
+            `${process.env.REACT_APP_API_URL}/user/practice/sessions`,
+            {},   // body (현재 빈 객체)
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                }
+            }
+        ).then(res => {
+            console.log(res.data);
+            setCurrentSession(res.data.session_id);
+            CreateSessionModels(res.data.session_id);
+            fetchSessions();
+        }).catch(err => {
+            console.log(err);
+        });
+    };
+
 
     // 외부 클릭 처리
     useEffect(() => {
@@ -75,6 +122,7 @@ export default function UserPractice() {
         }
     }, [currentMode, selectedModels]);
 
+
     const getModelInfo = (model) => {
         return modelMap[model] || modelMap['gemini'];
     };
@@ -85,8 +133,27 @@ export default function UserPractice() {
         return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     };
 
-    const getSimulatedResponse = (model, question) => {
-        return `안녕하세요! "${question}"에 대한 ${getModelInfo(model).name}의 답변입니다.\n\n이 기능은 개발 중이며, 실제 API 연동 후 정확한 답변을 제공할 예정입니다.`;
+    const getSimulatedResponse = async (model, question) => {
+        try {
+            const res = await axios.post(
+                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat`,
+                {
+                    prompt_text: question,
+                    session_model_ids: [defaltModels]
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    }
+                }
+            );
+            console.log(res.data.results[0].response_text);
+            return res.data.results[0].response_text;
+        } catch (err) {
+            console.log(err);
+            return `서버와 통신중 오류가 발생했습니다. 다시 시도해주세요.`;
+        }
     };
 
     const autoResize = (textarea) => {
@@ -158,12 +225,37 @@ export default function UserPractice() {
         if (currentMessages.length > 0) {
             if (!window.confirm('현재 대화를 저장하고 새 대화를 시작하시겠습니까?')) return;
         }
-
         setCurrentMessages([]);
-        setShowEmptyState(true);
-        // Toast 메시지는 추후 구현
-        console.log('새 대화가 시작되었습니다');
+        setShowEmptyState(true); // 단일모드로 전환
+        CreateSession(); // 세션 생성
+
+
+        showToast('새 대화가 시작되었습니다', 'success');
     };
+
+    const [defaltModels, setDefaltModels] = useState(0);
+    const CreateSessionModels = (session_id) => {
+        axios.post(
+            `${process.env.REACT_APP_API_URL}/user/practice/sessions/${session_id}/models`,
+            {
+                session_id: 0,
+                model_name: "gpt-4o-mini",
+                is_primary: true
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                }
+            }
+        ).then(res => {
+            console.log(res.data);
+            setDefaltModels(res.data.session_model_id);
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
 
     const applySuggestion = (text) => {
         setMessageInput(text);
@@ -215,7 +307,11 @@ export default function UserPractice() {
         return { text: 'gemini-1.5-flash', icon: '🤖', bgColor: 'rgba(66, 133, 244, 0.1)', color: '#4285f4' };
     };
 
-    const sendMessage = () => {
+    const sendMessage = async () => {
+        if (!currentSession) {
+            alert("새 대화를 눌러주세요");
+            return;
+        }
         const message = messageInput.trim();
 
         if (!message || isGenerating) return;
@@ -228,14 +324,13 @@ export default function UserPractice() {
         if (messageInputRef.current) {
             autoResize(messageInputRef.current);
         }
-
         setIsGenerating(true);
         setShowEmptyState(false);
 
         if (currentMode === 'single') {
-
+            // 사용자 메시지 추가
             setCurrentMessages(prev => [...prev,
-            <div className={`chat-message chat-message--user`}>
+            <div key={`user-${Date.now()}`} className={`chat-message chat-message--user`}>
                 <div className="chat-message__avatar">김</div>
                 <div className="chat-message__content">
                     <div className="chat-message__bubble">
@@ -250,13 +345,14 @@ export default function UserPractice() {
             </div>
             ]);
 
-            selectedModels.forEach(model => {
+            // 선택된 모델들에 대해 백엔드 통신
+            for (const model of selectedModels) {
                 const modelInfo = model ? getModelInfo(model) : null;
-                setTimeout(() => {
-                    const response = getSimulatedResponse(model, message);
+                try {
+                    const response = await getSimulatedResponse(model, message);
 
                     setCurrentMessages(prev => [...prev,
-                    <div className="chat-message chat-message--assistant">
+                    <div key={`assistant-${Date.now()}-${model}`} className="chat-message chat-message--assistant">
                         <div className="chat-message__avatar">🤖</div>
                         <div className="chat-message__content">
                             <div className="chat-message__bubble">
@@ -275,19 +371,23 @@ export default function UserPractice() {
                         </div>
                     </div>
                     ]);
+                } catch (err) {
+                    console.error('응답 생성 중 오류:', err);
+                }
+            }
 
-                    setIsGenerating(false);
-                }, 2000);
-            });
+            setIsGenerating(false);
         } else {
             // 비교 모드
-            selectedModels.forEach(model => {
-                setTimeout(() => {
-                    const response = getSimulatedResponse(model, message);
+            for (const model of selectedModels) {
+                try {
+                    const response = await getSimulatedResponse(model, message);
                     // 비교 모드 메시지는 별도로 관리 (추후 구현)
-                    setIsGenerating(false);
-                }, 2000);
-            });
+                } catch (err) {
+                    console.error('응답 생성 중 오류:', err);
+                }
+            }
+            setIsGenerating(false);
         }
     };
 
@@ -343,56 +443,23 @@ export default function UserPractice() {
                                 </div>
 
                                 <div className="chat-sidebar__history" id="chatHistory">
-                                    <div className="chat-history-item chat-history-item--active">
-                                        <div className="chat-history-item__project">📁 AI 실습 기초</div>
-                                        <div className="chat-history-item__title">파일 첨부 확인</div>
-                                        <div className="chat-history-item__meta">
-                                            <div className="chat-history-item__models">
-                                                <div className="chat-history-item__model-icon"
-                                                    style={{ background: 'rgba(16, 163, 127, 0.1)', color: '#10a37f' }}>G</div>
+                                    {sessions.map((session) => (
+                                        <div key={session.session_id} className={`chat-history-item ${currentSession === session.session_id ? 'chat-history-item--active' : ''}`} onClick={() => setCurrentSession(session.session_id)}>
+                                            <div className="chat-history-item__project">{session.title ? session.title : '타이틀 없음'}</div>
+                                            <div className="chat-history-item__title">session_id : {session.session_id}</div>
+                                            <div className="chat-history-item__meta">
+                                                <div className="chat-history-item__models">
+                                                    <div className="chat-history-item__model-icon" style={{ background: 'rgba(16, 163, 127, 0.1)', color: '#10a37f' }}>G</div>
+                                                    <div className="chat-history-item__model-icon" style={{ background: 'rgba(217, 119, 87, 0.1)', color: '#d97757' }}>C</div>
+                                                    <div className="chat-history-item__model-icon" style={{ background: 'rgba(66, 133, 244, 0.1)', color: '#4285f4' }}>G</div>
+                                                </div>
+                                                <span>
+                                                    {session.started_at.split('T')[0].slice(5)}{" "}
+                                                    {session.started_at.split('T')[1].slice(0, 5)}
+                                                </span>
                                             </div>
-                                            <span>10. 30. 15:19</span>
                                         </div>
-                                    </div>
-
-                                    <div className="chat-history-item">
-                                        <div className="chat-history-item__project">📁 마케팅 프로젝트</div>
-                                        <div className="chat-history-item__title">경주 행사 문의</div>
-                                        <div className="chat-history-item__meta">
-                                            <div className="chat-history-item__models">
-                                                <div className="chat-history-item__model-icon"
-                                                    style={{ background: 'rgba(217, 119, 87, 0.1)', color: '#d97757' }}>C</div>
-                                            </div>
-                                            <span>10. 29. 14:32</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="chat-history-item">
-                                        <div className="chat-history-item__project">📁 코딩 실습</div>
-                                        <div className="chat-history-item__title">React DOM 제어</div>
-                                        <div className="chat-history-item__meta">
-                                            <div className="chat-history-item__models">
-                                                <div className="chat-history-item__model-icon"
-                                                    style={{ background: 'rgba(66, 133, 244, 0.1)', color: '#4285f4' }}>G</div>
-                                            </div>
-                                            <span>10. 28. 09:15</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="chat-history-item">
-                                        <div className="chat-history-item__title">자기소개 요청</div>
-                                        <div className="chat-history-item__meta">
-                                            <div className="chat-history-item__models">
-                                                <div className="chat-history-item__model-icon"
-                                                    style={{ background: 'rgba(16, 163, 127, 0.1)', color: '#10a37f' }}>G</div>
-                                                <div className="chat-history-item__model-icon"
-                                                    style={{ background: 'rgba(217, 119, 87, 0.1)', color: '#d97757' }}>C</div>
-                                                <div className="chat-history-item__model-icon"
-                                                    style={{ background: 'rgba(66, 133, 244, 0.1)', color: '#4285f4' }}>G</div>
-                                            </div>
-                                            <span>10. 27. 16:48</span>
-                                        </div>
-                                    </div>
+                                    ))}
                                 </div>
 
                                 <div className="chat-sidebar__files" id="attachedFiles">
