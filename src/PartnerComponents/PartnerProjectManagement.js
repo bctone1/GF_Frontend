@@ -33,7 +33,7 @@ export default function PartnerProjectManagement() {
             const endDateValue = formData.get('endDate');
             const classDescription = formData.get('ClassDescription')?.trim() || '';
 
-            // 다중 선택 값 가져오기 (LLM 체크박스)
+            // 다중 선택 값 가져오기 (LLM 체크박스) - 문자열 ID 배열
             const selectedLLMs = formData.getAll('llm');
 
             // 유효성 검사
@@ -89,6 +89,11 @@ export default function PartnerProjectManagement() {
                 throw new Error('최소 하나의 LLM 모델을 선택해주세요.');
             }
 
+            // allowed_model_ids: 문자열 ID들을 숫자 배열로 변환 (예: ["1","2"] → [1,2])
+            const allowedModelIds = selectedLLMs
+                .map(v => parseInt(v, 10))
+                .filter(v => !Number.isNaN(v));
+
             // 백엔드로 전송할 데이터 구성
             const requestData = {
                 name: className,
@@ -101,11 +106,11 @@ export default function PartnerProjectManagement() {
                 location: "string",
                 online_url: "string",
                 invite_only: false,
-                // LLM 정보도 함께 전송 (필요한 경우)
-                llms: selectedLLMs,
+                allowed_model_ids: allowedModelIds,
                 course_id: courseIdToUse
             };
 
+            console.log('모델 결과', selectedLLMs, allowedModelIds);
             console.log('전송할 데이터:', requestData);
             console.log("선택한 코스 아이디", courseIdToUse);
 
@@ -199,7 +204,7 @@ export default function PartnerProjectManagement() {
 
     const fetchCourse = async () => {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/course`);
-        console.log(response.data.items);
+        // console.log(response.data.items);
         setCourses(response.data.items);
     }
     const [courses, setCourses] = useState([]);
@@ -278,11 +283,21 @@ export default function PartnerProjectManagement() {
             console.log(error);
         });
     }
+    const fetchAssistant = async () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/models`, {
+        }).then(response => {
+            console.log(response.data.items);
+            setAssistant(response.data.items);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
 
 
     useEffect(() => {
         fetchMyClasses();
         fetchCourse();
+        fetchAssistant();
     }, []);
 
     // 과정명 자동완성 필터링
@@ -369,6 +384,15 @@ export default function PartnerProjectManagement() {
     const handleEndDateChange = (e) => {
         setEndDate(e.target.value);
     };
+
+
+
+    const [Assistant, setAssistant] = useState([
+        { id: 1, provider: "openai", modality: "chat", model_name: "gpt-4o-mini" },
+        { id: 2, provider: "google", modality: "chat", model_name: "gemini-2.5-flash" },
+        { id: 3, provider: "lg", modality: "chat", model_name: "exaone-4.0" },
+        { id: 4, provider: "anthropic", modality: "chat", model_name: "claude-3-haiku" },
+    ]);
 
 
 
@@ -561,36 +585,19 @@ export default function PartnerProjectManagement() {
                             <div className="form-section">
                                 <h3 className="form-section-title">사용할 LLM 모델</h3>
                                 <div className="llm-selection">
-                                    <label className="llm-checkbox">
-                                        <input type="checkbox" name="llm" value="chatgpt" />
-                                        <div className="llm-card">
-                                            <div className="llm-icon">🟢</div>
-                                            <div className="llm-info">
-                                                <div className="llm-name">ChatGPT-4</div>
+                                    {Assistant?.map((assistant) => (
+                                        <label className="llm-checkbox" key={assistant.id}>
+                                            <input type="checkbox" name="llm" value={assistant.id} />
+                                            <div className="llm-card">
+                                                {/* <div className="llm-icon">🟢</div> */}
+                                                {/* <div className="llm-icon">{assistant.provider}</div> */}
+                                                <div className="llm-info">
+                                                    <div className="llm-name">{assistant.model_name}</div>
+                                                </div>
+                                                <div className="llm-checkmark">✓</div>
                                             </div>
-                                            <div className="llm-checkmark">✓</div>
-                                        </div>
-                                    </label>
-                                    <label className="llm-checkbox">
-                                        <input type="checkbox" name="llm" value="claude" />
-                                        <div className="llm-card">
-                                            <div className="llm-icon">🟣</div>
-                                            <div className="llm-info">
-                                                <div className="llm-name">Claude 3.5</div>
-                                            </div>
-                                            <div className="llm-checkmark">✓</div>
-                                        </div>
-                                    </label>
-                                    <label className="llm-checkbox">
-                                        <input type="checkbox" name="llm" value="gemini" />
-                                        <div className="llm-card">
-                                            <div className="llm-icon">🔵</div>
-                                            <div className="llm-info">
-                                                <div className="llm-name">Gemini Pro</div>
-                                            </div>
-                                            <div className="llm-checkmark">✓</div>
-                                        </div>
-                                    </label>
+                                        </label>
+                                    ))}
                                 </div>
                             </div>
 

@@ -12,10 +12,9 @@ const projects = [
 ];
 
 const modelMap = {
-    'gpt-4': { name: 'GPT-4', color: '#10a37f', bgColor: 'rgba(16, 163, 127, 0.1)' },
-    'claude': { name: 'Claude', color: '#d97757', bgColor: 'rgba(217, 119, 87, 0.1)' },
-    'gemini': { name: 'Gemini', color: '#4285f4', bgColor: 'rgba(66, 133, 244, 0.1)' },
-    'exaone': { name: 'EXAONE', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)' }
+    'gpt-4': { name: 'GPT-4', color: '#10a37f', bgColor: 'rgba(16, 163, 127, 0.1)', apiName: 'gpt-4o-mini' },
+    'gemini': { name: 'Gemini', color: '#4285f4', bgColor: 'rgba(66, 133, 244, 0.1)', apiName: 'gemini-1.5-flash' },
+    'exaone': { name: 'EXAONE', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)', apiName: 'exaone-3.5' }
 };
 
 export default function UserPractice() {
@@ -32,6 +31,8 @@ export default function UserPractice() {
     const [messageInput, setMessageInput] = useState('');
     const [showEmptyState, setShowEmptyState] = useState(true);
     const [comparePanels, setComparePanels] = useState([]);
+    const [compareMessages, setCompareMessages] = useState({}); // { model: [messages] }
+    const [sessionModelIds, setSessionModelIds] = useState({}); // { model: session_model_id }
 
     const messageInputRef = useRef(null);
     const plusMenuRef = useRef(null);
@@ -133,10 +134,30 @@ export default function UserPractice() {
     useEffect(() => {
         if (currentMode === 'parallel' && selectedModels.length >= 2) {
             setComparePanels(selectedModels);
+            // 선택된 모델이 변경되면 해당 모델의 메시지 초기화
+            const newCompareMessages = {};
+            selectedModels.forEach(model => {
+                if (compareMessages[model]) {
+                    newCompareMessages[model] = compareMessages[model];
+                }
+            });
+            setCompareMessages(newCompareMessages);
         } else {
             setComparePanels([]);
         }
     }, [currentMode, selectedModels]);
+
+    // 비교 모드 메시지 스크롤
+    useEffect(() => {
+        if (currentMode === 'parallel') {
+            comparePanels.forEach(model => {
+                const ref = compareMessagesRefs.current[model];
+                if (ref) {
+                    ref.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        }
+    }, [compareMessages, comparePanels, currentMode]);
 
 
     const getModelInfo = (model) => {
@@ -169,6 +190,34 @@ export default function UserPractice() {
         } catch (err) {
             console.log(err);
             return `서버와 통신중 오류가 발생했습니다. 다시 시도해주세요.`;
+        }
+    };
+
+    // 비교 모드용 API 호출 (여러 모델 ID 지원)
+    const getCompareResponse = async (question, sessionModelIdsArray) => {
+        try {
+            const documentIds = attachedFiles
+                .filter(file => file.isDocument && file.knowledge_id)
+                .map(file => file.knowledge_id);
+
+            const res = await axios.post(
+                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat`,
+                {
+                    prompt_text: question,
+                    session_model_ids: sessionModelIdsArray,
+                    document_ids: documentIds.length > 0 ? documentIds : [0]
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    }
+                }
+            );
+            return res.data;
+        } catch (err) {
+            console.log(err);
+            return null;
         }
     };
 
@@ -238,10 +287,11 @@ export default function UserPractice() {
     };
 
     const startNewChat = () => {
-        if (currentMessages.length > 0) {
+        if (currentMessages.length > 0 || Object.keys(compareMessages).length > 0) {
             if (!window.confirm('현재 대화를 저장하고 새 대화를 시작하시겠습니까?')) return;
         }
         setCurrentMessages([]);
+        setCompareMessages({});
         setShowEmptyState(true); // 단일모드로 전환
         CreateSession(); // 세션 생성
 
@@ -270,6 +320,37 @@ export default function UserPractice() {
         }).catch(err => {
             console.log(err);
         });
+    }
+
+    // 비교 모드용: 각 모델에 대한 세션 모델 생성
+    const CreateSessionModelsForCompare = async (session_id, models) => {
+        const newSessionModelIds = {};
+        for (const model of models) {
+            const modelInfo = modelMap[model];
+            if (modelInfo) {
+                try {
+                    const res = await axios.post(
+                        `${process.env.REACT_APP_API_URL}/user/practice/sessions/${session_id}/models`,
+                        {
+                            session_id: 0,
+                            model_name: modelInfo.apiName,
+                            is_primary: false
+                        },
+                        {
+                            headers: {
+                                Authorization: `Bearer ${accessToken}`,
+                                "Content-Type": "application/json",
+                            }
+                        }
+                    );
+                    newSessionModelIds[model] = res.data.session_model_id;
+                } catch (err) {
+                    console.log(`세션 모델 생성 실패 (${model}):`, err);
+                }
+            }
+        }
+        setSessionModelIds(prev => ({ ...prev, ...newSessionModelIds }));
+        return newSessionModelIds;
     }
 
 
@@ -309,7 +390,14 @@ export default function UserPractice() {
                 setSelectedModels([...selectedModels, modelValue]);
             }
         } else {
-            setSelectedModels(selectedModels.filter(m => m !== modelValue));
+            const remainingModels = selectedModels.filter(m => m !== modelValue);
+            setSelectedModels(remainingModels);
+
+            // 비교 모드에서 모델이 1개만 남으면 알림 후 단일 모드로 전환
+            if (currentMode === 'parallel' && remainingModels.length === 1) {
+                alert('비교 모드에는 최소 2개 이상의 모델이 필요합니다. 단일 모드로 전환합니다.');
+                setCurrentMode('single');
+            }
         }
     };
 
@@ -395,14 +483,76 @@ export default function UserPractice() {
             setIsGenerating(false);
         } else {
             // 비교 모드
-            for (const model of selectedModels) {
-                try {
-                    const response = await getSimulatedResponse(model, message);
-                    // 비교 모드 메시지는 별도로 관리 (추후 구현)
-                } catch (err) {
-                    console.error('응답 생성 중 오류:', err);
+            const currentTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+            // 각 패널에 사용자 메시지 추가
+            selectedModels.forEach(model => {
+                setCompareMessages(prev => ({
+                    ...prev,
+                    [model]: [
+                        ...(prev[model] || []),
+                        {
+                            type: 'user',
+                            content: message,
+                            time: currentTime
+                        }
+                    ]
+                }));
+            });
+
+            // 세션 모델 ID 배열 생성
+            // 각 모델에 대한 세션 모델 ID가 있으면 사용하고, 없으면 기본 모델 ID 사용
+            const modelIdsToSend = selectedModels.map(model => {
+                return sessionModelIds[model] || defaltModels;
+            });
+
+            try {
+                const responseData = await getCompareResponse(message, modelIdsToSend);
+
+                if (responseData && responseData.results) {
+                    // 각 결과를 해당 모델의 패널에 추가
+                    responseData.results.forEach((result, index) => {
+                        if (index < selectedModels.length) {
+                            const model = selectedModels[index];
+                            const modelInfo = getModelInfo(model);
+
+                            setCompareMessages(prev => ({
+                                ...prev,
+                                [model]: [
+                                    ...(prev[model] || []),
+                                    {
+                                        type: 'assistant',
+                                        content: result.response_text,
+                                        time: new Date(result.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+                                        modelName: result.model_name,
+                                        modelInfo: modelInfo,
+                                        latency: result.latency_ms,
+                                        tokenUsage: result.token_usage
+                                    }
+                                ]
+                            }));
+                        }
+                    });
                 }
+            } catch (err) {
+                console.error('응답 생성 중 오류:', err);
+                // 오류 발생 시 각 패널에 오류 메시지 추가
+                selectedModels.forEach(model => {
+                    setCompareMessages(prev => ({
+                        ...prev,
+                        [model]: [
+                            ...(prev[model] || []),
+                            {
+                                type: 'assistant',
+                                content: '서버와 통신중 오류가 발생했습니다. 다시 시도해주세요.',
+                                time: currentTime,
+                                isError: true
+                            }
+                        ]
+                    }));
+                });
             }
+
             setIsGenerating(false);
         }
     };
@@ -468,6 +618,27 @@ export default function UserPractice() {
     };
 
     const selectedDisplay = updateSelectedDisplay();
+
+    const assistant_models = [
+        {
+            id: 'exaone',
+            name: 'exaone-3.5',
+            desc: 'LG AI Research의 최신 멀티모달 모델',
+            iconStyle: { background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }
+        },
+        {
+            id: 'gpt-4',
+            name: 'gpt-4o',
+            desc: 'OpenAI 최신 플래그쉽 모델',
+            iconClass: 'model-checkbox__icon--gpt'
+        },
+        {
+            id: 'gemini',
+            name: 'gemini-1.5-flash',
+            desc: 'Google의 자체적 AI 모델',
+            iconClass: 'model-checkbox__icon--gemini'
+        }
+    ];
 
     return (
         <>
@@ -597,6 +768,9 @@ export default function UserPractice() {
                                     <div className="chat-main--compare" id="compareContainer">
                                         {comparePanels.map((model) => {
                                             const modelInfo = getModelInfo(model);
+                                            const messages = compareMessages[model] || [];
+                                            const hasMessages = messages.length > 0;
+
                                             return (
                                                 <div key={model} className="compare-panel" data-model={model}>
                                                     <div className="compare-panel__header">
@@ -611,12 +785,57 @@ export default function UserPractice() {
                                                         </div>
                                                     </div>
                                                     <div className="compare-panel__messages" id={`compareMessages-${model}`}>
-                                                        <div className="empty-state" style={{ padding: 'var(--space-6)' }}>
-                                                            <div className="empty-state__icon" style={{ fontSize: '48px', marginBottom: 'var(--space-3)' }}>💬</div>
-                                                            <div className="empty-state__desc" style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-                                                                {modelInfo.name} 응답이 여기에 표시됩니다
+                                                        {!hasMessages ? (
+                                                            <div className="empty-state" style={{ padding: 'var(--space-6)' }}>
+                                                                <div className="empty-state__icon" style={{ fontSize: '48px', marginBottom: 'var(--space-3)' }}>💬</div>
+                                                                <div className="empty-state__desc" style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                                                                    {modelInfo.name} 응답이 여기에 표시됩니다
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        ) : (
+                                                            <>
+                                                                {messages.map((msg, index) => (
+                                                                    <div key={index} className={`chat-message ${msg.type === 'user' ? 'chat-message--user' : 'chat-message--assistant'}`}>
+                                                                        <div className="chat-message__avatar">
+                                                                            {msg.type === 'user' ? '김' : '🤖'}
+                                                                        </div>
+                                                                        <div className="chat-message__content">
+                                                                            <div className="chat-message__bubble">
+                                                                                <div className="chat-message__text">{msg.content}</div>
+                                                                            </div>
+                                                                            <div className="chat-message__meta">
+                                                                                <span className="chat-message__time">{msg.time}</span>
+                                                                                {msg.type === 'assistant' && msg.modelInfo && (
+                                                                                    <span className="chat-message__model" style={{ background: msg.modelInfo.bgColor, color: msg.modelInfo.color }}>
+                                                                                        {msg.modelName || msg.modelInfo.name}
+                                                                                    </span>
+                                                                                )}
+                                                                                {msg.type === 'assistant' && msg.latency && (
+                                                                                    <span className="chat-message__latency" style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginLeft: '4px' }}>
+                                                                                        {msg.latency}ms
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                                {isGenerating && (
+                                                                    <div className="chat-message chat-message--assistant chat-message--loading">
+                                                                        <div className="chat-message__avatar">🤖</div>
+                                                                        <div className="chat-message__content">
+                                                                            <div className="chat-message__bubble">
+                                                                                <div className="typing-indicator">
+                                                                                    <div className="typing-indicator__dot"></div>
+                                                                                    <div className="typing-indicator__dot"></div>
+                                                                                    <div className="typing-indicator__dot"></div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                <div ref={el => compareMessagesRefs.current[model] = el} />
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             );
@@ -866,82 +1085,40 @@ export default function UserPractice() {
 
                                     {showModelDropdown && (
                                         <div className="model-selector-dropdown" id="modelDropdown" ref={modelDropdownRef}>
-                                            <label className={`model-selector-dropdown__item ${selectedModels.includes('exaone') ? 'model-selector-dropdown__item--selected' : ''}`}>
-                                                <input
-                                                    type="checkbox"
-                                                    className="model-checkbox-input"
-                                                    value="exaone"
-                                                    checked={selectedModels.includes('exaone')}
-                                                    onChange={(e) => handleModelCheckboxChange('exaone', e.target.checked)}
-                                                />
-                                                <div className="model-selector-dropdown__icon"
-                                                    style={{ background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>🤖</div>
-                                                <div className="model-selector-dropdown__info">
-                                                    <div className="model-selector-dropdown__name">exaone-3.5</div>
-                                                    <div className="model-selector-dropdown__desc">LG AI Research의 최신 멀티모달 모델</div>
-                                                </div>
-                                                <span className="model-selector-dropdown__check">
-                                                    {selectedModels.includes('exaone') ? '✓' : ''}
-                                                </span>
-                                            </label>
-
-                                            <label className={`model-selector-dropdown__item ${selectedModels.includes('claude') ? 'model-selector-dropdown__item--selected' : ''}`}>
-                                                <input
-                                                    type="checkbox"
-                                                    className="model-checkbox-input"
-                                                    value="claude"
-                                                    checked={selectedModels.includes('claude')}
-                                                    onChange={(e) => handleModelCheckboxChange('claude', e.target.checked)}
-                                                />
-                                                <div className="model-selector-dropdown__icon model-checkbox__icon--claude">🤖</div>
-                                                <div className="model-selector-dropdown__info">
-                                                    <div className="model-selector-dropdown__name">claude-3-sonnet</div>
-                                                    <div className="model-selector-dropdown__desc">Anthropic의 고능력 대화 모델</div>
-                                                </div>
-                                                <span className="model-selector-dropdown__check">
-                                                    {selectedModels.includes('claude') ? '✓' : ''}
-                                                </span>
-                                            </label>
-
-                                            <label className={`model-selector-dropdown__item ${selectedModels.includes('gpt-4') ? 'model-selector-dropdown__item--selected' : ''}`}>
-                                                <input
-                                                    type="checkbox"
-                                                    className="model-checkbox-input"
-                                                    value="gpt-4"
-                                                    checked={selectedModels.includes('gpt-4')}
-                                                    onChange={(e) => handleModelCheckboxChange('gpt-4', e.target.checked)}
-                                                />
-                                                <div className="model-selector-dropdown__icon model-checkbox__icon--gpt">🤖</div>
-                                                <div className="model-selector-dropdown__info">
-                                                    <div className="model-selector-dropdown__name">gpt-4o</div>
-                                                    <div className="model-selector-dropdown__desc">OpenAI 최신 플래그쉽 모델</div>
-                                                </div>
-                                                <span className="model-selector-dropdown__check">
-                                                    {selectedModels.includes('gpt-4') ? '✓' : ''}
-                                                </span>
-                                            </label>
-
-                                            <label className={`model-selector-dropdown__item ${selectedModels.includes('gemini') ? 'model-selector-dropdown__item--selected' : ''}`}>
-                                                <input
-                                                    type="checkbox"
-                                                    className="model-checkbox-input"
-                                                    value="gemini"
-                                                    checked={selectedModels.includes('gemini')}
-                                                    onChange={(e) => handleModelCheckboxChange('gemini', e.target.checked)}
-                                                />
-                                                <div className="model-selector-dropdown__icon model-checkbox__icon--gemini">🤖</div>
-                                                <div className="model-selector-dropdown__info">
-                                                    <div className="model-selector-dropdown__name">gemini-1.5-flash</div>
-                                                    <div className="model-selector-dropdown__desc">Google의 자체적 AI 모델</div>
-                                                </div>
-                                                <span className="model-selector-dropdown__check">
-                                                    {selectedModels.includes('gemini') ? '✓' : ''}
-                                                </span>
-                                            </label>
+                                            {assistant_models.map((model) => (
+                                                <label
+                                                    key={model.id}
+                                                    className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="model-checkbox-input"
+                                                        value={model.id}
+                                                        checked={selectedModels.includes(model.id)}
+                                                        onChange={(e) => handleModelCheckboxChange(model.id, e.target.checked)}
+                                                    />
+                                                    <div
+                                                        className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
+                                                        style={model.iconStyle || {}}
+                                                    >
+                                                        🤖
+                                                    </div>
+                                                    <div className="model-selector-dropdown__info">
+                                                        <div className="model-selector-dropdown__name">{model.name}</div>
+                                                        <div className="model-selector-dropdown__desc">{model.desc}</div>
+                                                    </div>
+                                                    <span className="model-selector-dropdown__check">
+                                                        {selectedModels.includes(model.id) ? '✓' : ''}
+                                                    </span>
+                                                </label>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
                             </aside>
+
+
                         </div>
                     </main>
                 </div>
