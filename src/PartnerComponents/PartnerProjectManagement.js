@@ -14,7 +14,7 @@ export default function PartnerProjectManagement() {
     const [newClass, setNewClass] = useState(null);
     const partnerId = sessionStorage.getItem("partner_id");
     const accessToken = sessionStorage.getItem("access_token");
-    const courseId = 1;
+    const [selectedCourseId, setSelectedCourseId] = useState(null);
 
     const handleCreateClass = async (e) => {
         e.preventDefault();
@@ -40,9 +40,45 @@ export default function PartnerProjectManagement() {
             if (!className) {
                 throw new Error('강의명을 입력해주세요.');
             }
+
+            let courseIdToUse;
+
+            // 과정명이 비어있는 경우
             if (!courseName) {
-                throw new Error('과정명을 입력해주세요.');
+                const confirmNoCourse = window.confirm('무소속으로 진행하시겠습니까?');
+                if (!confirmNoCourse) {
+                    // "아니오"를 누른 경우 중단
+                    setIsLoading(false);
+                    return;
+                }
+                // "예"를 누른 경우 course_id를 1로 설정
+                courseIdToUse = 1;
+            } else {
+                // 입력한 과정명이 courses에 존재하는지 확인
+                const foundCourse = courses.find(course =>
+                    course && course.title && course.title.trim() === courseName.trim()
+                );
+
+                if (!foundCourse) {
+                    // 과정이 없으면 알림창 표시 및 input 비우기
+                    alert('해당 과정이 존재하지 않습니다. 자동완성 목록에서 선택해주세요.');
+                    setCourseNameInput('');
+                    setSelectedCourseId(null);
+                    const form = document.getElementById('createClassForm');
+                    if (form) {
+                        const courseNameInput = form.querySelector('[name="courseName"]');
+                        if (courseNameInput) {
+                            courseNameInput.value = '';
+                        }
+                    }
+                    setIsLoading(false);
+                    return;
+                }
+
+                // 선택된 course_id 사용 (없으면 찾은 과정의 id 사용)
+                courseIdToUse = selectedCourseId || foundCourse.id;
             }
+
             if (!studentCount || studentCount < 1) {
                 throw new Error('수강 학생 수를 올바르게 입력해주세요.');
             }
@@ -66,15 +102,16 @@ export default function PartnerProjectManagement() {
                 online_url: "string",
                 invite_only: false,
                 // LLM 정보도 함께 전송 (필요한 경우)
-                llms: selectedLLMs
+                llms: selectedLLMs,
+                course_id: courseIdToUse
             };
 
             console.log('전송할 데이터:', requestData);
-            console.log("선택한 코스 아이디", courseId);
+            console.log("선택한 코스 아이디", courseIdToUse);
 
             // axios를 사용한 POST 요청
             const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes`,
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes?course_id=${courseIdToUse}`,
                 requestData,
                 {
                     headers: {
@@ -96,6 +133,7 @@ export default function PartnerProjectManagement() {
             setEndDate('');
             setCourseNameInput('');
             setShowSuggestions(false);
+            setSelectedCourseId(null);
 
         } catch (error) {
             console.error('에러 발생:', error);
@@ -257,10 +295,17 @@ export default function PartnerProjectManagement() {
     const handleCourseNameChange = (e) => {
         const value = e.target.value;
         setCourseNameInput(value);
+        // 입력값이 변경되면 선택된 course_id 초기화
+        setSelectedCourseId(null);
     };
 
-    const handleCourseNameSelect = (courseName) => {
+    const handleCourseNameSelect = (course) => {
+        const courseName = course.title || course;
         setCourseNameInput(courseName);
+        // course 객체인 경우 id 저장
+        if (course && course.id) {
+            setSelectedCourseId(course.id);
+        }
         setShowSuggestions(false);
         setSelectedIndex(-1);
 
@@ -291,7 +336,7 @@ export default function PartnerProjectManagement() {
             case 'Enter':
                 e.preventDefault();
                 if (selectedIndex >= 0 && selectedIndex < filteredCourse.length) {
-                    handleCourseNameSelect(filteredCourse[selectedIndex].title);
+                    handleCourseNameSelect(filteredCourse[selectedIndex]);
                 }
                 break;
             case 'Escape':
@@ -428,6 +473,7 @@ export default function PartnerProjectManagement() {
                             setCourseNameInput('');
                             setShowSuggestions(false);
                             setError(null);
+                            setSelectedCourseId(null);
                         }}>
                             확인
                         </button>
@@ -447,6 +493,7 @@ export default function PartnerProjectManagement() {
                             setCourseNameInput('');
                             setShowSuggestions(false);
                             setError(null);
+                            setSelectedCourseId(null);
                         }}>✕</button>
                     </div>
                     <div className="modal__body">
@@ -463,7 +510,7 @@ export default function PartnerProjectManagement() {
                                         type="text"
                                         id="courseName"
                                         name="courseName"
-                                        placeholder="AI 기초과정"
+                                        placeholder="AI 기초과정 (선택사항)"
                                         value={courseNameInput}
                                         onChange={handleCourseNameChange}
                                         onKeyDown={handleCourseNameKeyDown}
@@ -477,7 +524,6 @@ export default function PartnerProjectManagement() {
                                                 setShowSuggestions(false);
                                             }, 200);
                                         }}
-                                        required
                                     />
                                     {showSuggestions && filteredCourse.length > 0 && (
                                         <div className="autocomplete-dropdown">
@@ -485,7 +531,7 @@ export default function PartnerProjectManagement() {
                                                 <div
                                                     key={course.id || index}
                                                     className={`autocomplete-item ${index === selectedIndex ? 'autocomplete-item--selected' : ''}`}
-                                                    onClick={() => handleCourseNameSelect(course.title)}
+                                                    onClick={() => handleCourseNameSelect(course)}
                                                     onMouseEnter={() => setSelectedIndex(index)}
                                                 >
                                                     {course.title}
@@ -659,6 +705,7 @@ export default function PartnerProjectManagement() {
                                 setCourseNameInput('');
                                 setShowSuggestions(false);
                                 setError(null);
+                                setSelectedCourseId(null);
                             }}
                             disabled={isLoading}
                         >
