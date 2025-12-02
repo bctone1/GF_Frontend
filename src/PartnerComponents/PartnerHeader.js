@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { createNotificationDropdown } from '../utill/utill';
 
 export default function PartnerHeader() {
     const accessToken = sessionStorage.getItem("access_token");
@@ -71,9 +72,9 @@ export default function PartnerHeader() {
                     </div>
 
 
-                    <button id="notificationBtn" className="header__icon-button">
+                    <button id="notificationBtn" className="header__icon-button" onClick={createNotificationDropdown}>
                         <span>🔔</span>
-                        <span className="header__badge">3</span>
+                        {/* <span className="header__badge">3</span> */}
                     </button>
 
                     <div id="profileBtn" className="header__profile"

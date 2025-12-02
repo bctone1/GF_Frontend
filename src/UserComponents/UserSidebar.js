@@ -1,13 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { setSelectedClass, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
 export default function UserSidebar() {
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
 
     const [myClasses, setMyClasses] = useState([]);
+    const [selectedClassId, setSelectedClassId] = useState('');
     const accessToken = sessionStorage.getItem("access_token");
+
     const fetchMyClasses = () => {
         axios.get(`${process.env.REACT_APP_API_URL}/user/classes`, {
             headers: {
@@ -16,13 +19,54 @@ export default function UserSidebar() {
         }).then(response => {
             // console.log(response.data.items);
             setMyClasses(response.data.items);
+            const savedClassId = getSelectedClassId();
+            // console.log(savedClassId);
+            if (savedClassId) {
+                const isValid = response.data.items.some(c => c.id === savedClassId);
+                if (isValid) {
+                    setSelectedClassId(savedClassId);
+                    const selectedClass = response.data.items.find(c => c.id === savedClassId);
+                    if (selectedClass) {
+                        setSelectedClass(savedClassId, selectedClass.class_title);
+                    }
+                } else {
+                    // setSelectedClass(null, null);
+                    // setSelectedClassId('');
+                }
+            }
         }).catch(error => {
             console.log(error);
         });
     }
+
+    useEffect(() => {
+        const savedClassId = getSelectedClassId();
+        if (savedClassId) {
+            setSelectedClassId(savedClassId);
+        }
+    }, [location.pathname]);
+
     useEffect(() => {
         fetchMyClasses();
     }, []);
+
+    const handleClassChange = (e) => {
+        const classId = e.target.value;
+        setSelectedClassId(classId);
+        if (classId) {
+            const selectedClass = myClasses.find(c => c.id === classId);
+            const classTitle = selectedClass ? selectedClass.class_title : null;
+            setSelectedClass(classId, classTitle);
+        } else {
+            setSelectedClass(null, null);
+        }
+    };
+
+    const alwaysActiveMenus = ['dashboard', 'history', 'profile'];
+
+    const isMenuDisabled = (menuName) => {
+        return !selectedClassId && !alwaysActiveMenus.includes(menuName);
+    };
 
     return (
         <>
@@ -39,10 +83,15 @@ export default function UserSidebar() {
 
 
                     <div className="sidebar__class-selector">
-                        <select id="classSelector" className="sidebar__class-select">
+                        <select
+                            id="classSelector"
+                            className="sidebar__class-select"
+                            value={selectedClassId}
+                            onChange={handleClassChange}
+                        >
                             <option value="">📚 과목을 선택하세요</option>
                             {myClasses.map((myClass) => (
-                                <option value={myClass.id} key={myClass.class_id}>{myClass.name}</option>
+                                <option value={myClass.id} key={myClass.class_id}>{myClass.class_title}</option>
                             ))}
                         </select>
                     </div>
@@ -64,7 +113,12 @@ export default function UserSidebar() {
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/practice"
-                                className={`sidebar__menu-link ${currentMenu === 'practice' ? 'sidebar__menu-link--active' : ''}`}
+                                className={`sidebar__menu-link ${currentMenu === 'practice' ? 'sidebar__menu-link--active' : ''} ${isMenuDisabled('practice') ? 'sidebar__menu-link--disabled' : ''}`}
+                                onClick={(e) => {
+                                    if (isMenuDisabled('practice')) {
+                                        e.preventDefault();
+                                    }
+                                }}
                             >
                                 <span className="sidebar__menu-icon">💬</span>
                                 <span>AI 실습</span>
@@ -74,7 +128,12 @@ export default function UserSidebar() {
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/project"
-                                className={`sidebar__menu-link ${currentMenu === 'project' ? 'sidebar__menu-link--active' : ''}`}
+                                className={`sidebar__menu-link ${currentMenu === 'project' ? 'sidebar__menu-link--active' : ''} ${isMenuDisabled('project') ? 'sidebar__menu-link--disabled' : ''}`}
+                                onClick={(e) => {
+                                    if (isMenuDisabled('project')) {
+                                        e.preventDefault();
+                                    }
+                                }}
                             >
                                 <span className="sidebar__menu-icon">📂</span>
                                 <span>내 프로젝트</span>
@@ -84,7 +143,12 @@ export default function UserSidebar() {
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/knowledge"
-                                className={`sidebar__menu-link ${currentMenu === 'knowledge' ? 'sidebar__menu-link--active' : ''}`}
+                                className={`sidebar__menu-link ${currentMenu === 'knowledge' ? 'sidebar__menu-link--active' : ''} ${isMenuDisabled('knowledge') ? 'sidebar__menu-link--disabled' : ''}`}
+                                onClick={(e) => {
+                                    if (isMenuDisabled('knowledge')) {
+                                        e.preventDefault();
+                                    }
+                                }}
                             >
                                 <span className="sidebar__menu-icon">📚</span>
                                 <span>지식베이스</span>
@@ -96,7 +160,12 @@ export default function UserSidebar() {
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/agent"
-                                className={`sidebar__menu-link ${currentMenu === 'agent' ? 'sidebar__menu-link--active' : ''}`}
+                                className={`sidebar__menu-link ${currentMenu === 'agent' ? 'sidebar__menu-link--active' : ''} ${isMenuDisabled('agent') ? 'sidebar__menu-link--disabled' : ''}`}
+                                onClick={(e) => {
+                                    if (isMenuDisabled('agent')) {
+                                        e.preventDefault();
+                                    }
+                                }}
                             >
                                 <span className="sidebar__menu-icon">🤖</span>
                                 <span>내 에이전트</span>
@@ -106,7 +175,12 @@ export default function UserSidebar() {
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/workflow"
-                                className={`sidebar__menu-link ${currentMenu === 'workflow' ? 'sidebar__menu-link--active' : ''}`}
+                                className={`sidebar__menu-link ${currentMenu === 'workflow' ? 'sidebar__menu-link--active' : ''} ${isMenuDisabled('workflow') ? 'sidebar__menu-link--disabled' : ''}`}
+                                onClick={(e) => {
+                                    if (isMenuDisabled('workflow')) {
+                                        e.preventDefault();
+                                    }
+                                }}
                             >
                                 <span className="sidebar__menu-icon">🔀</span>
                                 <span>워크플로우</span>

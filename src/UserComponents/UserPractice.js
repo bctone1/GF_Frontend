@@ -52,7 +52,7 @@ export default function UserPractice() {
                 }
             }
         ).then(res => {
-            console.log(res.data.items);
+            // console.log(res.data.items);
             setSessions(res.data.items);
         }
         ).catch(err => {
@@ -60,7 +60,23 @@ export default function UserPractice() {
         }
         )
     }
+
+    const [documents, setDocuments] = useState([]);
+    const fetchDocuments = async () => {
+        const response = await axios.get(
+            `${process.env.REACT_APP_API_URL}/user/document`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+        // console.log('Documents:', response.data.items);
+        setDocuments(response.data.items);
+    }
+
     useEffect(() => {
+        fetchDocuments();
         fetchSessions();
     }, []);
 
@@ -76,7 +92,7 @@ export default function UserPractice() {
                 }
             }
         ).then(res => {
-            console.log(res.data);
+            // console.log(res.data);
             setCurrentSession(res.data.session_id);
             CreateSessionModels(res.data.session_id);
             fetchSessions();
@@ -417,9 +433,38 @@ export default function UserPractice() {
     };
 
     const removeFile = (index) => {
-        const fileName = attachedFiles[index].name;
+        const file = attachedFiles[index];
+        const fileName = file.name || (file.documentName || '파일');
         setAttachedFiles(prev => prev.filter((_, i) => i !== index));
         console.log(`${fileName} 제거됨`);
+    };
+
+    const addDocumentToAttached = (document) => {
+        // 이미 첨부된 문서인지 확인
+        const isAlreadyAttached = attachedFiles.some(
+            file => file.knowledge_id === document.knowledge_id
+        );
+
+        if (isAlreadyAttached) {
+            showToast('이미 첨부된 문서입니다.', 'info');
+            return;
+        }
+
+        // 문서 정보를 File 객체처럼 만들어서 추가
+        const documentFile = {
+            knowledge_id: document.knowledge_id,
+            name: document.name,
+            size: document.file_size_bytes,
+            documentName: document.name,
+            isDocument: true,
+            updated_at: document.updated_at,
+            chunk_count: document.chunk_count
+        };
+
+        setAttachedFiles(prev => [...prev, documentFile]);
+        setShowPlusMenu(false);
+        setPlusMenuView('main');
+        showToast(`${document.name}이(가) 첨부되었습니다.`, 'success');
     };
 
     const selectedDisplay = updateSelectedDisplay();
@@ -473,8 +518,11 @@ export default function UserPractice() {
                                             <div key={index} className="attached-file">
                                                 <div className="attached-file__icon">📄</div>
                                                 <div className="attached-file__info">
-                                                    <div className="attached-file__name">{file.name}</div>
-                                                    <div className="attached-file__size">{formatFileSize(file.size)}</div>
+                                                    <div className="attached-file__name">{file.name || file.documentName}</div>
+                                                    <div className="attached-file__size">
+                                                        {file.size ? formatFileSize(file.size) : (file.chunk_count ? `${file.chunk_count} 청크` : '')}
+                                                        {file.isDocument && <span style={{ marginLeft: '4px', color: 'var(--primary-600)', fontSize: '10px' }}>지식베이스</span>}
+                                                    </div>
                                                 </div>
                                                 <button className="attached-file__remove" onClick={() => removeFile(index)}>✕</button>
                                             </div>
@@ -704,8 +752,29 @@ export default function UserPractice() {
                                                             </button>
                                                             <span className="plus-menu__header-title">지식베이스</span>
                                                         </div>
-                                                        <div className="plus-menu__empty">
-                                                            Phase 2에서 구현 예정입니다
+                                                        <div id="plusMenuKnowledge" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                                            {documents && documents.length > 0 ? (
+                                                                documents.map(document => (
+                                                                    <div
+                                                                        key={document.knowledge_id}
+                                                                        className="plus-menu__item"
+                                                                        onClick={() => addDocumentToAttached(document)}
+                                                                        style={{ cursor: 'pointer' }}
+                                                                    >
+                                                                        <span className="plus-menu__icon">📄</span>
+                                                                        <div className="plus-menu__text">
+                                                                            <div className="plus-menu__title">{document.name}</div>
+                                                                            <div className="plus-menu__desc">
+                                                                                {formatFileSize(document.file_size_bytes)} · {document.chunk_count} 청크
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <div className="plus-menu__empty">
+                                                                    등록된 문서가 없습니다. 문서를 등록해주세요.
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 )}

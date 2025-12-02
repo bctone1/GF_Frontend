@@ -17,12 +17,12 @@ export default function UserDashboard() {
     // UserHeader에서 받아온 데이터를 처리하는 콜백 함수들
     const handleAccountData = (accountData) => {
         setMyaccount(accountData);
-        console.log(accountData);
+        // console.log(accountData);
     };
 
     const handleProfileData = (profileData) => {
         setMyprofile(profileData);
-        console.log(profileData);
+        // console.log(profileData);
     };
 
     const handleSubmit = (e) => {
@@ -37,7 +37,7 @@ export default function UserDashboard() {
                     "Content-Type": "application/json",
                 },
             }).then(response => {
-                console.log(response.data);
+                // console.log(response.data);
                 setInviteStatus(false);
                 showToast(`강의가 등록되었습니다!`, 'info');
             }).catch(error => {
@@ -116,7 +116,7 @@ export default function UserDashboard() {
                     },
                 }
             ).then(response => {
-                console.log(response.data);
+                // console.log(response.data);
                 setPartnerSignupStatus(false);
             }).catch(error => {
                 console.log(error);
@@ -320,7 +320,7 @@ export default function UserDashboard() {
                     "Content-Type": "application/json",
                 },
             }).then(response => {
-                console.log(response.data);
+                // console.log(response.data);
                 showToast('강의가 등록되었습니다.', 'success');
                 setInviteStatus(false);
             });

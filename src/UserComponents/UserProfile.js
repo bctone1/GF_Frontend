@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, use } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
@@ -11,33 +11,50 @@ export default function UserDashboard() {
         setActiveSection(section);
     };
 
-    const classes = {
-        'class-1': {
-            id: 'class-1',
-            name: '2025 AI 심화과정',
-            status: 'active',
-            startDate: '2025-11-01',
-            endDate: '2025-12-31',
-            instructor: '김강사'
-        },
-        'class-2': {
-            id: 'class-2',
-            name: '프롬프트엔지니어링',
-            status: 'active',
-            startDate: '2025-11-01',
-            endDate: '2025-12-15',
-            instructor: '이강사'
-        },
-        'class-3': {
-            id: 'class-3',
-            name: '2024 AI 기초과정',
-            status: 'ended',
-            startDate: '2024-09-01',
-            endDate: '2024-10-31',
-            instructor: '박강사'
-        }
-    };
-    const classArray = Object.values(classes);
+    // const classes = {
+    //     'class-1': {
+    //         id: 'class-1',
+    //         name: '2025 AI 심화과정',
+    //         status: 'active',
+    //         startDate: '2025-11-01',
+    //         endDate: '2025-12-31',
+    //         instructor: '김강사'
+    //     },
+    //     'class-2': {
+    //         id: 'class-2',
+    //         name: '프롬프트엔지니어링',
+    //         status: 'active',
+    //         startDate: '2025-11-01',
+    //         endDate: '2025-12-15',
+    //         instructor: '이강사'
+    //     },
+    //     'class-3': {
+    //         id: 'class-3',
+    //         name: '2024 AI 기초과정',
+    //         status: 'ended',
+    //         startDate: '2024-09-01',
+    //         endDate: '2024-10-31',
+    //         instructor: '박강사'
+    //     }
+    // };
+    // const classArray = Object.values(classes);
+    const [classArray, setClassArray] = useState([]);
+    const fetchMyClasses = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/classes`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            console.log(response.data.items);
+            setClassArray(response.data.items);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+
+    useEffect(() => {
+        fetchMyClasses();
+    }, [])
 
     const [inviteStatus, setInviteStatus] = useState(false);
     const inviteCodeRefs = useRef([]);
@@ -313,7 +330,7 @@ export default function UserDashboard() {
                                         <div id="classList" className="class-list">
 
                                             {classArray.map((classInfo) => {
-                                                const isActive = classInfo.status === 'active';
+                                                const isActive = classInfo.enrollment_status === 'active';
                                                 const statusBadge = isActive ? (
                                                     <span className="class-card__badge class-card__badge--active">진행 중</span>
                                                 ) : (
@@ -321,18 +338,18 @@ export default function UserDashboard() {
                                                 );
 
                                                 return (
-                                                    <div className="class-card" key={classInfo.id}>
+                                                    <div className="class-card" key={classInfo.class_id}>
                                                         <div className="class-card__header">
                                                             <div className="class-card__icon">📚</div>
                                                             {statusBadge}
                                                         </div>
 
-                                                        <h3 className="class-card__title">{classInfo.name}</h3>
+                                                        <h3 className="class-card__title">{classInfo.class_title}</h3>
 
                                                         <div className="class-card__info">
                                                             <div className="class-card__info-item">
                                                                 <span className="class-card__info-icon">👨‍🏫</span>
-                                                                <span>{classInfo.instructor}</span>
+                                                                <span>{classInfo.teacher_name}</span>
                                                             </div>
 
                                                             <div className="class-card__info-item">
