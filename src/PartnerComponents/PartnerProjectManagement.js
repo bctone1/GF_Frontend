@@ -121,6 +121,22 @@ export default function PartnerProjectManagement() {
                 }
             );
             console.log('응답 데이터:', response.data);
+
+            if (response.data.invite_codes[0].code) {
+                axios.post(`${process.env.REACT_APP_API_URL}/user/class/invites/redeem`, {
+                    code: response.data.invite_codes[0].code
+                }, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }).then(response => {
+                    console.log(response.data);
+                }).catch(error => {
+                    console.log(error);
+                });
+            }
+
             setNewClass(response.data);
 
             // 성공 시 모달 표시
