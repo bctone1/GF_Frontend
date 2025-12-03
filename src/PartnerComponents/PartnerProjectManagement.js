@@ -98,7 +98,8 @@ export default function PartnerProjectManagement() {
             const requestData = {
                 name: className,
                 description: classDescription,
-                status: "planned",
+                // status: "planned",
+                status: "active",
                 start_at: startDateValue,
                 end_at: endDateValue,
                 capacity: studentCount,

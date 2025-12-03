@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
-import { showToast } from '../utill/utill';
+import { showToast, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
 const projects = [
     { id: 1, name: 'AI 실습 기초', icon: '📁', color: '#9333ea' },
@@ -12,15 +12,20 @@ const projects = [
 ];
 
 const modelMap = {
-    'gpt-4': { name: 'GPT-4', color: '#10a37f', bgColor: 'rgba(16, 163, 127, 0.1)', apiName: 'gpt-4o-mini' },
-    'gemini': { name: 'Gemini', color: '#4285f4', bgColor: 'rgba(66, 133, 244, 0.1)', apiName: 'gemini-1.5-flash' },
-    'exaone': { name: 'EXAONE', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)', apiName: 'exaone-3.5' }
+    'gpt-4o-mini': { name: 'gpt-4o-mini', color: '#10a37f', bgColor: 'rgba(16, 163, 127, 0.1)' },
+    'gemini-2.5-flash': { name: 'gemini-2.5-flash', color: '#4285f4', bgColor: 'rgba(66, 133, 244, 0.1)' },
+    'exaone-4.0': { name: 'exaone-4.0', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)' },
+    'claude-3-haiku-20240307': { name: 'claude-3-haiku-20240307', color: '#000000', bgColor: 'rgba(0, 0, 0, 0.1)' }
 };
+
+// const exmpleConversations=[
+//     {},
+// ];
 
 export default function UserPractice() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [currentMode, setCurrentMode] = useState('single');
-    const [selectedModels, setSelectedModels] = useState(['gemini']);
+    const [selectedModels, setSelectedModels] = useState(['gpt-4o-mini']);
     const [currentMessages, setCurrentMessages] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentProject, setCurrentProject] = useState('AI 실습 기초');
@@ -33,6 +38,9 @@ export default function UserPractice() {
     const [comparePanels, setComparePanels] = useState([]);
     const [compareMessages, setCompareMessages] = useState({}); // { model: [messages] }
     const [sessionModelIds, setSessionModelIds] = useState({}); // { model: session_model_id }
+    const [documents, setDocuments] = useState([]);
+    const [Assistant, setAssistant] = useState([]);
+    const [currentSession, setCurrentSession] = useState(null);
 
     const messageInputRef = useRef(null);
     const plusMenuRef = useRef(null);
@@ -42,50 +50,81 @@ export default function UserPractice() {
     const messagesEndRef = useRef(null);
     const compareMessagesRefs = useRef({});
     const accessToken = sessionStorage.getItem("access_token");
+    const userId = sessionStorage.getItem("user_id");
+    const userEmail = sessionStorage.getItem("user_email");
+
     const [sessions, setSessions] = useState([]);
-    const fetchSessions = () => {
-        axios.get(
-            `${process.env.REACT_APP_API_URL}/user/practice/sessions`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                }
+    const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
+
+    const [allowedModelIds, setAllowedModelIds] = useState(() => {
+        const stored = sessionStorage.getItem("allowed_model_ids");
+        if (!stored) return [1]; // 기본값
+        try {
+            return JSON.parse(stored);
+        } catch {
+            if (typeof stored === 'string' && stored.includes(',')) {
+                return stored.split(',').map(id => parseInt(id.trim(), 10));
             }
-        ).then(res => {
-            // console.log(res.data.items);
-            setSessions(res.data.items);
+            return [parseInt(stored, 10)];
         }
-        ).catch(err => {
-            console.log(err);
-        }
-        )
+    });
+
+    const fetchSessions = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
+            { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
+        );
+        // console.log(response.data.items);
+        setSessions(response.data.items);
     }
 
-    const [documents, setDocuments] = useState([]);
-    const fetchDocuments = async () => {
-        const response = await axios.get(
-            `${process.env.REACT_APP_API_URL}/user/document`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            }
+    // UserSidebar에서 클래스 변경 시 호출되는 콜백
+    const handleClassChange = (classId, allowedModelIdsArray) => {
+        // console.log(classId, allowedModelIdsArray);
+        setSavedClassId(classId);
+        setAllowedModelIds(allowedModelIdsArray || [1]);
+        // console.log(Assistant.find(model => model.id === allowedModelIdsArray[0]).model_name);
+        setSelectedModels([Assistant.find(model => model.id === allowedModelIdsArray[0]).model_name]);
+    };
+
+
+
+
+    const filteredSessions = useMemo(() => {
+        if (!savedClassId) return [];
+        return sessions.filter(
+            session => session.class_id === Number(savedClassId)
         );
-        // console.log('Documents:', response.data.items);
+    }, [sessions, savedClassId]);
+
+    const fetchDocuments = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/document`,
+            { headers: { Authorization: `Bearer ${accessToken}`, }, }
+        );
         setDocuments(response.data.items);
     }
 
+    const fetchAssistant = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/models`);
+        console.log(response.data.items);
+        setAssistant(response.data.items);
+    }
+
     useEffect(() => {
+        fetchAssistant();
         fetchDocuments();
         fetchSessions();
     }, []);
 
-    const [currentSession, setCurrentSession] = useState(null);
+
     const CreateSession = () => {
         axios.post(
             `${process.env.REACT_APP_API_URL}/user/practice/sessions`,
-            {},   // body (현재 빈 객체)
+            {
+                user_id: userId,
+                class_id: savedClassId ? parseInt(savedClassId, 10) : null,
+                title: "새 대화",
+                notes: `${userEmail} 님이 생성`,
+            },
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
@@ -93,9 +132,8 @@ export default function UserPractice() {
                 }
             }
         ).then(res => {
-            // console.log(res.data);
             setCurrentSession(res.data.session_id);
-            CreateSessionModels(res.data.session_id);
+            // CreateSessionModels(res.data.session_id);
             fetchSessions();
         }).catch(err => {
             console.log(err);
@@ -173,7 +211,7 @@ export default function UserPractice() {
     const getSimulatedResponse = async (model, question) => {
         try {
             const res = await axios.post(
-                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat`,
+                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`,
                 {
                     prompt_text: question,
                     session_model_ids: [defaltModels]
@@ -185,7 +223,7 @@ export default function UserPractice() {
                     }
                 }
             );
-            console.log(res.data.results[0].response_text);
+            // console.log(res.data.results[0].response_text);
             return res.data.results[0].response_text;
         } catch (err) {
             console.log(err);
@@ -201,7 +239,7 @@ export default function UserPractice() {
                 .map(file => file.knowledge_id);
 
             const res = await axios.post(
-                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat`,
+                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`,
                 {
                     prompt_text: question,
                     session_model_ids: sessionModelIdsArray,
@@ -279,7 +317,7 @@ export default function UserPractice() {
         setShowPlusMenu(false);
         setPlusMenuView('main');
         // Toast 메시지는 추후 구현
-        console.log(`프로젝트 변경: ${projectName}`);
+        // console.log(`프로젝트 변경: ${projectName}`);
     };
 
     const toggleModelDropdown = () => {
@@ -300,59 +338,6 @@ export default function UserPractice() {
     };
 
     const [defaltModels, setDefaltModels] = useState(0);
-    const CreateSessionModels = (session_id) => {
-        axios.post(
-            `${process.env.REACT_APP_API_URL}/user/practice/sessions/${session_id}/models`,
-            {
-                session_id: 0,
-                model_name: "gpt-4o-mini",
-                is_primary: true
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    "Content-Type": "application/json",
-                }
-            }
-        ).then(res => {
-            console.log(res.data);
-            setDefaltModels(res.data.session_model_id);
-        }).catch(err => {
-            console.log(err);
-        });
-    }
-
-    // 비교 모드용: 각 모델에 대한 세션 모델 생성
-    const CreateSessionModelsForCompare = async (session_id, models) => {
-        const newSessionModelIds = {};
-        for (const model of models) {
-            const modelInfo = modelMap[model];
-            if (modelInfo) {
-                try {
-                    const res = await axios.post(
-                        `${process.env.REACT_APP_API_URL}/user/practice/sessions/${session_id}/models`,
-                        {
-                            session_id: 0,
-                            model_name: modelInfo.apiName,
-                            is_primary: false
-                        },
-                        {
-                            headers: {
-                                Authorization: `Bearer ${accessToken}`,
-                                "Content-Type": "application/json",
-                            }
-                        }
-                    );
-                    newSessionModelIds[model] = res.data.session_model_id;
-                } catch (err) {
-                    console.log(`세션 모델 생성 실패 (${model}):`, err);
-                }
-            }
-        }
-        setSessionModelIds(prev => ({ ...prev, ...newSessionModelIds }));
-        return newSessionModelIds;
-    }
-
 
     const applySuggestion = (text) => {
         setMessageInput(text);
@@ -366,19 +351,29 @@ export default function UserPractice() {
 
         if (mode === 'single') {
             if (selectedModels.length > 1) {
-                setSelectedModels([selectedModels[0]]);
+                // setSelectedModels([selectedModels[0]]);
+                setSelectedModels([Assistant.find(model => model.id === allowedModelIds[0]).model_name]);
             }
             console.log('단일 모델 모드로 전환');
         } else {
             if (selectedModels.length < 2) {
-                console.log('비교 모드는 최소 2개 모델을 선택해주세요');
-                setSelectedModels(['gemini', 'gpt-4']);
+                // console.log('비교 모드는 최소 2개 모델을 선택해주세요');
+                // setSelectedModels(['gemini-2.5-flash', 'gpt-4o-mini']);
+                // console.log(allowedModelIds);
+                if (allowedModelIds.length < 2) {
+                    alert("사용가능한 모델이 2개 이상이 필요합니다. 파트너에게 문의해주세요");
+                    setCurrentMode('single');
+                    setSelectedModels([Assistant.find(model => model.id === allowedModelIds[0]).model_name]);
+                } else {
+                    setSelectedModels([Assistant.find(model => model.id === allowedModelIds[0]).model_name, Assistant.find(model => model.id === allowedModelIds[1]).model_name]);
+                }
             }
             console.log('모델 비교 모드로 전환');
         }
     };
 
     const handleModelCheckboxChange = (modelValue, checked) => {
+        console.log(modelValue, checked);
         if (checked) {
             if (currentMode === 'single') {
                 setSelectedModels([modelValue]);
@@ -404,6 +399,7 @@ export default function UserPractice() {
     const updateSelectedDisplay = () => {
         if (selectedModels.length === 1) {
             const info = getModelInfo(selectedModels[0]);
+            // console.log(info);
             return { text: info.name, icon: '🤖', bgColor: info.bgColor, color: info.color };
         } else if (selectedModels.length > 1) {
             return { text: `${selectedModels.length}개 모델 선택됨`, icon: '🤖', bgColor: 'var(--primary-100)', color: 'var(--primary-600)' };
@@ -417,6 +413,7 @@ export default function UserPractice() {
             return;
         }
         const message = messageInput.trim();
+        console.log(selectedModels);
 
         if (!message || isGenerating) return;
         if (selectedModels.length === 0) {
@@ -619,33 +616,12 @@ export default function UserPractice() {
 
     const selectedDisplay = updateSelectedDisplay();
 
-    const assistant_models = [
-        {
-            id: 'exaone',
-            name: 'exaone-3.5',
-            desc: 'LG AI Research의 최신 멀티모달 모델',
-            iconStyle: { background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }
-        },
-        {
-            id: 'gpt-4',
-            name: 'gpt-4o',
-            desc: 'OpenAI 최신 플래그쉽 모델',
-            iconClass: 'model-checkbox__icon--gpt'
-        },
-        {
-            id: 'gemini',
-            name: 'gemini-1.5-flash',
-            desc: 'Google의 자체적 AI 모델',
-            iconClass: 'model-checkbox__icon--gemini'
-        }
-    ];
-
     return (
         <>
             <div id="app">
                 <UserHeader />
                 <div className="container">
-                    <UserSidebar />
+                    <UserSidebar onClassChange={handleClassChange} />
 
                     <main className="main">
                         <div className="practice-container">
@@ -659,7 +635,7 @@ export default function UserPractice() {
                                 </div>
 
                                 <div className="chat-sidebar__history" id="chatHistory">
-                                    {sessions.map((session) => (
+                                    {filteredSessions.map((session) => (
                                         <div key={session.session_id} className={`chat-history-item ${currentSession === session.session_id ? 'chat-history-item--active' : ''}`} onClick={() => setCurrentSession(session.session_id)}>
                                             <div className="chat-history-item__project">{session.title ? session.title : '타이틀 없음'}</div>
                                             <div className="chat-history-item__title">session_id : {session.session_id}</div>
@@ -719,9 +695,9 @@ export default function UserPractice() {
                                             <span>파일 첨부 확인</span>
                                             <span className="chat-main__badge">코딩 에이전트</span>
                                         </div>
-                                        <div className="chat-main__actions">
+                                        {/* <div className="chat-main__actions">
                                             <button className="btn-icon" title="설정">⚙️</button>
-                                        </div>
+                                        </div> */}
                                     </div>
                                 )}
 
@@ -780,9 +756,9 @@ export default function UserPractice() {
                                                             </div>
                                                             <div className="compare-panel__model-name">{modelInfo.name}</div>
                                                         </div>
-                                                        <div className="compare-panel__actions">
+                                                        {/* <div className="compare-panel__actions">
                                                             <button className="btn-icon" style={{ width: '28px', height: '28px', fontSize: '14px' }} title="새로고침">🔄</button>
-                                                        </div>
+                                                        </div> */}
                                                     </div>
                                                     <div className="compare-panel__messages" id={`compareMessages-${model}`}>
                                                         {!hasMessages ? (
@@ -1085,18 +1061,20 @@ export default function UserPractice() {
 
                                     {showModelDropdown && (
                                         <div className="model-selector-dropdown" id="modelDropdown" ref={modelDropdownRef}>
-                                            {assistant_models.map((model) => (
+                                            {Assistant.map((model) => (
                                                 <label
                                                     key={model.id}
                                                     className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
                                                         }`}
+                                                    style={{ opacity: !allowedModelIds.includes(model.id) ? 0.5 : 1 }}
                                                 >
                                                     <input
                                                         type="checkbox"
                                                         className="model-checkbox-input"
                                                         value={model.id}
-                                                        checked={selectedModels.includes(model.id)}
-                                                        onChange={(e) => handleModelCheckboxChange(model.id, e.target.checked)}
+                                                        checked={selectedModels.includes(model.model_name)}
+                                                        onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
+                                                        disabled={!allowedModelIds.includes(model.id)}
                                                     />
                                                     <div
                                                         className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
@@ -1105,8 +1083,8 @@ export default function UserPractice() {
                                                         🤖
                                                     </div>
                                                     <div className="model-selector-dropdown__info">
-                                                        <div className="model-selector-dropdown__name">{model.name}</div>
-                                                        <div className="model-selector-dropdown__desc">{model.desc}</div>
+                                                        <div className="model-selector-dropdown__name">{model.model_name}</div>
+                                                        <div className="model-selector-dropdown__desc">{model.provider}</div>
                                                     </div>
                                                     <span className="model-selector-dropdown__check">
                                                         {selectedModels.includes(model.id) ? '✓' : ''}

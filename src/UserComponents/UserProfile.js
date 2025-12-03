@@ -247,10 +247,10 @@ export default function UserDashboard() {
                     <UserSidebar />
 
                     <main className="main">
-                        <div className="page-header">
+                        {/* <div className="page-header">
                             <h1 className="page-header__title">⚙️ 설정</h1>
                             <p className="page-header__subtitle">계정 정보 및 환경 설정을 관리하세요</p>
-                        </div>
+                        </div> */}
 
 
                         <div className="settings-layout">
@@ -340,7 +340,8 @@ export default function UserDashboard() {
                                                 return (
                                                     <div className="class-card" key={classInfo.class_id}>
                                                         <div className="class-card__header">
-                                                            <div className="class-card__icon">📚</div>
+                                                            {/* <div className="class-card__icon">📚</div> */}
+                                                            {classInfo.course_title}
                                                             {statusBadge}
                                                         </div>
 
@@ -354,7 +355,7 @@ export default function UserDashboard() {
 
                                                             <div className="class-card__info-item">
                                                                 <span className="class-card__info-icon">📅</span>
-                                                                <span>{classInfo.startDate} ~ {classInfo.endDate}</span>
+                                                                <span>{classInfo.class_start_at.split('T')[0]} ~ {classInfo.class_end_at.split('T')[0]}</span>
                                                             </div>
                                                         </div>
 

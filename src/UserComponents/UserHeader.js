@@ -14,6 +14,8 @@ export default function UserHeader({ onAccountData, onProfileData }) {
             },
         }).then(response => {
             sessionStorage.setItem("partner_id", response.data.partner_id);
+            sessionStorage.setItem("user_id", response.data.user_id);
+            sessionStorage.setItem("user_email", response.data.email);
             // console.log(response.data);
             setMyaccount(response.data);
             // 부모 컴포넌트로 데이터 전달
@@ -50,7 +52,11 @@ export default function UserHeader({ onAccountData, onProfileData }) {
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
     const handleLogout = () => {
-        sessionStorage.removeItem("access_token");
+        sessionStorage.clear();
+        // sessionStorage.removeItem("access_token");
+        // sessionStorage.removeItem("user_id");
+        // sessionStorage.removeItem("partner_id");
+        // sessionStorage.removeItem("user_email");
         window.location.href = "/login";
     }
 

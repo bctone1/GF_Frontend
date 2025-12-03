@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { setSelectedClass, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
-export default function UserSidebar() {
+export default function UserSidebar({ onClassChange }) {
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
 
@@ -22,16 +22,18 @@ export default function UserSidebar() {
             const savedClassId = getSelectedClassId();
             // console.log(savedClassId);
             if (savedClassId) {
-                const isValid = response.data.items.some(c => c.id === savedClassId);
+                // 타입 불일치 해결: class_id를 문자열로 변환하여 비교
+                const isValid = response.data.items.some(c => String(c.class_id) === String(savedClassId));
                 if (isValid) {
+                    // alert(isValid);
                     setSelectedClassId(savedClassId);
-                    const selectedClass = response.data.items.find(c => c.id === savedClassId);
+                    const selectedClass = response.data.items.find(c => String(c.class_id) === String(savedClassId));
                     if (selectedClass) {
                         setSelectedClass(savedClassId, selectedClass.class_title);
                     }
                 } else {
-                    // setSelectedClass(null, null);
-                    // setSelectedClassId('');
+                    setSelectedClass(null, null);
+                    setSelectedClassId('');
                 }
             }
         }).catch(error => {
@@ -54,11 +56,27 @@ export default function UserSidebar() {
         const classId = e.target.value;
         setSelectedClassId(classId);
         if (classId) {
-            const selectedClass = myClasses.find(c => c.id === classId);
+            // console.log(classId);
+            // 타입 불일치 해결: class_id를 문자열로 변환하여 비교
+            const selectedClass = myClasses.find(c => String(c.class_id) === String(classId));
             const classTitle = selectedClass ? selectedClass.class_title : null;
+            // console.log(selectedClass);
+            const allowed_model_ids = selectedClass ? selectedClass.allowed_model_ids : [1];
+            // console.log(allowed_model_ids);
+            // console.log(classTitle);
+            sessionStorage.setItem("allowed_model_ids", allowed_model_ids);
             setSelectedClass(classId, classTitle);
+
+            // 부모 컴포넌트에 클래스 변경 알림
+            if (onClassChange) {
+                onClassChange(classId, allowed_model_ids);
+            }
         } else {
             setSelectedClass(null, null);
+            // 클래스가 선택 해제된 경우도 부모에 알림
+            if (onClassChange) {
+                onClassChange(null, [1]);
+            }
         }
     };
 
@@ -91,7 +109,7 @@ export default function UserSidebar() {
                         >
                             <option value="">📚 과목을 선택하세요</option>
                             {myClasses.map((myClass) => (
-                                <option value={myClass.id} key={myClass.class_id}>{myClass.class_title}</option>
+                                <option value={myClass.class_id} key={myClass.class_id}>{myClass.class_title}</option>
                             ))}
                         </select>
                     </div>
