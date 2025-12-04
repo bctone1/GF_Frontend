@@ -551,7 +551,7 @@ export default function PartnerProjectManagement() {
                                         type="text"
                                         id="courseName"
                                         name="courseName"
-                                        placeholder="AI 기초과정 (선택사항)"
+                                        placeholder="소속이 없는 경우 '무소속 과정'으로 입력해주세요."
                                         value={courseNameInput}
                                         onChange={handleCourseNameChange}
                                         onKeyDown={handleCourseNameKeyDown}
