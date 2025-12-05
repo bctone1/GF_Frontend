@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
@@ -16,21 +16,39 @@ export default function UserKnowledge() {
 
     const [viewType, setViewType] = useState('grid');
 
-    const fetchDocuments = async () => {
-        const response = await axios.get(
-            `${process.env.REACT_APP_API_URL}/user/document`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            }
-        );
-        console.log('Documents:', response.data.items);
-        setDocuments(response.data.items);
-    }
+    const fetchDocuments = useCallback(async () => {
+        try {
+            const response = await axios.get(
+                `${process.env.REACT_APP_API_URL}/user/document`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+            console.log('Documents:', response.data.items);
+            setDocuments(response.data.items);
+        } catch (error) {
+            console.error('Failed to fetch documents:', error);
+        }
+    }, [accessToken]);
+    
     useEffect(() => {
         fetchDocuments();
-    }, []);
+    }, [fetchDocuments]);
+
+    // progress가 100이 아닌 항목이 있으면 5초마다 자동 갱신
+    useEffect(() => {
+        const hasInProgress = documents.some(doc => doc.progress < 100);
+        
+        if (!hasInProgress) return;
+
+        const intervalId = setInterval(() => {
+            fetchDocuments();
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [documents, fetchDocuments]);
 
     // 파일 업로드 함수
     const uploadFiles = async (files) => {
@@ -371,11 +389,56 @@ export default function UserKnowledge() {
 
                                                 <div className="document-status">
                                                     <div className="status-bar">
-                                                        <div className={`status-indicator ${document.status === 'active' ? 'status-indicator--ready' : 'status-indicator--processing'}`}></div>
-                                                        <span style={{ color: `${document.status === 'active' ? 'var(--employee-primary)' : 'var(--employee-accent)'}`, fontWeight: 'var(--font-semibold)' }}>
-                                                            {document.status}
+                                                        <div 
+                                                            className={`status-indicator ${document.status === 'ready' ? 'status-indicator--ready' : 'status-indicator--processing'}`}
+                                                            style={document.status !== 'ready' ? {
+                                                                animation: 'pulse 1.5s ease-in-out infinite'
+                                                            } : {}}
+                                                        ></div>
+                                                        <span style={{ 
+                                                            color: getStatusColor(document.status), 
+                                                            fontWeight: 'var(--font-semibold)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px'
+                                                        }}>
+                                                            {getStatusLabel(document.status)}
+                                                            {document.status !== 'ready' && document.status !== 'failed' && (
+                                                                <span style={{
+                                                                    fontSize: '0.75em',
+                                                                    animation: 'pulse 1.5s ease-in-out infinite'
+                                                                }}>⋯</span>
+                                                            )}
                                                         </span>
                                                     </div>
+                                                    {document.status !== 'ready' && document.status !== 'failed' && (
+                                                        <div style={{
+                                                            width: '100%',
+                                                            height: '4px',
+                                                            backgroundColor: 'var(--gray-200)',
+                                                            borderRadius: 'var(--radius-full)',
+                                                            marginTop: '8px',
+                                                            overflow: 'hidden'
+                                                        }}>
+                                                            <div style={{
+                                                                width: `${document.progress || 0}%`,
+                                                                height: '100%',
+                                                                backgroundColor: getStatusColor(document.status),
+                                                                borderRadius: 'var(--radius-full)',
+                                                                transition: 'width 0.3s ease',
+                                                                animation: document.progress < 100 ? 'pulse 1.5s ease-in-out infinite' : 'none'
+                                                            }}></div>
+                                                        </div>
+                                                    )}
+                                                    {document.status === 'failed' && document.error_message && (
+                                                        <div style={{
+                                                            fontSize: 'var(--text-xs)',
+                                                            color: 'var(--error)',
+                                                            marginTop: '4px'
+                                                        }}>
+                                                            {document.error_message}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="document-tags">
@@ -420,9 +483,42 @@ export default function UserKnowledge() {
                                                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>크기</div>
                                                 </div>
                                                 <div>
-                                                    <span className="session-badge session-badge--active" style={{ fontSize: 'var(--text-xs)' }}>
-                                                        준비됨
+                                                    <span 
+                                                        className={`session-badge ${document.status === 'ready' ? 'session-badge--active' : ''}`} 
+                                                        style={{ 
+                                                            fontSize: 'var(--text-xs)',
+                                                            backgroundColor: document.status === 'ready' ? undefined : getStatusColor(document.status),
+                                                            color: document.status === 'ready' ? undefined : 'white',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px'
+                                                        }}
+                                                    >
+                                                        {getStatusLabel(document.status)}
+                                                        {document.status !== 'ready' && document.status !== 'failed' && (
+                                                            <span style={{
+                                                                animation: 'pulse 1.5s ease-in-out infinite'
+                                                            }}>⋯</span>
+                                                        )}
                                                     </span>
+                                                    {document.status !== 'ready' && document.status !== 'failed' && (
+                                                        <div style={{
+                                                            width: '100px',
+                                                            height: '3px',
+                                                            backgroundColor: 'var(--gray-200)',
+                                                            borderRadius: 'var(--radius-full)',
+                                                            marginTop: '4px',
+                                                            overflow: 'hidden'
+                                                        }}>
+                                                            <div style={{
+                                                                width: `${document.progress || 0}%`,
+                                                                height: '100%',
+                                                                backgroundColor: getStatusColor(document.status),
+                                                                borderRadius: 'var(--radius-full)',
+                                                                transition: 'width 0.3s ease'
+                                                            }}></div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -450,4 +546,24 @@ function formatFileSize(bytes) {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function getStatusLabel(status) {
+    const statusMap = {
+        'uploading': '업로드 중',
+        'embedding': '임베딩 중',
+        'ready': '준비됨',
+        'failed': '실패'
+    };
+    return statusMap[status] || status;
+}
+
+function getStatusColor(status) {
+    const colorMap = {
+        'uploading': 'var(--employee-accent)',
+        'embedding': 'var(--employee-accent)',
+        'ready': 'var(--employee-primary)',
+        'failed': 'var(--error)'
+    };
+    return colorMap[status] || 'var(--text-secondary)';
 }
