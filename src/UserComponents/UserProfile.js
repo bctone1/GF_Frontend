@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, use } from 'react';
+import { useState, useRef } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
@@ -39,22 +39,7 @@ export default function UserDashboard() {
     // };
     // const classArray = Object.values(classes);
     const [classArray, setClassArray] = useState([]);
-    const fetchMyClasses = () => {
-        axios.get(`${process.env.REACT_APP_API_URL}/user/classes`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        }).then(response => {
-            console.log(response.data.items);
-            setClassArray(response.data.items);
-        }).catch(error => {
-            console.log(error);
-        });
-    }
-
-    useEffect(() => {
-        fetchMyClasses();
-    }, [])
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const [inviteStatus, setInviteStatus] = useState(false);
     const inviteCodeRefs = useRef([]);
@@ -128,9 +113,18 @@ export default function UserDashboard() {
                 console.log(response.data);
                 setInviteStatus(false);
                 showToast(`강의가 등록되었습니다!`, 'success');
+                // UserSidebar에서 클래스 목록 새로고침
+                setRefreshTrigger(prev => prev + 1);
             }).catch(error => {
                 console.log(error);
             });
+        }
+    };
+
+    // UserSidebar에서 클래스 데이터를 받아오는 콜백
+    const handleClassesData = (classes, isLoading) => {
+        if (!isLoading) {
+            setClassArray(classes);
         }
     };
 
@@ -244,7 +238,7 @@ export default function UserDashboard() {
             <div id="app">
                 <UserHeader />
                 <div className="container">
-                    <UserSidebar />
+                    <UserSidebar onClassesData={handleClassesData} refreshTrigger={refreshTrigger} />
 
                     <main className="main">
                         {/* <div className="page-header">
