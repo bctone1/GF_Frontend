@@ -63,7 +63,7 @@ export default function UserKnowledge() {
                         Authorization: `Bearer ${accessToken}`,
                         'Content-Type': 'multipart/form-data',
                     },
-                    timeout: 300000, // 5분 timeout 설정
+                    timeout: 300000,
                 }
             );
 
@@ -371,9 +371,9 @@ export default function UserKnowledge() {
 
                                                 <div className="document-status">
                                                     <div className="status-bar">
-                                                        <div className="status-indicator status-indicator--ready"></div>
-                                                        <span style={{ color: 'var(--employee-primary)', fontWeight: 'var(--font-semibold)' }}>
-                                                            RAG 준비 완료
+                                                        <div className={`status-indicator ${document.status === 'active' ? 'status-indicator--ready' : 'status-indicator--processing'}`}></div>
+                                                        <span style={{ color: `${document.status === 'active' ? 'var(--employee-primary)' : 'var(--employee-accent)'}`, fontWeight: 'var(--font-semibold)' }}>
+                                                            {document.status}
                                                         </span>
                                                     </div>
                                                 </div>
