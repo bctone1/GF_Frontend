@@ -174,6 +174,20 @@
       pointer-events: none;
   }
 
+  .upload-dropzone--error {
+      border-color: var(--error);
+      background: #fef2f2;
+      cursor: default;
+  }
+
+  .upload-dropzone--error .upload-icon {
+      opacity: 1;
+  }
+
+  .upload-dropzone--error .upload-text {
+      color: var(--error);
+  }
+
   .upload-icon {
       font-size: 64px;
       margin-bottom: var(--space-3);
@@ -401,6 +415,15 @@
 
       50% {
           opacity: 0.5;
+      }
+  }
+
+  @keyframes spin {
+      from {
+          transform: rotate(0deg);
+      }
+      to {
+          transform: rotate(360deg);
       }
   }
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { showToast } from '../utill/utill';
@@ -13,8 +13,12 @@ export default function UserDashboard() {
     const [partnerSignupStatus, setPartnerSignupStatus] = useState(false);
     const [myprofile, setMyprofile] = useState(null);
     const [myaccount, setMyaccount] = useState(null);
+    const [myClasses, setMyClasses] = useState([]);
+    const [isClassesLoading, setIsClassesLoading] = useState(true);
+    const [showInviteOverlay, setShowInviteOverlay] = useState(false);
+    const [isInitialDelayPassed, setIsInitialDelayPassed] = useState(false);
+    const [refreshClassesTrigger, setRefreshClassesTrigger] = useState(0);
 
-    // UserHeader에서 받아온 데이터를 처리하는 콜백 함수들
     const handleAccountData = (accountData) => {
         setMyaccount(accountData);
         // console.log(accountData);
@@ -23,6 +27,11 @@ export default function UserDashboard() {
     const handleProfileData = (profileData) => {
         setMyprofile(profileData);
         // console.log(profileData);
+    };
+
+    const handleClassesData = (classes, isLoading) => {
+        setMyClasses(classes);
+        setIsClassesLoading(isLoading);
     };
 
     const handleSubmit = (e) => {
@@ -40,6 +49,8 @@ export default function UserDashboard() {
                 // console.log(response.data);
                 setInviteStatus(false);
                 showToast(`강의가 등록되었습니다!`, 'info');
+                // UserSidebar에서 클래스 목록을 다시 가져오도록 트리거
+                setRefreshClassesTrigger(prev => prev + 1);
             }).catch(error => {
                 console.log(error);
             });
@@ -96,6 +107,35 @@ export default function UserDashboard() {
     };
 
     const accessToken = sessionStorage.getItem("access_token");
+
+    // 컴포넌트 마운트 후 1초 지연 설정
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsInitialDelayPassed(true);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    // 모달 표시를 1초 지연 및 클래스 존재 여부에 따라 제어
+    useEffect(() => {
+        // 초기 1초 지연이 지나지 않았으면 overlay 숨기기
+        if (!isInitialDelayPassed) {
+            setShowInviteOverlay(false);
+            return;
+        }
+
+        // 클래스가 있으면 overlay 숨기기
+        if (myClasses.length > 0 || myaccount?.partner_id) {
+            setShowInviteOverlay(false);
+            return;
+        }
+
+        // 클래스가 없고 로딩이 완료된 경우 overlay 표시
+        if (!isClassesLoading && myClasses.length === 0 && !myaccount?.partner_id) {
+            setShowInviteOverlay(true);
+        }
+    }, [isInitialDelayPassed, isClassesLoading, myClasses.length, myaccount?.partner_id]);
 
     const handlePartnerSignupSubmit = (e) => {
         e.preventDefault();
@@ -323,6 +363,8 @@ export default function UserDashboard() {
                 // console.log(response.data);
                 showToast('강의가 등록되었습니다.', 'success');
                 setInviteStatus(false);
+                // UserSidebar에서 클래스 목록을 다시 가져오도록 트리거
+                setRefreshClassesTrigger(prev => prev + 1);
             });
         } else {
             showToast('초대코드를 6자리 이상 입력해주세요', 'error');
@@ -331,7 +373,7 @@ export default function UserDashboard() {
 
     return (
         <>
-            <div className={`invite-overlay ${inviteStatus && !myaccount?.partner_id ? '' : 'invite-overlay--hidden'}`} id="inviteOverlay">
+            <div className={`invite-overlay ${inviteStatus && showInviteOverlay ? '' : 'invite-overlay--hidden'}`} id="inviteOverlay">
                 <div className="invite-modal">
                     <div className="invite-modal__header">
                         <div className="invite-modal__icon">🎓</div>
@@ -610,7 +652,10 @@ export default function UserDashboard() {
                     onProfileData={handleProfileData}
                 />
                 <div className="container">
-                    <UserSidebar />
+                    <UserSidebar 
+                        onClassesData={handleClassesData}
+                        refreshTrigger={refreshClassesTrigger}
+                    />
                     <main className="main">
                         <div className="page-header">
                             {/* <h1 className="page-header__title">🏠 대시보드</h1>

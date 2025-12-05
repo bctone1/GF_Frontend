@@ -3,31 +3,49 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { setSelectedClass, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
-export default function UserSidebar({ onClassChange }) {
+export default function UserSidebar({ onClassChange, onClassesData, refreshTrigger }) {
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
 
     const [myClasses, setMyClasses] = useState([]);
     const [selectedClassId, setSelectedClassId] = useState('');
+    const [isClassesLoading, setIsClassesLoading] = useState(true);
     const accessToken = sessionStorage.getItem("access_token");
 
     const fetchMyClasses = () => {
+        if (!accessToken) {
+            setIsClassesLoading(false);
+            if (onClassesData) {
+                onClassesData([], false);
+            }
+            return;
+        }
+
+        setIsClassesLoading(true);
         axios.get(`${process.env.REACT_APP_API_URL}/user/classes`, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
             },
         }).then(response => {
-            // console.log(response.data.items);
-            setMyClasses(response.data.items);
+            console.log(response.data.items);
+            const classes = response.data.items || [];
+            setMyClasses(classes);
+            setIsClassesLoading(false);
+            
+            // 부모 컴포넌트에 클래스 데이터 전달
+            if (onClassesData) {
+                onClassesData(classes, false);
+            }
+
             const savedClassId = getSelectedClassId();
             // console.log(savedClassId);
             if (savedClassId) {
                 // 타입 불일치 해결: class_id를 문자열로 변환하여 비교
-                const isValid = response.data.items.some(c => String(c.class_id) === String(savedClassId));
+                const isValid = classes.some(c => String(c.class_id) === String(savedClassId));
                 if (isValid) {
                     // alert(isValid);
                     setSelectedClassId(savedClassId);
-                    const selectedClass = response.data.items.find(c => String(c.class_id) === String(savedClassId));
+                    const selectedClass = classes.find(c => String(c.class_id) === String(savedClassId));
                     if (selectedClass) {
                         setSelectedClass(savedClassId, selectedClass.class_title);
                     }
@@ -38,6 +56,10 @@ export default function UserSidebar({ onClassChange }) {
             }
         }).catch(error => {
             console.log(error);
+            setIsClassesLoading(false);
+            if (onClassesData) {
+                onClassesData([], false);
+            }
         });
     }
 
@@ -51,6 +73,13 @@ export default function UserSidebar({ onClassChange }) {
     useEffect(() => {
         fetchMyClasses();
     }, []);
+
+    // refreshTrigger가 변경되면 클래스 목록 다시 가져오기 (0보다 클 때만)
+    useEffect(() => {
+        if (refreshTrigger > 0) {
+            fetchMyClasses();
+        }
+    }, [refreshTrigger]);
 
     const handleClassChange = (e) => {
         const classId = e.target.value;
