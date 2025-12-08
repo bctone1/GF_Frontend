@@ -9,7 +9,7 @@
 
   /* 레이아웃 */
   .documents-layout {
-      display: grid;
+      /* display: grid; */
       grid-template-columns: 280px 1fr;
       gap: var(--space-6);
       height: calc(100vh - var(--header-height) - 100px);
