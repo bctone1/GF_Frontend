@@ -97,7 +97,7 @@ export default function UserDashboard() {
                 showToast(`강의가 등록되었습니다!`, 'success');
                 setRefreshTrigger(prev => prev + 1);
             }).catch(error => {
-                console.log(error);
+                showToast(`초대코드가 올바르지 않습니다.`, 'error');
             });
         }
     };

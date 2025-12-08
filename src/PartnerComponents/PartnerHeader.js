@@ -51,7 +51,7 @@ export default function PartnerHeader() {
                     <button id="menuToggle" className="header__icon-button hidden-desktop">
                         <span>☰</span>
                     </button>
-                    <a href="/partner/dashboard" className="header__logo">
+                    <a href="/partner/project-management" className="header__logo">
                         {/* <span className="header__logo-icon">🌱</span>
                         <span>GrowFit Partner</span> */}
                         <img className="auth-logo-icon-header" src="/GrowFit.png" alt="GrowFit" />

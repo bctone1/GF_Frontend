@@ -166,17 +166,6 @@ export default function UserDashboard() {
 
     const [organizations, setOrganizations] = useState([
         { id: 1, name: "천강", code: "00001", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 2, name: "천둥", code: "00002", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 3, name: "천벌", code: "00003", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 4, name: "천국", code: "00004", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 5, name: "천사", code: "00005", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 6, name: "천지", code: "00006", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 7, name: "천주", code: "00007", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 8, name: "천명", code: "00008", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 9, name: "서울우유", code: "00009", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 10, name: "부산우유", code: "000010", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 11, name: "서울역1번출구", code: "00011", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" },
-        { id: 12, name: "서울역12번출구", code: "00012", status: "active", created_at: "2025-01-01", updated_at: "2025-01-01" }
     ]);
 
     // 자동완성 관련 state
@@ -652,7 +641,7 @@ export default function UserDashboard() {
                     onProfileData={handleProfileData}
                 />
                 <div className="container">
-                    <UserSidebar 
+                    <UserSidebar
                         onClassesData={handleClassesData}
                         refreshTrigger={refreshClassesTrigger}
                     />

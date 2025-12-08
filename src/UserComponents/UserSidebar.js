@@ -85,24 +85,16 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
         const classId = e.target.value;
         setSelectedClassId(classId);
         if (classId) {
-            // console.log(classId);
-            // 타입 불일치 해결: class_id를 문자열로 변환하여 비교
             const selectedClass = myClasses.find(c => String(c.class_id) === String(classId));
             const classTitle = selectedClass ? selectedClass.class_title : null;
-            // console.log(selectedClass);
             const allowed_model_ids = selectedClass ? selectedClass.allowed_model_ids : [1];
-            // console.log(allowed_model_ids);
-            // console.log(classTitle);
             sessionStorage.setItem("allowed_model_ids", allowed_model_ids);
             setSelectedClass(classId, classTitle);
-
-            // 부모 컴포넌트에 클래스 변경 알림
             if (onClassChange) {
                 onClassChange(classId, allowed_model_ids);
             }
         } else {
             setSelectedClass(null, null);
-            // 클래스가 선택 해제된 경우도 부모에 알림
             if (onClassChange) {
                 onClassChange(null, [1]);
             }
@@ -146,7 +138,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
 
                 <nav className="sidebar__nav">
                     <ul className="sidebar__menu">
-                        <li className="sidebar__menu-item">
+                        {/* <li className="sidebar__menu-item">
                             <Link
                                 to="/user/dashboard"
                                 className={`sidebar__menu-link ${currentMenu === 'dashboard' ? 'sidebar__menu-link--active' : ''}`}
@@ -154,7 +146,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">🏠</span>
                                 <span>대시보드</span>
                             </Link>
-                        </li>
+                        </li> */}
 
 
                         <li className="sidebar__menu-item">

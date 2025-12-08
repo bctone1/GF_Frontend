@@ -1104,6 +1104,18 @@
         border-color: var(--error);
     }
 
+    .class-card__action-btn--ended {
+        color: var(--text-tertiary);
+    }
+
+    .class-card__action-btn--ended:hover {
+        border-radius: var(--radius-md);
+        background: var(--background);
+        color: var(--text-tertiary);
+    }
+
+
+
     .no-classes {
         text-align: center;
         padding: var(--space-12) var(--space-6);

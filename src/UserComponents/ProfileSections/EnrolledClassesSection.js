@@ -1,6 +1,20 @@
 import React from 'react';
+import { showToast } from '../../utill/utill';
+import { useNavigate } from 'react-router-dom';
 
 export default function EnrolledClassesSection({ classArray, onInviteClick }) {
+    const navigate = useNavigate();
+
+    const handlePracticeClick = (daysLeft, classInfo) => {
+        console.log(classInfo);
+        if (daysLeft < 0) {
+            showToast(`강의가 종료되었습니다.`, 'error');
+        } else {
+            // navigate(`/user/practice/`);
+        }
+    }
+
+
     return (
         <div id="enrolled-section" className="user-settings-section user-settings-section--active">
             <h2 className="user-settings-section__title">수강 중인 강의</h2>
@@ -16,11 +30,14 @@ export default function EnrolledClassesSection({ classArray, onInviteClick }) {
 
                 <div id="classList" className="class-list">
                     {classArray.map((classInfo) => {
-                        const isActive = classInfo.enrollment_status === 'active';
-                        const statusBadge = isActive ? (
-                            <span className="class-card__badge class-card__badge--active">진행 중</span>
-                        ) : (
+                        const daysLeft = Math.floor(
+                            (new Date(classInfo.class_end_at) - new Date()) / (1000 * 60 * 60 * 24)
+                        );
+
+                        const statusBadge = daysLeft < 0 ? (
                             <span className="class-card__badge class-card__badge--ended">종료됨</span>
+                        ) : (
+                            <span className="class-card__badge class-card__badge--active">진행 중</span>
                         );
 
                         return (
@@ -45,7 +62,9 @@ export default function EnrolledClassesSection({ classArray, onInviteClick }) {
                                 </div>
 
                                 <div className="class-card__actions">
-                                    <button className="class-card__action-btn">
+                                    <button className={`class-card__action-btn ${daysLeft < 0 ? 'class-card__action-btn--ended' : ''}`}
+                                        onClick={() => handlePracticeClick(daysLeft, classInfo)}
+                                    >
                                         실습하기
                                     </button>
 

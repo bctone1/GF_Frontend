@@ -69,15 +69,8 @@ export function createNotificationDropdown() {
     </div>
     <div class="dropdown__body">
       <div class="notification-item">
-        <div class="notification-item__icon notification-item__icon--warning">⚠️</div>
-        <div class="notification-item__content">
-          <p class="notification-item__title">과제 제출 마감 임박</p>
-          <p class="notification-item__time">2시간 전</p>
-        </div>
+        Phase 2에서 구현 예정입니다
       </div>
-    </div>
-    <div class="dropdown__footer">
-      <a href="#" class="dropdown__link">모든 알림 보기</a>
     </div>
   `;
 

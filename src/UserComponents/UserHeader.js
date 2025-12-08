@@ -82,7 +82,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
                                 {/* <span className="mode-toggle-btn__icon">👨‍🎓</span> */}
                                 <span className="mode-toggle-btn__text">수강생</span>
                             </button>
-                            <button className="mode-toggle-btn" onClick={() => window.location.href = '/partner/dashboard'}>
+                            <button className="mode-toggle-btn" onClick={() => window.location.href = '/partner/project-management'}>
                                 {/* <span className="mode-toggle-btn__icon">👨‍🏫</span> */}
                                 <span className="mode-toggle-btn__text">강사</span>
                             </button>
