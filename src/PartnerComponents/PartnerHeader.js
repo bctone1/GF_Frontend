@@ -61,7 +61,7 @@ export default function PartnerHeader() {
                 <div className="header__right">
 
                     <div className="header__mode-toggle">
-                        <button className="mode-toggle-btn-partner" onClick={() => window.location.href = '/user/dashboard'}>
+                        <button className="mode-toggle-btn-partner" onClick={() => window.location.href = '/user/profile'}>
                             {/* <span className="mode-toggle-btn__icon">👨‍🎓</span> */}
                             <span className="mode-toggle-btn__text">수강생</span>
                         </button>

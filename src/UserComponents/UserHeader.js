@@ -67,7 +67,7 @@ export default function UserHeader({ onAccountData, onProfileData }) {
                     <button id="menuToggle" className="header__icon-button hidden-desktop">
                         <span>☰</span>
                     </button>
-                    <a href="/user/dashboard" className="header__logo">
+                    <a href="/user/profile" className="header__logo">
                         {/* <span className="header__logo-icon">🌱</span>
                         <span>GrowFit</span> */}
                         <img className="auth-logo-icon-header" src="/GrowFit.png" alt="GrowFit" />
