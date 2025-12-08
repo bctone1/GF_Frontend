@@ -11,6 +11,7 @@
      --partner-success: #10b981;
      --partner-warning: #f59e0b;
      --partner-danger: #ef4444;
+
  }
 
  /* ========== 페이지 헤더 ========== */
@@ -147,6 +148,10 @@
      background: #d1fae5;
      color: var(--partner-success);
  }
+ .project-card__status--end {
+    background: #fee2e2;
+    color: var(--partner-danger);
+}
 
  .status-dot {
      width: 6px;

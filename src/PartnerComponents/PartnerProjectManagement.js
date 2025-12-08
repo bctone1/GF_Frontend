@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
@@ -300,6 +300,31 @@ export default function PartnerProjectManagement() {
         fetchCourse();
         fetchAssistant();
     }, []);
+
+    // 진행 중과 종료됨 강의 개수 계산
+    const { activeCount, completedCount } = useMemo(() => {
+        const now = new Date();
+        let active = 0;
+        let completed = 0;
+
+        myClasses.forEach((myclass) => {
+            if (!myclass.start_at || !myclass.end_at) return;
+
+            const startDate = new Date(myclass.start_at);
+            const endDate = new Date(myclass.end_at);
+
+            // 진행 중: 현재 날짜가 시작일과 종료일 사이에 있는 경우
+            if (now >= startDate && now <= endDate) {
+                active++;
+            }
+            // 종료됨: 현재 날짜가 종료일을 지난 경우
+            else if (now > endDate) {
+                completed++;
+            }
+        });
+
+        return { activeCount: active, completedCount: completed };
+    }, [myClasses]);
 
     // 과정명 자동완성 필터링
     useEffect(() => {
@@ -774,120 +799,103 @@ export default function PartnerProjectManagement() {
                                         <div className="stat-icon stat-icon--primary">📁</div>
                                     </div>
                                     <div className="stat-card__label">전체 강의</div>
-                                    <div className="stat-card__value">3개</div>
+                                    <div className="stat-card__value">{myClasses.length}개</div>
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-card__header">
                                         <div className="stat-icon stat-icon--success">🚀</div>
                                     </div>
                                     <div className="stat-card__label">진행 중</div>
-                                    <div className="stat-card__value">3개</div>
+                                    <div className="stat-card__value">{activeCount}개</div>
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-card__header">
                                         <div className="stat-icon stat-icon--secondary">✅</div>
                                     </div>
                                     <div className="stat-card__label">종료됨</div>
-                                    <div className="stat-card__value">0개</div>
+                                    <div className="stat-card__value">{completedCount}개</div>
                                 </div>
-                                <div className="stat-card">
+                                {/* <div className="stat-card">
                                     <div className="stat-card__header">
                                         <div className="stat-icon stat-icon--warning">👥</div>
                                     </div>
                                     <div className="stat-card__label">총 학생 수</div>
                                     <div className="stat-card__value">127명</div>
-                                </div>
+                                </div> */}
                             </div>
 
 
                             <div className="projects-grid">
 
-                                {myClasses.map((myclass) => (
-                                    <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
-                                        <div className="project-card__header">
+                                {myClasses.map((myclass) => {
+                                    const daysLeft = Math.floor(
+                                        (new Date(myclass.end_at) - new Date()) / (1000 * 60 * 60 * 24)
+                                    );
 
-                                            <div className="project-card__status project-card__status--active">
-                                                <span className="status-dot"></span>
-                                                {myclass.status}
+                                    return (
+                                        <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
+                                            <div className="project-card__header">
+                                                <div className={`project-card__status project-card__status--${daysLeft < 0 ? 'end' : 'active'}`}>
+                                                    <span className="status-dot"></span>
+                                                    {daysLeft < 0 ? '종료' : `D-${daysLeft} 남음`}
+                                                </div>
+                                            </div>
+
+                                            <h3 className="project-card__title">{myclass.name}</h3>
+
+                                            <div className="project-card__meta">
+                                                {/* <div className="project-card__meta-item">
+                                                    <span>💰</span>
+                                                    <span>20,000,000원</span>
+                                                </div> */}
+                                                <div className="project-card__meta-item">
+                                                    <span>👥</span>
+                                                    <span>{myclass.capacity}명</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="project-card__meta">
+                                                <div className="project-card__meta-item">
+                                                    <span>📅</span>
+                                                    <span>{myclass.start_at.split('T')[0]} ~ {myclass.end_at.split('T')[0]}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* <div className="project-settlement">
+                                                <div className="settlement-row">
+                                                    <span className="settlement-label">플랫폼 사용료</span>
+                                                    <span className="settlement-value">100,000원</span>
+                                                </div>
+                                                <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × 20명</p>
+
+                                                <div className="cost-divider"></div>
+
+                                                <div className="settlement-row">
+                                                    <span className="settlement-label">API 사용료 (예상)</span>
+                                                    <span className="settlement-value">1,200,000원</span>
+                                                </div>
+                                                <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × 59일 (70% 사용률 가정)</p>
+
+                                                <div className="cost-divider"></div>
+
+                                                <div className="settlement-row settlement-row--total">
+                                                    <span className="settlement-label">총 예상 비용</span>
+                                                    <span className="settlement-value">1,300,000원</span>
+                                                </div>
+                                            </div> */}
+
+                                            <div className="project-card__actions">
+                                                <button
+                                                    className="project-action-btn project-action-btn--primary"
+                                                    onClick={() => alert(myclass.invite_codes[0].code)}
+                                                >
+                                                    코드확인
+                                                </button>
                                             </div>
                                         </div>
+                                    );
+                                })}
 
-                                        <h3 className="project-card__title">{myclass.name}</h3>
-
-                                        <div className="project-card__meta">
-                                            <div className="project-card__meta-item">
-                                                <span>💰</span>
-                                                <span>20,000,000원</span>
-                                            </div>
-                                            <div className="project-card__meta-item">
-                                                <span>👥</span>
-                                                <span>{myclass.capacity}명</span>
-                                            </div>
-                                        </div>
-                                        <div className="project-card__meta">
-                                            <div className="project-card__meta-item">
-                                                <span>📅</span>
-                                                <span>{myclass.start_at.split('T')[0]} ~ {myclass.end_at.split('T')[0]}</span>
-                                            </div>
-                                            <div className="project-card__meta-item">
-                                                <span>⏰</span>
-                                                <span>
-                                                    {(() => {
-                                                        const daysLeft = Math.floor((new Date(myclass.end_at) - new Date()) / (1000 * 60 * 60 * 24));
-                                                        return daysLeft < 0 ? '종료' : `D-${daysLeft} 남음`;
-                                                    })()}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* <div className="project-settlement">
-                                            <div className="settlement-row">
-                                                <span className="settlement-label">
-
-                                                    플랫폼 사용료
-                                                </span>
-                                                <span className="settlement-value">100,000원</span>
-                                            </div>
-                                            <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × 20명</p>
-
-                                            <div className="cost-divider"></div>
-
-                                            <div className="settlement-row">
-                                                <span className="settlement-label">
-
-                                                    API 사용료 (예상)
-                                                </span>
-                                                <span className="settlement-value">1,200,000원</span>
-                                            </div>
-                                            <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × 59일 (70% 사용률 가정)
-                                            </p>
-
-                                            <div className="cost-divider"></div>
-
-                                            <div className="settlement-row settlement-row--total">
-                                                <span className="settlement-label">
-
-                                                    총 예상 비용
-                                                </span>
-                                                <span className="settlement-value">1,300,000원</span>
-                                            </div>
-                                        </div> */}
-
-                                        <div className="project-card__actions">
-                                            <button className="project-action-btn project-action-btn--primary"
-                                                onClick={() => alert(myclass.invite_codes[0].code)}
-                                            >
-                                                코드확인
-                                            </button>
-                                            <button className="project-action-btn"
-                                                // onClick={() => navigate(`/partner/project-management/${myclass.id}`)}
-                                                onClick={() => alert('학생관리')}
-                                            >
-                                                학생관리
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
 
 
