@@ -1,9 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { setSelectedClass, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
-export default function UserSidebar({ onClassChange, onClassesData, refreshTrigger }) {
+export default function UserSidebar({ onClassChange, onClassesData, refreshTrigger, externalClassSelect }) {
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
 
@@ -81,8 +81,8 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
         }
     }, [refreshTrigger]);
 
-    const handleClassChange = (e) => {
-        const classId = e.target.value;
+    // 클래스 변경 로직을 재사용 가능한 함수로 분리
+    const changeClass = useCallback((classId) => {
         setSelectedClassId(classId);
         if (classId) {
             const selectedClass = myClasses.find(c => String(c.class_id) === String(classId));
@@ -99,7 +99,22 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                 onClassChange(null, [1]);
             }
         }
+    }, [myClasses, onClassChange]);
+
+    const handleClassChange = (e) => {
+        const classId = e.target.value;
+        changeClass(classId);
     };
+
+    // externalClassSelect가 변경되면 클래스 선택
+    useEffect(() => {
+        if (externalClassSelect && myClasses.length > 0) {
+            const isValid = myClasses.some(c => String(c.class_id) === String(externalClassSelect));
+            if (isValid) {
+                changeClass(externalClassSelect);
+            }
+        }
+    }, [externalClassSelect, myClasses, changeClass]);
 
     const alwaysActiveMenus = ['dashboard', 'history', 'profile'];
 
@@ -129,9 +144,21 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                             onChange={handleClassChange}
                         >
                             <option value="">📚 과목을 선택하세요</option>
-                            {myClasses.map((myClass) => (
+
+                            {/* {myClasses.map((myClass) => (
                                 <option value={myClass.class_id} key={myClass.class_id}>{myClass.class_title}</option>
-                            ))}
+                            ))} */}
+
+                            {myClasses.map((myClass) => {
+                                const daysLeft = Math.floor(
+                                    (new Date(myClass.class_end_at) - new Date()) / (1000 * 60 * 60 * 24)
+                                );
+                                return (
+                                    <option disabled={daysLeft < 0} value={myClass.class_id} key={myClass.class_id}>{myClass.class_title}</option>
+                                )
+                            })}
+
+
                         </select>
                     </div>
                 </div>

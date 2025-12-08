@@ -70,6 +70,11 @@ export default function UserPractice() {
 
     // UserSidebar에서 클래스 변경 시 호출되는 콜백
     const handleClassChange = (classId, allowedModelIdsArray) => {
+        setCurrentMessages([]);
+        setCompareMessages({});
+        setShowEmptyState(true);
+        setCurrentSession(0);
+        
         setSavedClassId(classId);
         const modelIds = allowedModelIdsArray || [1];
         setAllowedModelIds(modelIds);
@@ -84,7 +89,6 @@ export default function UserPractice() {
                 setSelectedModels([Assistant[0].model_name]);
             }
         } else {
-            // Assistant가 아직 로드되지 않았으면 기본값 유지
             setSelectedModels(['gpt-4o-mini']);
         }
     };

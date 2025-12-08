@@ -2,7 +2,7 @@ import React from 'react';
 import { showToast } from '../../utill/utill';
 import { useNavigate } from 'react-router-dom';
 
-export default function EnrolledClassesSection({ classArray, onInviteClick }) {
+export default function EnrolledClassesSection({ classArray, onInviteClick, onClassSelect }) {
     const navigate = useNavigate();
 
     const handlePracticeClick = (daysLeft, classInfo) => {
@@ -10,7 +10,11 @@ export default function EnrolledClassesSection({ classArray, onInviteClick }) {
         if (daysLeft < 0) {
             showToast(`강의가 종료되었습니다.`, 'error');
         } else {
-            // navigate(`/user/practice/`);
+            // 클래스 선택 핸들러 호출
+            if (onClassSelect) {
+                onClassSelect(classInfo.class_id);
+            }
+            navigate(`/user/practice/`);
         }
     }
 

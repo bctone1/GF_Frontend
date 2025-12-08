@@ -109,6 +109,16 @@ export default function UserDashboard() {
         }
     };
 
+    // 외부에서 클래스를 선택할 수 있도록 하는 상태
+    const [externalClassSelect, setExternalClassSelect] = useState(null);
+
+    // 클래스 선택 핸들러 (EnrolledClassesSection에서 사용)
+    const handleClassSelect = (classId) => {
+        setExternalClassSelect(classId);
+        // 선택 후 초기화 (다음 선택을 위해)
+        setTimeout(() => setExternalClassSelect(null), 100);
+    };
+
     // 프로필 업데이트 후 콜백
     const handleProfileUpdate = (updatedProfile) => {
         setMyprofile(updatedProfile);
@@ -128,6 +138,7 @@ export default function UserDashboard() {
                         <EnrolledClassesSection
                             classArray={classArray}
                             onInviteClick={() => setInviteStatus(!inviteStatus)}
+                            onClassSelect={handleClassSelect}
                         />
                     </Suspense>
                 );
@@ -289,7 +300,11 @@ export default function UserDashboard() {
                     onProfileData={handleProfileData}
                 />
                 <div className="container">
-                    <UserSidebar onClassesData={handleClassesData} refreshTrigger={refreshTrigger} />
+                    <UserSidebar 
+                        onClassesData={handleClassesData} 
+                        refreshTrigger={refreshTrigger}
+                        externalClassSelect={externalClassSelect}
+                    />
 
                     <main className="main">
                         <div className="settings-layout">
