@@ -15,8 +15,6 @@ export default function UserKnowledge() {
     const accessToken = sessionStorage.getItem("access_token");
 
     const [viewType, setViewType] = useState('grid');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [sortOption, setSortOption] = useState('recent');
 
     const fetchDocuments = useCallback(async () => {
         try {
@@ -34,7 +32,7 @@ export default function UserKnowledge() {
             console.error('Failed to fetch documents:', error);
         }
     }, [accessToken]);
-
+    
     useEffect(() => {
         fetchDocuments();
     }, [fetchDocuments]);
@@ -42,7 +40,7 @@ export default function UserKnowledge() {
     // progress가 100이 아닌 항목이 있으면 5초마다 자동 갱신
     useEffect(() => {
         const hasInProgress = documents.some(doc => doc.progress < 100);
-
+        
         if (!hasInProgress) return;
 
         const intervalId = setInterval(() => {
@@ -175,31 +173,6 @@ export default function UserKnowledge() {
         setUploadError(null);
     };
 
-    // 검색 및 정렬된 문서 목록 계산
-    const filteredAndSortedDocuments = documents
-        .filter((document) => {
-            if (!searchQuery.trim()) return true;
-            return document.name.toLowerCase().includes(searchQuery.toLowerCase());
-        })
-        .sort((a, b) => {
-            switch (sortOption) {
-                case 'recent':
-                    return new Date(b.updated_at) - new Date(a.updated_at);
-                case 'name':
-                    return a.name.localeCompare(b.name, 'ko');
-                case 'size':
-                    return (b.file_size_bytes || 0) - (a.file_size_bytes || 0);
-                case 'type':
-                    const getFileExtension = (filename) => {
-                        const parts = filename.split('.');
-                        return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
-                    };
-                    return getFileExtension(a.name).localeCompare(getFileExtension(b.name));
-                default:
-                    return 0;
-            }
-        });
-
     return (
         <>
             <div id="app">
@@ -209,6 +182,55 @@ export default function UserKnowledge() {
 
                     <main className="main">
                         <div className="documents-layout">
+
+                            <div className="folders-sidebar">
+                                <div className="folders-header">
+                                    <h2 className="folders-title"></h2>
+                                    <button className="btn btn--sm btn--outline"
+                                        onClick={() => alert("개발중입니다.")}
+                                    >
+                                        ➕
+                                    </button>
+                                </div>
+
+                                <div className="folder-tree">
+                                    <div className="folder-item folder-item--active" >
+                                        <span>모든 문서</span>
+                                        <span className="folder-count">24</span>
+                                    </div>
+
+                                    <div className="folder-item" >
+                                        <span className="folder-icon">🕒</span>
+                                        <span>최근 문서</span>
+                                        <span className="folder-count">8</span>
+                                    </div>
+
+                                    <div className="folder-item" >
+                                        <span className="folder-icon">⭐</span>
+                                        <span> 즐겨찾기</span>
+                                        <span className="folder-count">5</span>
+                                    </div>
+
+                                    <div style={{ height: '1px', background: 'var(--border)', margin: 'var(--space-3) 0' }}></div>
+
+                                    <div className="folder-item" >
+                                        <span>Python 학습</span>
+                                        <span className="folder-count">12</span>
+                                    </div>
+
+                                    <div className="folder-item" >
+                                        <span>마케팅 자료</span>
+                                        <span className="folder-count">8</span>
+                                    </div>
+
+                                    <div className="folder-item" >
+                                        <span>데이터 분석</span>
+                                        <span className="folder-count">4</span>
+                                    </div>
+                                </div>
+                            </div>
+
+
                             <div className="documents-main">
                                 <div className="documents-header">
                                     <div className="search-bar">
@@ -217,15 +239,9 @@ export default function UserKnowledge() {
                                             className="search-input"
                                             placeholder=" 문서 검색..."
                                             id="searchInput"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
                                         />
-                                        <select
-                                            className="sort-select"
-                                            value={sortOption}
-                                            onChange={(e) => setSortOption(e.target.value)}
-                                        >
-                                            <option value="recent">업로드순</option>
+                                        <select className="sort-select" >
+                                            <option value="recent">최근 수정순</option>
                                             <option value="name">이름순</option>
                                             <option value="size">크기순</option>
                                             <option value="type">유형순</option>
@@ -358,7 +374,7 @@ export default function UserKnowledge() {
 
                                     <div id="documentsGrid" className="documents-grid" style={{ display: viewType === 'grid' ? '' : 'none' }}>
 
-                                        {filteredAndSortedDocuments.map((document) => (
+                                        {documents.map((document) => (
                                             <div className="document-card" key={document.knowledge_id}>
                                                 <button className="document-card__menu" >
                                                     ⋮
@@ -366,21 +382,21 @@ export default function UserKnowledge() {
                                                 <div className="document-card__header">
                                                     <div className="document-icon document-icon--pdf">📄</div>
                                                     <div className="document-info">
-                                                        <div className="document-name">{getDisplayName(document.name)}</div>
+                                                        <div className="document-name">{document.name}</div>
                                                         <div className="document-meta">{document.updated_at.split('T')[0]}</div>
                                                     </div>
                                                 </div>
 
                                                 <div className="document-status">
                                                     <div className="status-bar">
-                                                        <div
+                                                        <div 
                                                             className={`status-indicator ${document.status === 'ready' ? 'status-indicator--ready' : 'status-indicator--processing'}`}
                                                             style={document.status !== 'ready' ? {
                                                                 animation: 'pulse 1.5s ease-in-out infinite'
                                                             } : {}}
                                                         ></div>
-                                                        <span style={{
-                                                            color: getStatusColor(document.status),
+                                                        <span style={{ 
+                                                            color: getStatusColor(document.status), 
                                                             fontWeight: 'var(--font-semibold)',
                                                             display: 'flex',
                                                             alignItems: 'center',
@@ -447,7 +463,7 @@ export default function UserKnowledge() {
 
 
                                     <div id="documentsList" className="documents-list" style={{ display: viewType === 'list' ? '' : 'none' }}>
-                                        {filteredAndSortedDocuments.map((document) => (
+                                        {documents.map((document) => (
                                             <div className="document-list-item" key={document.knowledge_id}>
                                                 <div className="document-icon document-icon--pdf" style={{ width: '40px', height: '40px', fontSize: '20px' }}>
                                                     📄
@@ -467,9 +483,9 @@ export default function UserKnowledge() {
                                                     <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>크기</div>
                                                 </div>
                                                 <div>
-                                                    <span
-                                                        className={`session-badge ${document.status === 'ready' ? 'session-badge--active' : ''}`}
-                                                        style={{
+                                                    <span 
+                                                        className={`session-badge ${document.status === 'ready' ? 'session-badge--active' : ''}`} 
+                                                        style={{ 
                                                             fontSize: 'var(--text-xs)',
                                                             backgroundColor: document.status === 'ready' ? undefined : getStatusColor(document.status),
                                                             color: document.status === 'ready' ? undefined : 'white',
@@ -530,10 +546,6 @@ function formatFileSize(bytes) {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-}
-function getDisplayName(originName) {
-    const parts = originName.split("_");
-    return parts.slice(2).join("_");
 }
 
 function getStatusLabel(status) {

@@ -27,11 +27,11 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                 Authorization: `Bearer ${accessToken}`,
             },
         }).then(response => {
-            console.log(response.data.items);
+            // console.log(response.data.items);
             const classes = response.data.items || [];
             setMyClasses(classes);
             setIsClassesLoading(false);
-            
+
             // 부모 컴포넌트에 클래스 데이터 전달
             if (onClassesData) {
                 onClassesData(classes, false);
@@ -190,12 +190,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/knowledge"
-                                className={`sidebar__menu-link ${currentMenu === 'knowledge' ? 'sidebar__menu-link--active' : ''} ${isMenuDisabled('knowledge') ? 'sidebar__menu-link--disabled' : ''}`}
-                                onClick={(e) => {
-                                    if (isMenuDisabled('knowledge')) {
-                                        e.preventDefault();
-                                    }
-                                }}
+                                className={`sidebar__menu-link ${currentMenu === 'knowledge' ? 'sidebar__menu-link--active' : ''}`}
                             >
                                 <span className="sidebar__menu-icon">📚</span>
                                 <span>지식베이스</span>
@@ -204,7 +199,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
 
 
 
-                        <li className="sidebar__menu-item">
+                        {/* <li className="sidebar__menu-item">
                             <Link
                                 to="/user/agent"
                                 className={`sidebar__menu-link ${currentMenu === 'agent' ? 'sidebar__menu-link--active' : ''} ${isMenuDisabled('agent') ? 'sidebar__menu-link--disabled' : ''}`}
@@ -217,8 +212,8 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">🤖</span>
                                 <span>내 에이전트</span>
                             </Link>
-                        </li>
-
+                        </li> */}
+                        {/* 
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/workflow"
@@ -232,9 +227,9 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">🔀</span>
                                 <span>워크플로우</span>
                             </Link>
-                        </li>
+                        </li> */}
 
-                        <li className="sidebar__menu-item">
+                        {/* <li className="sidebar__menu-item">
                             <Link
                                 to="/user/history"
                                 className={`sidebar__menu-link ${currentMenu === 'history' ? 'sidebar__menu-link--active' : ''}`}
@@ -242,7 +237,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">📊</span>
                                 <span>내 기록</span>
                             </Link>
-                        </li>
+                        </li> */}
 
                         <li className="sidebar__menu-item">
                             <Link

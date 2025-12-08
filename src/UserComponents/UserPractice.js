@@ -615,7 +615,7 @@ export default function UserPractice() {
                                             <div key={index} className="attached-file">
                                                 <div className="attached-file__icon">📄</div>
                                                 <div className="attached-file__info">
-                                                    <div className="attached-file__name">{file.name || file.documentName}</div>
+                                                    <div className="attached-file__name">{getDisplayName(file.name || file.documentName)}</div>
                                                     <div className="attached-file__size">
                                                         {file.size ? formatFileSize(file.size) : (file.chunk_count ? `${file.chunk_count} 청크` : '')}
                                                         {file.isDocument && <span style={{ marginLeft: '4px', color: 'var(--primary-600)', fontSize: '10px' }}>지식베이스</span>}
@@ -921,7 +921,7 @@ export default function UserPractice() {
                                                                     >
                                                                         <span className="plus-menu__icon">📄</span>
                                                                         <div className="plus-menu__text">
-                                                                            <div className="plus-menu__title">{document.name}</div>
+                                                                            <div className="plus-menu__title">{getDisplayName(document.name)}</div>
                                                                             <div className="plus-menu__desc">
                                                                                 {formatFileSize(document.file_size_bytes)} · {document.chunk_count} 청크
                                                                             </div>
@@ -1044,4 +1044,9 @@ export default function UserPractice() {
             </div>
         </>
     );
+}
+
+function getDisplayName(originName) {
+    const parts = originName.split("_");
+    return parts.slice(2).join("_");
 }

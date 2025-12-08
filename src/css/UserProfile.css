@@ -45,13 +45,13 @@
         top: var(--space-6);
     }
 
-    .settings-nav {
+    .user-settings-nav {
         display: flex;
         flex-direction: column;
         gap: var(--space-1);
     }
 
-    .settings-nav__item {
+    .user-settings-nav__item {
         padding: var(--space-3);
         border-radius: var(--radius-md);
         font-size: var(--text-sm);
@@ -64,17 +64,17 @@
         gap: var(--space-2);
     }
 
-    .settings-nav__item:hover {
+    .user-settings-nav__item:hover {
         background: var(--surface);
         color: var(--text-primary);
     }
 
-    .settings-nav__item--active {
+    .user-settings-nav__item--active {
         background: linear-gradient(135deg, var(--employee-primary), var(--employee-secondary));
         color: white;
     }
 
-    .settings-nav__icon {
+    .user-settings-nav__icon {
         font-size: 18px;
     }
 
@@ -86,11 +86,11 @@
         padding: var(--space-6);
     }
 
-    .settings-section {
+    .user-settings-section {
         display: none;
     }
 
-    .settings-section--active {
+    .user-settings-section--active {
         display: block;
         animation: fadeIn 0.3s ease-out;
     }
@@ -107,14 +107,14 @@
         }
     }
 
-    .settings-section__title {
+    .user-settings-section__title {
         font-size: var(--text-2xl);
         font-weight: var(--font-bold);
         color: var(--text-primary);
         margin-bottom: var(--space-2);
     }
 
-    .settings-section__desc {
+    .user-settings-section__desc {
         font-size: var(--text-sm);
         color: var(--text-secondary);
         margin-bottom: var(--space-6);
@@ -440,12 +440,12 @@
             position: static;
         }
 
-        .settings-nav {
+        .user-settings-nav {
             flex-direction: row;
             overflow-x: auto;
         }
 
-        .settings-nav__item {
+        .user-settings-nav__item {
             white-space: nowrap;
         }
 
@@ -624,7 +624,7 @@
             padding: 0;
         }
 
-        .settings-section {
+        .user-settings-section {
             page-break-inside: avoid;
         }
     }
@@ -647,12 +647,12 @@
             font-size: var(--text-2xl);
         }
 
-        .settings-nav {
+        .user-settings-nav {
             gap: var(--space-1);
             padding: var(--space-2);
         }
 
-        .settings-nav__item {
+        .user-settings-nav__item {
             font-size: var(--text-xs);
             padding: var(--space-2);
         }
@@ -879,17 +879,17 @@
 
     /* 모바일 네비게이션 개선 */
     @media (max-width: 1024px) {
-        .settings-nav {
+        .user-settings-nav {
             overflow-x: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
         }
 
-        .settings-nav::-webkit-scrollbar {
+        .user-settings-nav::-webkit-scrollbar {
             display: none;
         }
 
-        .settings-nav__item {
+        .user-settings-nav__item {
             flex-shrink: 0;
         }
     }
