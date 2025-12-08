@@ -324,7 +324,8 @@ export default function UserPractice() {
         } else {
             const remainingModels = selectedModels.filter(m => m !== modelValue);
             if (remainingModels.length < 1) {
-                alert('최소 1개 이상의 모델을 선택해야 합니다.');
+                showToast('최소 1개 이상의 모델을 선택해야 합니다.', 'error');
+                // alert('최소 1개 이상의 모델을 선택해야 합니다.');
                 return;
             }
             setSelectedModels(remainingModels);
