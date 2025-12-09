@@ -3,8 +3,10 @@ import UserSidebar from './UserSidebar';
 import { useState, useEffect } from 'react';
 import { getSelectedClassId } from '../utill/utill';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 export default function UserProject() {
+    const navigate = useNavigate();
     const accessToken = sessionStorage.getItem("access_token");
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [projectList, setProjectList] = useState([]);
@@ -74,25 +76,61 @@ export default function UserProject() {
 
     const [modalStatus, setModalStatus] = useState(false);
     const [sessionModalStatus, setSessionModalStatus] = useState(false);
-    const [selectedProject, setSelectedProject] = useState(null);
+    const [selectedProject, setSelectedProject] = useState([]);
 
     const [sessionList, setSessionList] = useState([]);
 
-    const handleProjectClick = async (project_id) => {
-        const res = await axios.get(`${process.env.REACT_APP_API_URL}/projects/${project_id}/sessions`,
+    const handleProjectClick = async (project) => {
+        setSelectedProject(project);
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/projects/${project.project_id}/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, }, }
         );
         console.log(res.data);
-        setSessionList(res.data);
+
+
+        // session_id별로 그룹화하고 가공
+        const sessionMap = new Map();
+
+        res.data.forEach(session => {
+            const sessionId = session.session_id;
+
+            if (!sessionMap.has(sessionId)) {
+                sessionMap.set(sessionId, {
+                    sessions: [],
+                    modelNames: []
+                });
+            }
+
+            const group = sessionMap.get(sessionId);
+            group.sessions.push(session);
+            if (!group.modelNames.includes(session.primary_model_name)) {
+                group.modelNames.push(session.primary_model_name);
+            }
+        });
+
+        // 각 session_id 그룹에서 마지막 항목을 선택하고 primary_model_name 배열 추가
+        const processedSessions = Array.from(sessionMap.values()).map(group => {
+            const lastSession = group.sessions[group.sessions.length - 1];
+            return {
+                ...lastSession,
+                primary_model_name: group.modelNames,
+                primary_model_label: group.modelNames.join(', ') // 표시용
+            };
+        });
+
+        setSessionList(processedSessions);
         setSessionModalStatus(true);
     };
 
     const handleStartNewSession = () => {
-        console.log('새 대화 시작:', selectedProject);
+        console.log('새 대화 시작:', selectedProject.project_id);
+        navigate(`/user/practice?projectId=${selectedProject.project_id}`);
     };
 
     const handleSessionClick = (sessionId) => {
         console.log('세션 클릭:', sessionId);
+        // UserPractice로 이동하면서 세션 ID를 쿼리 파라미터로 전달
+        navigate(`/user/practice?sessionId=${sessionId}`);
     };
 
 
@@ -143,7 +181,7 @@ export default function UserProject() {
             }}>
                 <div className="modal-container" style={{ maxWidth: '700px' }}>
                     <div className="modal-header">
-                        <h2 className="modal-title">{selectedProject || '프로젝트'}</h2>
+                        <h2 className="modal-title">{selectedProject?.name || '프로젝트'}</h2>
                         <button className="modal-close" onClick={() => setSessionModalStatus(false)}>✕</button>
                     </div>
                     <div className="modal-body">
@@ -303,7 +341,7 @@ export default function UserProject() {
 
                             {projectList.map((project) => {
                                 return (
-                                    <div className="project-card project-card--personal" onClick={() => handleProjectClick(project.project_id)} key={project.project_id}>
+                                    <div className="project-card project-card--personal" onClick={() => handleProjectClick(project)} key={project.project_id}>
                                         <h3 className="project-card__title">{project.name}</h3>
                                         <p className="project-card__description">
                                             {project.description}

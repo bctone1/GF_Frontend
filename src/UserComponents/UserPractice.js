@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
 import { showToast, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
+import { useSearchParams } from 'react-router-dom';
 
 export default function UserPractice() {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [currentMessages, setCurrentMessages] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
@@ -21,6 +23,7 @@ export default function UserPractice() {
     const [documents, setDocuments] = useState([]);
     const [Assistant, setAssistant] = useState([]);
     const [currentSession, setCurrentSession] = useState(0);
+    const [currentProjectId, setCurrentProjectId] = useState(0);
 
 
 
@@ -56,7 +59,6 @@ export default function UserPractice() {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
-        console.log(response.data.items);
         setSessions(response.data.items);
     }
     const [projectList, setProjectList] = useState([]);
@@ -76,7 +78,6 @@ export default function UserPractice() {
                     "Content-Type": "application/json",
                 }
             });
-            console.log(response.data.items);
             // API가 클래스 필터링을 지원하지 않는 경우 클라이언트 측에서 필터링
             const projects = response.data.items || [];
             const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
@@ -229,8 +230,12 @@ export default function UserPractice() {
                 .filter(file => file.isDocument && file.knowledge_id)
                 .map(file => file.knowledge_id);
 
+            const URL = currentProjectId ?
+                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}&project_id=${currentProjectId}`
+                : `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`;
+            console.log("CHAT URL : ", URL);
             const res = await axios.post(
-                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`,
+                URL,
                 {
                     prompt_text: question,
                     model_names: selectedModels,
@@ -513,7 +518,8 @@ export default function UserPractice() {
 
     const selectedDisplay = updateSelectedDisplay();
 
-    const handleSessionClick = async (sessionId) => {
+    const handleSessionClick = useCallback(async (sessionId) => {
+        console.log("sessionId : ", sessionId);
         try {
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${sessionId}`,
                 { headers: { Authorization: `Bearer ${accessToken}`, }, }
@@ -598,7 +604,40 @@ export default function UserPractice() {
             console.error('세션 로드 중 오류:', error);
             showToast('세션을 불러오는 중 오류가 발생했습니다.', 'error');
         }
-    };
+    }, [accessToken, projectList]);
+
+
+    // URL 쿼리 파라미터에서 sessionId가 있으면 자동으로 세션 로드
+    useEffect(() => {
+        const sessionIdFromUrl = searchParams.get('sessionId');
+        if (sessionIdFromUrl) {
+            const sessionId = parseInt(sessionIdFromUrl, 10);
+            if (sessionId && !isNaN(sessionId)) {
+                // 세션이 로드될 때까지 약간의 지연 후 실행
+                const timer = setTimeout(() => {
+                    handleSessionClick(sessionId);
+                    // URL에서 쿼리 파라미터 제거 (한 번만 실행되도록)
+                    setSearchParams({});
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+        }
+        const projectIdFromUrl = searchParams.get('projectId');
+        if (projectIdFromUrl) {
+            const projectId = parseInt(projectIdFromUrl, 10);
+            if (projectId && !isNaN(projectId)) {
+                const timer = setTimeout(() => {
+                    const project = projectList.find(p => p.project_id === projectId);
+                    if (project) {
+                        setCurrentProject(project.name);
+                        setCurrentProjectId(project.project_id);
+                        setSearchParams({});
+                    }
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [searchParams, sessions, handleSessionClick, setSearchParams, setCurrentProject, projectList, setCurrentProjectId]);
 
     return (
         <>
