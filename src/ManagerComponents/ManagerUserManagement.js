@@ -1,7 +1,7 @@
 import ManagerHeader from './ManagerHeader';
 import ManagerSidebar from './ManagerSidebar';
 
-export default function ManagerDashboard() {
+export default function ManagerUserManagement() {
     return (
         <>
             <div id="app">
@@ -16,7 +16,6 @@ export default function ManagerDashboard() {
                     </main>
                 </div>
             </div>
-
         </>
-    )
+    );
 }

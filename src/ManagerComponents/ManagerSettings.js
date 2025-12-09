@@ -1,7 +1,7 @@
 import ManagerHeader from './ManagerHeader';
 import ManagerSidebar from './ManagerSidebar';
 
-export default function ManagerDashboard() {
+export default function ManagerSettings() {
     return (
         <>
             <div id="app">
@@ -14,9 +14,10 @@ export default function ManagerDashboard() {
                             준비중..
                         </div>
                     </main>
+
+
                 </div>
             </div>
-
         </>
-    )
+    );
 }

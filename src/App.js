@@ -23,6 +23,9 @@ import PartnerSettings from './PartnerComponents/PartnerSettings';
 
 import ManagerDashboard from './ManagerComponents/ManagerDashboard';
 import ManagerInstructor from './ManagerComponents/ManagerInstructor';
+import ManagerUserManagement from './ManagerComponents/ManagerUserManagement';
+import ManagerBilling from './ManagerComponents/ManagerBilling';
+import ManagerSettings from './ManagerComponents/ManagerSettings';
 
 import OrganizationDashboard from './OrganizationComponents/OrganizationDashboard';
 
@@ -63,6 +66,10 @@ export default function App() {
         {/* 매니저 컴포넌트 */}
         <Route path="/manager/dashboard" element={<ManagerDashboard />} />
         <Route path="/manager/instructor" element={<ManagerInstructor />} />
+        <Route path="/manager/user-management" element={<ManagerUserManagement />} />
+        <Route path="/manager/billing" element={<ManagerBilling />} />
+        <Route path="/manager/settings" element={<ManagerSettings />} />
+        
 
 
 
