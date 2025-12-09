@@ -663,11 +663,7 @@ export default function UserPractice() {
                                             <div className="chat-history-item__project">session_id : {session.session_id}</div>
                                             <div className="chat-history-item__title">{session.title ? session.title : '대화하기'}</div>
                                             <div className="chat-history-item__meta">
-                                                <div className="chat-history-item__models">
-                                                    {/* <div className="chat-history-item__model-icon" style={{ background: 'rgba(16, 163, 127, 0.1)', color: '#10a37f' }}>G</div>
-                                                    <div className="chat-history-item__model-icon" style={{ background: 'rgba(217, 119, 87, 0.1)', color: '#d97757' }}>C</div>
-                                                    <div className="chat-history-item__model-icon" style={{ background: 'rgba(66, 133, 244, 0.1)', color: '#4285f4' }}>G</div> */}
-                                                </div>
+
                                                 <span>
                                                     {session.started_at?.split('T')[0].slice(5)}{" "}
                                                     {session.started_at?.split('T')[1].slice(0, 5)}
@@ -717,8 +713,11 @@ export default function UserPractice() {
                                         <div className="chat-main__header" id="singleHeader">
                                             <div className="chat-main__title">
                                                 <span>
-                                                    {projectList.find(p => p.project_id === sessions.find(s => s.session_id === currentSession)?.project_id)?.name || ''}  {sessions.find(s => s.session_id === currentSession)?.title || ''}</span>
-                                                {/* <span className="chat-main__badge">코딩 에이전트</span> */}
+                                                    {projectList.find(p => p.project_id === sessions.find(s => s.session_id === currentSession)?.project_id)?.name || ''}
+                                                </span>
+                                                {sessions.find(s => s.session_id === currentSession)?.title && (
+                                                    <span className="chat-main__badge">{sessions.find(s => s.session_id === currentSession)?.title || ''}</span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="chat-messages" id="chatMessages">
