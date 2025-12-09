@@ -105,13 +105,13 @@ export default function UserHeader({ onAccountData, onProfileData }) {
 
                     <div id="profileDropdown" className={`dropdown dropdown--profile ${profileDropdownOpen ? 'dropdown--open' : ''}`}>
                         <div className="dropdown__body">
-                            <a href="#" className="dropdown__item">
+                            <a href="/user/profile?tab=profile" className="dropdown__item">
                                 <span className="dropdown__item-icon">👤</span>
                                 <span>내 프로필</span>
                             </a>
-                            <a href="#" className="dropdown__item">
-                                <span className="dropdown__item-icon">⚙️</span>
-                                <span>설정</span>
+                            <a href="/user/profile?tab=enrolled" className="dropdown__item">
+                                <span className="dropdown__item-icon">📚</span>
+                                <span>수강 강의</span>
                             </a>
                             <div className="divider"></div>
                             <a href="#" className="dropdown__item dropdown__item--danger" onClick={handleLogout}>

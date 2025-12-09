@@ -14,6 +14,29 @@ export default function UserProject() {
     const [sortBy, setSortBy] = useState('recent');
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
+    // 프로젝트의 세션 수를 조회하는 함수
+    const fetchSessionCount = async (projectId) => {
+        try {
+            const res = await axios.get(`${process.env.REACT_APP_API_URL}/projects/${projectId}/sessions`,
+                { headers: { Authorization: `Bearer ${accessToken}`, }, }
+            );
+            
+            // session_id별로 그룹화하여 고유한 세션 개수 계산
+            const sessionMap = new Map();
+            res.data.forEach(session => {
+                const sessionId = session.session_id;
+                if (!sessionMap.has(sessionId)) {
+                    sessionMap.set(sessionId, true);
+                }
+            });
+            
+            return sessionMap.size;
+        } catch (error) {
+            console.error(`프로젝트 ${projectId}의 세션 수 조회 실패:`, error);
+            return 0;
+        }
+    }
+
     const fetchProjects = async (classId) => {
         // 클래스가 선택되지 않으면 프로젝트를 표시하지 않음
         if (!classId) {
@@ -34,7 +57,19 @@ export default function UserProject() {
             // API가 클래스 필터링을 지원하지 않는 경우 클라이언트 측에서 필터링
             const projects = response.data.items || [];
             const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
-            setProjectList(filteredProjects);
+            
+            // 각 프로젝트의 세션 수를 병렬로 조회
+            const projectsWithSessionCount = await Promise.all(
+                filteredProjects.map(async (project) => {
+                    const sessionCount = await fetchSessionCount(project.project_id);
+                    return {
+                        ...project,
+                        sessionCount: sessionCount
+                    };
+                })
+            );
+            
+            setProjectList(projectsWithSessionCount);
         } catch (error) {
             console.error('프로젝트 조회 실패:', error);
             setProjectList([]);
@@ -158,8 +193,8 @@ export default function UserProject() {
                 filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 break;
             case 'conversations':
-                // 대화 많은 순은 세션 수를 기준으로 정렬 (현재는 임시로 updated_at 사용)
-                filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+                // 대화 많은 순은 세션 수를 기준으로 정렬
+                filtered.sort((a, b) => (b.sessionCount || 0) - (a.sessionCount || 0));
                 break;
             case 'recent':
             default:
@@ -402,7 +437,7 @@ export default function UserProject() {
                                                 <div className="project-card__meta">
                                                     <span className="project-meta-item">
                                                         <span>💬</span>
-                                                        <span>대화방 8개</span>
+                                                        <span>대화방 {project.sessionCount || 0}개</span>
                                                     </span>
                                                 </div>
                                                 <div className="project-tags">
@@ -467,7 +502,7 @@ export default function UserProject() {
                                                             <div className="project-card__meta">
                                                                 <span className="project-meta-item">
                                                                     <span>💬</span>
-                                                                    <span>대화방 8개</span>
+                                                                    <span>대화방 {project.sessionCount || 0}개</span>
                                                                 </span>
                                                             </div>
                                                             <div className="project-tags">

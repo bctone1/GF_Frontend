@@ -1,8 +1,9 @@
-import { useState, useRef, Suspense, lazy } from 'react';
+import { useState, useRef, Suspense, lazy, useEffect } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
 import { showToast } from '../utill/utill';
+import { useSearchParams } from 'react-router-dom';
 
 // Lazy load 섹션 컴포넌트들
 const EnrolledClassesSection = lazy(() => import('./ProfileSections/EnrolledClassesSection'));
@@ -15,10 +16,20 @@ const HelpSection = lazy(() => import('./ProfileSections/HelpSection'));
 
 export default function UserDashboard() {
     const [activeSection, setActiveSection] = useState('enrolled');
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const showSection = (section) => {
         setActiveSection(section);
     };
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) {
+            setActiveSection(tab);
+            setSearchParams({});
+        }
+    }, [searchParams, showSection]);
+
 
     const [classArray, setClassArray] = useState([]);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -300,8 +311,8 @@ export default function UserDashboard() {
                     onProfileData={handleProfileData}
                 />
                 <div className="container">
-                    <UserSidebar 
-                        onClassesData={handleClassesData} 
+                    <UserSidebar
+                        onClassesData={handleClassesData}
                         refreshTrigger={refreshTrigger}
                         externalClassSelect={externalClassSelect}
                     />

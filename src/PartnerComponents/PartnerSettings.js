@@ -1,14 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
+import { useSearchParams } from 'react-router-dom';
 
 
 export default function PartnerSettings() {
     const [activeSection, setActiveSection] = useState('profile');
+    const [searchParams, setSearchParams] = useSearchParams();
+
+
 
     const handleTabClick = (section) => {
         setActiveSection(section);
     };
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab) {
+            setActiveSection(tab);
+            setSearchParams({});
+        }
+    }, [searchParams]);
 
     return (
         <>
