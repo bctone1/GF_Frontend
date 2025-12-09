@@ -1,6 +1,6 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getSelectedClassId } from '../utill/utill';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -10,6 +10,9 @@ export default function UserProject() {
     const accessToken = sessionStorage.getItem("access_token");
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [projectList, setProjectList] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [sortBy, setSortBy] = useState('recent');
+    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
     const fetchProjects = async (classId) => {
         // 클래스가 선택되지 않으면 프로젝트를 표시하지 않음
@@ -132,6 +135,40 @@ export default function UserProject() {
         // UserPractice로 이동하면서 세션 ID를 쿼리 파라미터로 전달
         navigate(`/user/practice?sessionId=${sessionId}`);
     };
+
+    // 필터링 및 정렬된 프로젝트 리스트
+    const filteredAndSortedProjects = useMemo(() => {
+        let filtered = [...projectList];
+
+        // 검색 필터링
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase();
+            filtered = filtered.filter(project => 
+                project.name.toLowerCase().includes(query) ||
+                (project.description && project.description.toLowerCase().includes(query))
+            );
+        }
+
+        // 정렬
+        switch (sortBy) {
+            case 'name':
+                filtered.sort((a, b) => a.name.localeCompare(b.name));
+                break;
+            case 'created':
+                filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                break;
+            case 'conversations':
+                // 대화 많은 순은 세션 수를 기준으로 정렬 (현재는 임시로 updated_at 사용)
+                filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+                break;
+            case 'recent':
+            default:
+                filtered.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+                break;
+        }
+
+        return filtered;
+    }, [projectList, searchQuery, sortBy]);
 
 
 
@@ -301,7 +338,12 @@ export default function UserProject() {
                     <main className="main">
                         <div className="filter-bar">
                             <div className="user-project-filter-group">
-                                <select className="filter-select" id="sortBy">
+                                <select 
+                                    className="filter-select" 
+                                    id="sortBy"
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                >
                                     <option value="recent">최근 수정순</option>
                                     <option value="name">이름순</option>
                                     <option value="created">생성일순</option>
@@ -319,59 +361,147 @@ export default function UserProject() {
                                 className="search-input"
                                 placeholder="프로젝트 검색..."
                                 id="searchInput"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             <div className="view-switcher">
-                                <button className="view-btn view-btn--active" title="그리드 뷰">
+                                <button 
+                                    className={`view-btn ${viewMode === 'grid' ? 'view-btn--active' : ''}`} 
+                                    title="그리드 뷰"
+                                    onClick={() => setViewMode('grid')}
+                                >
                                     ⊞
                                 </button>
-                                <button className="view-btn" title="리스트 뷰">
+                                <button 
+                                    className={`view-btn ${viewMode === 'list' ? 'view-btn--active' : ''}`} 
+                                    title="리스트 뷰"
+                                    onClick={() => setViewMode('list')}
+                                >
                                     ☰
                                 </button>
                             </div>
                         </div>
 
 
-                        <div id="projectsGrid" className="projects-grid">
+                        {viewMode === 'grid' ? (
+                            <div id="projectsGrid" className="projects-grid">
+                                <div className="project-card project-card--empty" onClick={() => setModalStatus(true)}>
+                                    <div className="project-card--empty__icon">➕</div>
+                                    <div className="project-card--empty__text">새 프로젝트 만들기</div>
+                                    <div className="project-card--empty__desc">AI 실습을 시작하세요</div>
+                                </div>
 
-                            <div className="project-card project-card--empty" onClick={() => setModalStatus(true)}>
-                                <div className="project-card--empty__icon">➕</div>
-                                <div className="project-card--empty__text">새 프로젝트 만들기</div>
-                                <div className="project-card--empty__desc">AI 실습을 시작하세요</div>
-                            </div>
-
-                            {projectList.map((project) => {
-                                return (
-                                    <div className="project-card project-card--personal" onClick={() => handleProjectClick(project)} key={project.project_id}>
-                                        <h3 className="project-card__title">{project.name}</h3>
-                                        <p className="project-card__description">
-                                            {project.description}
+                                {filteredAndSortedProjects.length > 0 ? (
+                                    filteredAndSortedProjects.map((project) => {
+                                        return (
+                                            <div className="project-card project-card--personal" onClick={() => handleProjectClick(project)} key={project.project_id}>
+                                                <h3 className="project-card__title">{project.name}</h3>
+                                                <p className="project-card__description">
+                                                    {project.description}
+                                                </p>
+                                                <div className="project-card__meta">
+                                                    <span className="project-meta-item">
+                                                        <span>💬</span>
+                                                        <span>대화방 8개</span>
+                                                    </span>
+                                                </div>
+                                                <div className="project-tags">
+                                                    <span className="project-tag">GPT-4</span>
+                                                    <span className="project-tag">Claude</span>
+                                                    <span className="project-tag">Gemini</span>
+                                                </div>
+                                                <div className="project-card__footer">
+                                                    <div className="project-card__date">{project.updated_at.split('T')[0]} {project.updated_at.split('T')[1].split('.')[0]}</div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                ) : searchQuery.trim() ? (
+                                    <div style={{ 
+                                        gridColumn: '1 / -1', 
+                                        textAlign: 'center', 
+                                        padding: 'var(--space-8)',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        <p>검색 결과가 없습니다.</p>
+                                        <p style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
+                                            다른 검색어를 시도해보세요.
                                         </p>
-                                        <div className="project-card__meta">
-                                            <span className="project-meta-item">
-                                                <span>💬</span>
-                                                <span>대화방 8개</span>
-                                            </span>
-                                        </div>
-                                        <div className="project-tags">
-                                            <span className="project-tag">GPT-4</span>
-                                            <span className="project-tag">Claude</span>
-                                            <span className="project-tag">Gemini</span>
-                                        </div>
-                                        <div className="project-card__footer">
-                                            <div className="project-card__date">{project.updated_at.split('T')[0]} {project.updated_at.split('T')[1].split('.')[0]}</div>
-                                        </div>
                                     </div>
-                                )
-                            })}
+                                ) : null}
+                            </div>
+                        ) : (
+                            <div id="projectsList" className="projects-list">
+                                <div className="project-list-item project-card--empty" onClick={() => setModalStatus(true)} style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
+                                    <div className="project-card--empty__icon">➕</div>
+                                    <div className="project-card--empty__text">새 프로젝트 만들기</div>
+                                    <div className="project-card--empty__desc">AI 실습을 시작하세요</div>
+                                </div>
 
-
-
-                        </div>
-
-
-                        <div id="projectsList" className="projects-list" style={{ display: 'none' }}>
-
-                        </div>
+                                {filteredAndSortedProjects.length > 0 ? (
+                                    filteredAndSortedProjects.map((project) => {
+                                        return (
+                                            <div 
+                                                className="project-list-item" 
+                                                onClick={() => handleProjectClick(project)} 
+                                                key={project.project_id}
+                                            >
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 'var(--space-4)' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <h3 style={{ 
+                                                            fontSize: 'var(--text-lg)', 
+                                                            fontWeight: 'var(--font-semibold)', 
+                                                            color: 'var(--text-primary)',
+                                                            marginBottom: 'var(--space-2)'
+                                                        }}>
+                                                            {project.name}
+                                                        </h3>
+                                                        <p style={{ 
+                                                            fontSize: 'var(--text-sm)', 
+                                                            color: 'var(--text-secondary)',
+                                                            marginBottom: 'var(--space-3)'
+                                                        }}>
+                                                            {project.description || '설명이 없습니다.'}
+                                                        </p>
+                                                        <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
+                                                            <div className="project-card__meta">
+                                                                <span className="project-meta-item">
+                                                                    <span>💬</span>
+                                                                    <span>대화방 8개</span>
+                                                                </span>
+                                                            </div>
+                                                            <div className="project-tags">
+                                                                <span className="project-tag">GPT-4</span>
+                                                                <span className="project-tag">Claude</span>
+                                                                <span className="project-tag">Gemini</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div style={{ 
+                                                        fontSize: 'var(--text-xs)', 
+                                                        color: 'var(--text-secondary)',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>
+                                                        {project.updated_at.split('T')[0]} {project.updated_at.split('T')[1].split('.')[0]}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })
+                                ) : searchQuery.trim() ? (
+                                    <div style={{ 
+                                        textAlign: 'center', 
+                                        padding: 'var(--space-8)',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        <p>검색 결과가 없습니다.</p>
+                                        <p style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
+                                            다른 검색어를 시도해보세요.
+                                        </p>
+                                    </div>
+                                ) : null}
+                            </div>
+                        )}
                     </main>
 
                 </div >
