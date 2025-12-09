@@ -21,9 +21,10 @@ import PartnerStudentManagement from './PartnerComponents/PartnerStudentManageme
 import PartnerCostAnalytics from './PartnerComponents/PartnerCostAnalytics';
 import PartnerSettings from './PartnerComponents/PartnerSettings';
 
-
 import ManagerDashboard from './ManagerComponents/ManagerDashboard';
 import ManagerInstructor from './ManagerComponents/ManagerInstructor';
+
+import OrganizationDashboard from './OrganizationComponents/OrganizationDashboard';
 
 export default function App() {
   return (
@@ -56,7 +57,7 @@ export default function App() {
         <Route path="/partner/settings" element={<PartnerSettings />} />
 
         {/* 조직(관리자) 컴포넌트 */}
-        <Route path="/organization/dashboard" element={<PartnerDashboard />} />
+        <Route path="/organization/dashboard" element={<OrganizationDashboard />} />
 
 
         {/* 매니저 컴포넌트 */}

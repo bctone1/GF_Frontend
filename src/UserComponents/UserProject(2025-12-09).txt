@@ -11,58 +11,6 @@ export default function UserProject() {
     }
 
     const [modalStatus, setModalStatus] = useState(false);
-    const [sessionModalStatus, setSessionModalStatus] = useState(false);
-    const [selectedProject, setSelectedProject] = useState(null);
-
-    // 예시 세션 데이터
-    const exampleSessions = {
-        'Python 기초 학습': [
-            { id: 1, title: '변수와 데이터 타입', lastMessage: 'Python의 기본 데이터 타입에 대해...', updatedAt: '2시간 전', model: 'GPT-4' },
-            { id: 2, title: '반복문과 조건문', lastMessage: 'for문과 while문의 차이점은...', updatedAt: '5시간 전', model: 'Claude' },
-            { id: 3, title: '함수 정의하기', lastMessage: '함수의 매개변수와 반환값에 대해...', updatedAt: '1일 전', model: 'Gemini' },
-            { id: 4, title: '리스트와 딕셔너리', lastMessage: '리스트 컴프리헨션 문법은...', updatedAt: '2일 전', model: 'GPT-4' },
-            { id: 5, title: '클래스와 객체', lastMessage: '객체지향 프로그래밍의 개념은...', updatedAt: '3일 전', model: 'Claude' },
-        ],
-        '데이터 분석 실습': [
-            { id: 6, title: 'Pandas 기초', lastMessage: 'DataFrame 생성 방법은...', updatedAt: '1시간 전', model: 'GPT-4' },
-            { id: 7, title: '데이터 시각화', lastMessage: 'Matplotlib 사용법에 대해...', updatedAt: '어제', model: 'Claude' },
-        ],
-        '마케팅 콘텐츠 생성': [
-            { id: 8, title: '소셜미디어 포스트 작성', lastMessage: '인스타그램 캡션 작성 팁은...', updatedAt: '30분 전', model: 'GPT-4' },
-            { id: 9, title: '이메일 마케팅 카피', lastMessage: '오픈율을 높이는 제목 작성법...', updatedAt: '3시간 전', model: 'Claude' },
-        ],
-        '머신러닝 기초': [
-            { id: 10, title: '선형 회귀 이해하기', lastMessage: '선형 회귀의 기본 개념은...', updatedAt: '1일 전', model: 'GPT-4' },
-            { id: 11, title: '분류 알고리즘', lastMessage: '로지스틱 회귀와 결정 트리의 차이...', updatedAt: '2일 전', model: 'Claude' },
-        ],
-        '코드 리뷰 자동화': [
-            { id: 12, title: '코드 품질 체크', lastMessage: '코드 스타일 가이드라인 적용...', updatedAt: '4시간 전', model: 'GPT-4' },
-        ],
-        '웹 스크래핑 실습': [
-            { id: 13, title: 'BeautifulSoup 기초', lastMessage: 'HTML 파싱 방법에 대해...', updatedAt: '1주일 전', model: 'GPT-4' },
-        ],
-        '고객 분석 프로젝트': [
-            { id: 14, title: '감성 분석 모델', lastMessage: '텍스트 감성 분석 방법은...', updatedAt: '1일 전', model: 'Claude' },
-        ],
-        '업무 자동화': [
-            { id: 15, title: '반복 작업 스크립트', lastMessage: '파일 처리 자동화 방법...', updatedAt: '5일 전', model: 'GPT-4' },
-        ],
-    };
-
-    const handleProjectClick = (projectName) => {
-        setSelectedProject(projectName);
-        setSessionModalStatus(true);
-    };
-
-    const handleStartNewSession = () => {
-        console.log('새 대화 시작:', selectedProject);
-        // 새 대화 시작 로직
-    };
-
-    const handleSessionClick = (sessionId) => {
-        console.log('세션 클릭:', sessionId);
-        // 세션 열기 로직
-    };
 
 
 
@@ -93,7 +41,7 @@ export default function UserProject() {
                             </div>
 
 
-                            {/* <div className="form-group">
+                            <div className="form-group">
                                 <label className="form-label">프로젝트 유형</label>
                                 <div className="radio-group">
                                     <label className="radio-option">
@@ -117,7 +65,7 @@ export default function UserProject() {
                                         </span>
                                     </label>
                                 </div>
-                            </div> */}
+                            </div>
                         </form>
                     </div>
                     <div className="modal-footer">
@@ -127,126 +75,6 @@ export default function UserProject() {
                         <button type="submit" form="createProjectForm" className="btn btn--primary" style={{ background: 'var(--employee-primary)' }} >
                             프로젝트 생성
                         </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* 세션 리스트 모달 */}
-            <div id="sessionListModal" className={`modal-overlay ${sessionModalStatus ? 'modal-overlay--active' : ''}`} onClick={(e) => {
-                if (e.target.id === 'sessionListModal') {
-                    setSessionModalStatus(false);
-                }
-            }}>
-                <div className="modal-container" style={{ maxWidth: '700px' }}>
-                    <div className="modal-header">
-                        <h2 className="modal-title">{selectedProject || '프로젝트'}</h2>
-                        <button className="modal-close" onClick={() => setSessionModalStatus(false)}>✕</button>
-                    </div>
-                    <div className="modal-body">
-                        <button
-                            type="button"
-                            className="btn btn--primary"
-                            style={{
-                                background: 'var(--employee-primary)',
-                                width: '100%',
-                                marginBottom: 'var(--space-6)',
-                                padding: 'var(--space-3) var(--space-4)'
-                            }}
-                            onClick={handleStartNewSession}
-                        >
-                            ➕ 새 대화 시작
-                        </button>
-
-                        <div className="session-list">
-                            <h3 style={{
-                                fontSize: 'var(--text-sm)',
-                                fontWeight: 'var(--font-semibold)',
-                                color: 'var(--text-secondary)',
-                                marginBottom: 'var(--space-3)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px'
-                            }}>
-                                대화 목록
-                            </h3>
-                            {selectedProject && exampleSessions[selectedProject] ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                    {exampleSessions[selectedProject].map((session) => (
-                                        <div
-                                            key={session.id}
-                                            className="session-item"
-                                            onClick={() => handleSessionClick(session.id)}
-                                            style={{
-                                                padding: 'var(--space-4)',
-                                                border: '1px solid var(--border)',
-                                                borderRadius: 'var(--radius-md)',
-                                                cursor: 'pointer',
-                                                transition: 'all 0.2s',
-                                                background: 'var(--background)'
-                                            }}
-                                            onMouseEnter={(e) => {
-                                                e.currentTarget.style.borderColor = 'var(--employee-primary)';
-                                                e.currentTarget.style.background = 'var(--surface)';
-                                                e.currentTarget.style.transform = 'translateX(4px)';
-                                            }}
-                                            onMouseLeave={(e) => {
-                                                e.currentTarget.style.borderColor = 'var(--border)';
-                                                e.currentTarget.style.background = 'var(--background)';
-                                                e.currentTarget.style.transform = 'translateX(0)';
-                                            }}
-                                        >
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 'var(--space-2)' }}>
-                                                <h4 style={{
-                                                    fontSize: 'var(--text-base)',
-                                                    fontWeight: 'var(--font-semibold)',
-                                                    color: 'var(--text-primary)',
-                                                    margin: 0
-                                                }}>
-                                                    {session.title}
-                                                </h4>
-                                                <span style={{
-                                                    padding: '2px 8px',
-                                                    background: 'var(--surface)',
-                                                    border: '1px solid var(--border)',
-                                                    borderRadius: 'var(--radius-sm)',
-                                                    fontSize: 'var(--text-xs)',
-                                                    color: 'var(--text-secondary)'
-                                                }}>
-                                                    {session.model}
-                                                </span>
-                                            </div>
-                                            <p style={{
-                                                fontSize: 'var(--text-sm)',
-                                                color: 'var(--text-secondary)',
-                                                margin: '0 0 var(--space-2) 0',
-                                                display: '-webkit-box',
-                                                WebkitLineClamp: 2,
-                                                WebkitBoxOrient: 'vertical',
-                                                overflow: 'hidden'
-                                            }}>
-                                                {session.lastMessage}
-                                            </p>
-                                            <div style={{
-                                                fontSize: 'var(--text-xs)',
-                                                color: 'var(--text-secondary)'
-                                            }}>
-                                                {session.updatedAt}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div style={{
-                                    textAlign: 'center',
-                                    padding: 'var(--space-8)',
-                                    color: 'var(--text-secondary)'
-                                }}>
-                                    <p>아직 대화가 없습니다.</p>
-                                    <p style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
-                                        "새 대화 시작" 버튼을 눌러 대화를 시작하세요.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -308,7 +136,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('Python 기초 학습')}>
+                            <div className="project-card project-card--personal" >
                                 <h3 className="project-card__title">Python 기초 학습</h3>
                                 <p className="project-card__description">
                                     Python 프로그래밍의 기초부터 고급 개념까지 체계적으로 학습하는 프로젝트
@@ -330,7 +158,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('데이터 분석 실습')}>
+                            <div className="project-card project-card--personal" >
                                 <h3 className="project-card__title">데이터 분석 실습</h3>
                                 <p className="project-card__description">
                                     Pandas와 NumPy를 활용한 데이터 분석 및 시각화 프로젝트
@@ -351,7 +179,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--team" onClick={() => handleProjectClick('마케팅 콘텐츠 생성')}>
+                            <div className="project-card project-card--team" >
                                 <h3 className="project-card__title">마케팅 콘텐츠 생성</h3>
                                 <p className="project-card__description">
                                     AI를 활용한 소셜미디어 콘텐츠 및 마케팅 카피 작성 프로젝트
@@ -373,7 +201,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('머신러닝 기초')}>
+                            <div className="project-card project-card--personal" >
                                 <h3 className="project-card__title">머신러닝 기초</h3>
                                 <p className="project-card__description">
                                     머신러닝의 기본 개념과 알고리즘을 학습하는 프로젝트
@@ -394,7 +222,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--team" onClick={() => handleProjectClick('코드 리뷰 자동화')}>
+                            <div className="project-card project-card--team" >
                                 <h3 className="project-card__title">코드 리뷰 자동화</h3>
                                 <p className="project-card__description">
                                     AI를 활용한 코드 리뷰 및 개선 제안 시스템 구축
@@ -415,7 +243,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('웹 스크래핑 실습')}>
+                            <div className="project-card project-card--personal" >
                                 <h3 className="project-card__title">웹 스크래핑 실습</h3>
                                 <p className="project-card__description">
                                     BeautifulSoup과 Selenium을 활용한 웹 데이터 수집
@@ -436,7 +264,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--team" onClick={() => handleProjectClick('고객 분석 프로젝트')}>
+                            <div className="project-card project-card--team" >
                                 <h3 className="project-card__title">고객 분석 프로젝트</h3>
                                 <p className="project-card__description">
                                     고객 리뷰 감성 분석 및 인사이트 도출 프로젝트
@@ -458,7 +286,7 @@ export default function UserProject() {
                             </div>
 
 
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('업무 자동화')}>
+                            <div className="project-card project-card--personal" >
                                 <h3 className="project-card__title">업무 자동화</h3>
                                 <p className="project-card__description">
                                     반복 업무 자동화를 위한 스크립트 개발 프로젝트

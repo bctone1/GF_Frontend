@@ -106,7 +106,7 @@ export default function Login() {
                             <button
                                 type="button"
                                 className={`role-tab ${selectedRole === 'organization' ? 'role-tab--active' : ''}`}
-                                onClick={() => handleRoleSelect('organization')}
+                                onClick={() => alert("준비중입니다.")}
                             >
                                 <span className="role-tab__icon">⚙️</span>
                                 <span>기업</span>
