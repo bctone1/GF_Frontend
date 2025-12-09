@@ -737,7 +737,7 @@ export default function UserPractice() {
                                                 currentMessages.map((msg, index) => (
                                                     <div key={index} className={`chat-message ${msg.type === 'user' ? 'chat-message--user' : 'chat-message--assistant'}`}>
                                                         <div className="chat-message__avatar">
-                                                            {msg.type === 'user' ? '김' : '🤖'}
+                                                            {msg.type === 'user' ? 'U' : '🤖'}
                                                         </div>
                                                         <div className="chat-message__content">
                                                             <div className="chat-message__bubble">
@@ -810,7 +810,7 @@ export default function UserPractice() {
                                                                 {messages.map((msg, index) => (
                                                                     <div key={index} className={`chat-message ${msg.type === 'user' ? 'chat-message--user' : 'chat-message--assistant'}`}>
                                                                         <div className="chat-message__avatar">
-                                                                            {msg.type === 'user' ? '김' : '🤖'}
+                                                                            {msg.type === 'user' ? 'U' : '🤖'}
                                                                         </div>
                                                                         <div className="chat-message__content">
                                                                             <div className="chat-message__bubble">
