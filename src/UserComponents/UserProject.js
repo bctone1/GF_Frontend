@@ -1,67 +1,98 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
+import { getSelectedClassId } from '../utill/utill';
+import axios from 'axios';
 
 export default function UserProject() {
-    const handleCreateProject = (e) => {
+    const accessToken = sessionStorage.getItem("access_token");
+    const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
+    const [projectList, setProjectList] = useState([]);
+
+    const fetchProjects = async (classId) => {
+        // 클래스가 선택되지 않으면 프로젝트를 표시하지 않음
+        if (!classId) {
+            setProjectList([]);
+            return;
+        }
+
+        try {
+            const url = `${process.env.REACT_APP_API_URL}/projects?class_id=${classId}`;
+
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                }
+            });
+            console.log(response.data.items);
+            // API가 클래스 필터링을 지원하지 않는 경우 클라이언트 측에서 필터링
+            const projects = response.data.items || [];
+            const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
+            setProjectList(filteredProjects);
+        } catch (error) {
+            console.error('프로젝트 조회 실패:', error);
+            setProjectList([]);
+        }
+    }
+
+    useEffect(() => {
+        const currentClassId = getSelectedClassId();
+        setSavedClassId(currentClassId);
+        fetchProjects(currentClassId);
+    }, []);
+
+    // 클래스 변경 핸들러
+    const handleClassChange = (classId, allowedModelIds) => {
+        setSavedClassId(classId);
+        fetchProjects(classId);
+    };
+
+
+    const handleCreateProject = async (e) => {
         e.preventDefault();
-        console.log('create project');
-        setModalStatus(false);
+        try {
+            const response = await axios.post(`${process.env.REACT_APP_API_URL}/projects`, {
+                name: e.target.projectName.value,
+                description: e.target.projectDescription.value,
+                class_id: savedClassId
+            }, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                }
+            });
+            // 폼 초기화
+            e.target.reset();
+            fetchProjects(savedClassId);
+            setModalStatus(false);
+        } catch (error) {
+            console.error('프로젝트 생성 실패:', error);
+            // 에러 발생 시에도 사용자에게 알림을 줄 수 있습니다
+        }
     }
 
     const [modalStatus, setModalStatus] = useState(false);
     const [sessionModalStatus, setSessionModalStatus] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
 
-    // 예시 세션 데이터
-    const exampleSessions = {
-        'Python 기초 학습': [
-            { id: 1, title: '변수와 데이터 타입', lastMessage: 'Python의 기본 데이터 타입에 대해...', updatedAt: '2시간 전', model: 'GPT-4' },
-            { id: 2, title: '반복문과 조건문', lastMessage: 'for문과 while문의 차이점은...', updatedAt: '5시간 전', model: 'Claude' },
-            { id: 3, title: '함수 정의하기', lastMessage: '함수의 매개변수와 반환값에 대해...', updatedAt: '1일 전', model: 'Gemini' },
-            { id: 4, title: '리스트와 딕셔너리', lastMessage: '리스트 컴프리헨션 문법은...', updatedAt: '2일 전', model: 'GPT-4' },
-            { id: 5, title: '클래스와 객체', lastMessage: '객체지향 프로그래밍의 개념은...', updatedAt: '3일 전', model: 'Claude' },
-        ],
-        '데이터 분석 실습': [
-            { id: 6, title: 'Pandas 기초', lastMessage: 'DataFrame 생성 방법은...', updatedAt: '1시간 전', model: 'GPT-4' },
-            { id: 7, title: '데이터 시각화', lastMessage: 'Matplotlib 사용법에 대해...', updatedAt: '어제', model: 'Claude' },
-        ],
-        '마케팅 콘텐츠 생성': [
-            { id: 8, title: '소셜미디어 포스트 작성', lastMessage: '인스타그램 캡션 작성 팁은...', updatedAt: '30분 전', model: 'GPT-4' },
-            { id: 9, title: '이메일 마케팅 카피', lastMessage: '오픈율을 높이는 제목 작성법...', updatedAt: '3시간 전', model: 'Claude' },
-        ],
-        '머신러닝 기초': [
-            { id: 10, title: '선형 회귀 이해하기', lastMessage: '선형 회귀의 기본 개념은...', updatedAt: '1일 전', model: 'GPT-4' },
-            { id: 11, title: '분류 알고리즘', lastMessage: '로지스틱 회귀와 결정 트리의 차이...', updatedAt: '2일 전', model: 'Claude' },
-        ],
-        '코드 리뷰 자동화': [
-            { id: 12, title: '코드 품질 체크', lastMessage: '코드 스타일 가이드라인 적용...', updatedAt: '4시간 전', model: 'GPT-4' },
-        ],
-        '웹 스크래핑 실습': [
-            { id: 13, title: 'BeautifulSoup 기초', lastMessage: 'HTML 파싱 방법에 대해...', updatedAt: '1주일 전', model: 'GPT-4' },
-        ],
-        '고객 분석 프로젝트': [
-            { id: 14, title: '감성 분석 모델', lastMessage: '텍스트 감성 분석 방법은...', updatedAt: '1일 전', model: 'Claude' },
-        ],
-        '업무 자동화': [
-            { id: 15, title: '반복 작업 스크립트', lastMessage: '파일 처리 자동화 방법...', updatedAt: '5일 전', model: 'GPT-4' },
-        ],
-    };
+    const [sessionList, setSessionList] = useState([]);
 
-    const handleProjectClick = (projectName) => {
-        setSelectedProject(projectName);
+    const handleProjectClick = async (project_id) => {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/projects/${project_id}/sessions`,
+            { headers: { Authorization: `Bearer ${accessToken}`, }, }
+        );
+        console.log(res.data);
+        setSessionList(res.data);
         setSessionModalStatus(true);
     };
 
     const handleStartNewSession = () => {
         console.log('새 대화 시작:', selectedProject);
-        // 새 대화 시작 로직
     };
 
     const handleSessionClick = (sessionId) => {
         console.log('세션 클릭:', sessionId);
-        // 세션 열기 로직
     };
 
 
@@ -81,43 +112,16 @@ export default function UserProject() {
                                 <label className="form-label">
                                     프로젝트 이름 <span className="required">*</span>
                                 </label>
-                                <input type="text" id="projectName" className="form-input" placeholder="예: Python 기초 학습" required="" maxLength="50" />
+                                <input type="text" name="projectName" className="form-input" placeholder="예: Python 기초 학습" required="" maxLength="50" />
                                 <div className="form-hint">프로젝트를 대표하는 이름을 입력하세요 (최대 50자)</div>
                             </div>
 
 
                             <div className="form-group">
                                 <label className="form-label">프로젝트 설명</label>
-                                <textarea id="projectDescription" className="form-textarea" placeholder="이 프로젝트에 대해 간단히 설명해주세요..." rows="3" maxLength="200" />
+                                <textarea name="projectDescription" className="form-textarea" placeholder="이 프로젝트에 대해 간단히 설명해주세요..." rows="3" maxLength="200" />
                                 <div className="form-hint">프로젝트의 목적과 내용을 설명하세요 (최대 200자)</div>
                             </div>
-
-
-                            {/* <div className="form-group">
-                                <label className="form-label">프로젝트 유형</label>
-                                <div className="radio-group">
-                                    <label className="radio-option">
-                                        <input type="radio" name="projectType" value="personal" checked="" />
-                                        <span className="radio-label">
-                                            <span className="radio-icon">🙋</span>
-                                            <span>
-                                                <div className="radio-title">개인 프로젝트</div>
-                                                <div className="radio-desc">나만 사용하는 프로젝트</div>
-                                            </span>
-                                        </span>
-                                    </label>
-                                    <label className="radio-option">
-                                        <input type="radio" name="projectType" value="team" />
-                                        <span className="radio-label">
-                                            <span className="radio-icon">👥</span>
-                                            <span>
-                                                <div className="radio-title">팀 프로젝트</div>
-                                                <div className="radio-desc">팀원과 함께 작업</div>
-                                            </span>
-                                        </span>
-                                    </label>
-                                </div>
-                            </div> */}
                         </form>
                     </div>
                     <div className="modal-footer">
@@ -168,13 +172,13 @@ export default function UserProject() {
                             }}>
                                 대화 목록
                             </h3>
-                            {selectedProject && exampleSessions[selectedProject] ? (
+                            {sessionList.length > 0 ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                    {exampleSessions[selectedProject].map((session) => (
+                                    {sessionList.map((session) => (
                                         <div
-                                            key={session.id}
+                                            key={session.session_id}
                                             className="session-item"
-                                            onClick={() => handleSessionClick(session.id)}
+                                            onClick={() => handleSessionClick(session.session_id)}
                                             style={{
                                                 padding: 'var(--space-4)',
                                                 border: '1px solid var(--border)',
@@ -211,7 +215,7 @@ export default function UserProject() {
                                                     fontSize: 'var(--text-xs)',
                                                     color: 'var(--text-secondary)'
                                                 }}>
-                                                    {session.model}
+                                                    {session.primary_model_label}
                                                 </span>
                                             </div>
                                             <p style={{
@@ -223,13 +227,13 @@ export default function UserProject() {
                                                 WebkitBoxOrient: 'vertical',
                                                 overflow: 'hidden'
                                             }}>
-                                                {session.lastMessage}
+                                                {session.last_message_preview}
                                             </p>
                                             <div style={{
                                                 fontSize: 'var(--text-xs)',
                                                 color: 'var(--text-secondary)'
                                             }}>
-                                                {session.updatedAt}
+                                                {session.last_activity_at.split('T')[0].slice(5)} {session.last_activity_at.split('T')[1].slice(0, 5)}
                                             </div>
                                         </div>
                                     ))}
@@ -255,26 +259,17 @@ export default function UserProject() {
             <div id="app">
                 <UserHeader />
                 <div className="container">
-                    <UserSidebar />
-
-
+                    <UserSidebar onClassChange={handleClassChange} />
                     <main className="main">
-
-
-
-
-
-
-
                         <div className="filter-bar">
                             <div className="user-project-filter-group">
-                                <select className="filter-select" id="sortBy" onchange="sortProjects(this.value)">
+                                <select className="filter-select" id="sortBy">
                                     <option value="recent">최근 수정순</option>
                                     <option value="name">이름순</option>
                                     <option value="created">생성일순</option>
                                     <option value="conversations">대화 많은 순</option>
                                 </select>
-                                <select className="filter-select" id="filterModel" onchange="filterByModel(this.value)">
+                                <select className="filter-select" id="filterModel">
                                     <option value="all">모든 모델</option>
                                     <option value="gpt">GPT-4만</option>
                                     <option value="claude">Claude만</option>
@@ -286,7 +281,6 @@ export default function UserProject() {
                                 className="search-input"
                                 placeholder="프로젝트 검색..."
                                 id="searchInput"
-                                onkeyup="searchProjects(this.value)"
                             />
                             <div className="view-switcher">
                                 <button className="view-btn view-btn--active" title="그리드 뷰">
@@ -307,176 +301,30 @@ export default function UserProject() {
                                 <div className="project-card--empty__desc">AI 실습을 시작하세요</div>
                             </div>
 
-
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('Python 기초 학습')}>
-                                <h3 className="project-card__title">Python 기초 학습</h3>
-                                <p className="project-card__description">
-                                    Python 프로그래밍의 기초부터 고급 개념까지 체계적으로 학습하는 프로젝트
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 8개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Claude</span>
-                                    <span className="project-tag">Gemini</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">2시간 전</div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('데이터 분석 실습')}>
-                                <h3 className="project-card__title">데이터 분석 실습</h3>
-                                <p className="project-card__description">
-                                    Pandas와 NumPy를 활용한 데이터 분석 및 시각화 프로젝트
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 5개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Claude</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">어제</div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card project-card--team" onClick={() => handleProjectClick('마케팅 콘텐츠 생성')}>
-                                <h3 className="project-card__title">마케팅 콘텐츠 생성</h3>
-                                <p className="project-card__description">
-                                    AI를 활용한 소셜미디어 콘텐츠 및 마케팅 카피 작성 프로젝트
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 15개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Claude</span>
-                                    <span className="project-tag">Gemini</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">1시간 전</div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('머신러닝 기초')}>
-                                <h3 className="project-card__title">머신러닝 기초</h3>
-                                <p className="project-card__description">
-                                    머신러닝의 기본 개념과 알고리즘을 학습하는 프로젝트
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 6개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Claude</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">3일 전</div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card project-card--team" onClick={() => handleProjectClick('코드 리뷰 자동화')}>
-                                <h3 className="project-card__title">코드 리뷰 자동화</h3>
-                                <p className="project-card__description">
-                                    AI를 활용한 코드 리뷰 및 개선 제안 시스템 구축
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 12개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Claude</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">5시간 전</div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('웹 스크래핑 실습')}>
-                                <h3 className="project-card__title">웹 스크래핑 실습</h3>
-                                <p className="project-card__description">
-                                    BeautifulSoup과 Selenium을 활용한 웹 데이터 수집
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 4개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Gemini</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">1주일 전</div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card project-card--team" onClick={() => handleProjectClick('고객 분석 프로젝트')}>
-                                <h3 className="project-card__title">고객 분석 프로젝트</h3>
-                                <p className="project-card__description">
-                                    고객 리뷰 감성 분석 및 인사이트 도출 프로젝트
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 10개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Claude</span>
-                                    <span className="project-tag">Gemini</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">2일 전</div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card project-card--personal" onClick={() => handleProjectClick('업무 자동화')}>
-                                <h3 className="project-card__title">업무 자동화</h3>
-                                <p className="project-card__description">
-                                    반복 업무 자동화를 위한 스크립트 개발 프로젝트
-                                </p>
-                                <div className="project-card__meta">
-                                    <span className="project-meta-item">
-                                        <span>💬</span>
-                                        <span>대화방 3개</span>
-                                    </span>
-                                </div>
-                                <div className="project-tags">
-                                    <span className="project-tag">GPT-4</span>
-                                    <span className="project-tag">Claude</span>
-                                </div>
-                                <div className="project-card__footer">
-                                    <div className="project-card__date">5일 전</div>
-                                </div>
-                            </div>
+                            {projectList.map((project) => {
+                                return (
+                                    <div className="project-card project-card--personal" onClick={() => handleProjectClick(project.project_id)} key={project.project_id}>
+                                        <h3 className="project-card__title">{project.name}</h3>
+                                        <p className="project-card__description">
+                                            {project.description}
+                                        </p>
+                                        <div className="project-card__meta">
+                                            <span className="project-meta-item">
+                                                <span>💬</span>
+                                                <span>대화방 8개</span>
+                                            </span>
+                                        </div>
+                                        <div className="project-tags">
+                                            <span className="project-tag">GPT-4</span>
+                                            <span className="project-tag">Claude</span>
+                                            <span className="project-tag">Gemini</span>
+                                        </div>
+                                        <div className="project-card__footer">
+                                            <div className="project-card__date">{project.updated_at.split('T')[0]} {project.updated_at.split('T')[1].split('.')[0]}</div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
 
 
 

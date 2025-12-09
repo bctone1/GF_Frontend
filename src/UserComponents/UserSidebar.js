@@ -126,16 +126,6 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
         <>
             <aside className="sidebar sidebar--open">
                 <div className="sidebar__user">
-                    {/* <div className="sidebar__user-info">
-                        <div className="sidebar__user-avatar"
-                            style={{ background: "linear-gradient(135deg, #10b981, #06b6d4)" }}>김</div>
-                        <div className="sidebar__user-details">
-                            <div className="sidebar__user-name">김직원</div>
-                            <div className="sidebar__user-role">AI 실습생</div>
-                        </div>
-                    </div> */}
-
-
                     <div className="sidebar__class-selector">
                         <select
                             id="classSelector"
@@ -144,10 +134,6 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                             onChange={handleClassChange}
                         >
                             <option value="">📚 과목을 선택하세요</option>
-
-                            {/* {myClasses.map((myClass) => (
-                                <option value={myClass.class_id} key={myClass.class_id}>{myClass.class_title}</option>
-                            ))} */}
 
                             {myClasses.map((myClass) => {
                                 const daysLeft = Math.floor(
@@ -232,7 +218,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span>내 에이전트</span>
                             </Link>
                         </li>
-                        
+
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/workflow"

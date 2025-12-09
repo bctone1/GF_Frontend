@@ -4,14 +4,6 @@ import UserSidebar from './UserSidebar';
 import axios from 'axios';
 import { showToast, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
-const projects = [
-    { id: 1, name: 'AI 실습 기초', icon: '📁', color: '#9333ea' },
-    { id: 2, name: '마케팅 프로젝트', icon: '📊', color: '#10b981' },
-    { id: 3, name: '코딩 실습', icon: '💻', color: '#3b82f6' },
-    { id: 4, name: '데이터 분석', icon: '📈', color: '#f59e0b' }
-];
-
-
 export default function UserPractice() {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [currentMessages, setCurrentMessages] = useState([]);
@@ -64,9 +56,37 @@ export default function UserPractice() {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
-        // console.log(response.data.items);
+        console.log(response.data.items);
         setSessions(response.data.items);
     }
+    const [projectList, setProjectList] = useState([]);
+    const fetchProjects = async (classId) => {
+        // 클래스가 선택되지 않으면 프로젝트를 표시하지 않음
+        if (!classId) {
+            setProjectList([]);
+            return;
+        }
+
+        try {
+            const url = `${process.env.REACT_APP_API_URL}/projects?class_id=${classId}`;
+
+            const response = await axios.get(url, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                }
+            });
+            console.log(response.data.items);
+            // API가 클래스 필터링을 지원하지 않는 경우 클라이언트 측에서 필터링
+            const projects = response.data.items || [];
+            const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
+            setProjectList(filteredProjects);
+        } catch (error) {
+            console.error('프로젝트 조회 실패:', error);
+            setProjectList([]);
+        }
+    }
+
 
     // UserSidebar에서 클래스 변경 시 호출되는 콜백
     const handleClassChange = (classId, allowedModelIdsArray) => {
@@ -74,8 +94,10 @@ export default function UserPractice() {
         setCompareMessages({});
         setShowEmptyState(true);
         setCurrentSession(0);
-        
         setSavedClassId(classId);
+        fetchProjects(classId);
+
+
         const modelIds = allowedModelIdsArray || [1];
         setAllowedModelIds(modelIds);
 
@@ -117,6 +139,7 @@ export default function UserPractice() {
         fetchAssistant();
         fetchDocuments();
         fetchSessions();
+        fetchProjects(savedClassId);
     }, []);
 
     // Assistant가 로드되고 allowedModelIds가 변경될 때 첫 번째 허용된 모델 자동 선택
@@ -285,12 +308,18 @@ export default function UserPractice() {
         setPlusMenuView('integration');
     };
 
-    const selectProjectFromPlusMenu = (projectName) => {
-        setCurrentProject(projectName);
+    const selectProjectFromPlusMenu = async (project) => {
+        const res = await axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
+            {
+                project_id: project.project_id
+            },
+            { headers: { Authorization: `Bearer ${accessToken}`, }, }
+        );
+        console.log(res.data);
+        setCurrentProject(project.name);
         setShowPlusMenu(false);
         setPlusMenuView('main');
-        // Toast 메시지는 추후 구현
-        // console.log(`프로젝트 변경: ${projectName}`);
+
     };
 
     const toggleModelDropdown = () => {
@@ -558,6 +587,7 @@ export default function UserPractice() {
             setCompareMessages(newCompareMessages);
             setCurrentSession(sessionId);
             setShowEmptyState(false);
+            setCurrentProject(projectList.find(p => p.project_id === sessionData.project_id)?.name || '');
 
             // 사용된 모델들을 selectedModels에 설정
             const usedModels = Object.keys(newCompareMessages);
@@ -600,8 +630,8 @@ export default function UserPractice() {
                                                     <div className="chat-history-item__model-icon" style={{ background: 'rgba(66, 133, 244, 0.1)', color: '#4285f4' }}>G</div> */}
                                                 </div>
                                                 <span>
-                                                    {session.started_at.split('T')[0].slice(5)}{" "}
-                                                    {session.started_at.split('T')[1].slice(0, 5)}
+                                                    {session.started_at?.split('T')[0].slice(5)}{" "}
+                                                    {session.started_at?.split('T')[1].slice(0, 5)}
                                                 </span>
                                             </div>
                                         </div>
@@ -647,8 +677,9 @@ export default function UserPractice() {
                                     <>
                                         <div className="chat-main__header" id="singleHeader">
                                             <div className="chat-main__title">
-                                                <span>파일 첨부 확인</span>
-                                                <span className="chat-main__badge">코딩 에이전트</span>
+                                                <span>
+                                                    {projectList.find(p => p.project_id === sessions.find(s => s.session_id === currentSession)?.project_id)?.name || ''}  {sessions.find(s => s.session_id === currentSession)?.title || ''}</span>
+                                                {/* <span className="chat-main__badge">코딩 에이전트</span> */}
                                             </div>
                                         </div>
                                         <div className="chat-messages" id="chatMessages">
@@ -871,18 +902,18 @@ export default function UserPractice() {
                                                             <span className="plus-menu__header-title">프로젝트 선택</span>
                                                         </div>
                                                         <div id="plusMenuProjects">
-                                                            {projects && projects.length > 0 ? (
-                                                                projects.map(project => (
+                                                            {projectList && projectList.length > 0 ? (
+                                                                projectList.map(project => (
                                                                     <div
-                                                                        key={project.id}
+                                                                        key={project.project_id}
                                                                         className={`plus-menu__project-item ${project.name === currentProject ? 'plus-menu__project-item--active' : ''}`}
-                                                                        onClick={() => selectProjectFromPlusMenu(project.name)}
+                                                                        onClick={() => selectProjectFromPlusMenu(project)}
                                                                         style={{ cursor: 'pointer' }}
                                                                     >
                                                                         <div className="plus-menu__project-icon" style={{ background: `${project.color}20`, color: project.color }}>
-                                                                            {project.icon}
+                                                                            📁
                                                                         </div>
-                                                                        <div className="plus-menu__project-name">{project.name}</div>
+                                                                        <div className="plus-menu__project-name">{project.name} ({project.description})</div>
                                                                     </div>
                                                                 ))
                                                             ) : (
