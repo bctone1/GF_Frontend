@@ -35,7 +35,7 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
                 <div id="classList" className="class-list">
                     {classArray.map((classInfo) => {
                         const daysLeft = Math.floor(
-                            (new Date(classInfo.class_end_at) - new Date()) / (1000 * 60 * 60 * 24)
+                            (new Date(classInfo.class_end_at) - new Date()) / (1000 * 60 * 60 * 24) + 1
                         );
 
                         const statusBadge = daysLeft < 0 ? (
