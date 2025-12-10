@@ -829,9 +829,8 @@ export default function PartnerProjectManagement() {
 
                                 {myClasses.map((myclass) => {
                                     const daysLeft = Math.floor(
-                                        (new Date(myclass.end_at) - new Date()) / (1000 * 60 * 60 * 24)
+                                        (new Date(myclass.end_at) - new Date()) / (1000 * 60 * 60 * 24) + 1
                                     );
-
                                     return (
                                         <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
                                             <div className="project-card__header">
@@ -849,7 +848,7 @@ export default function PartnerProjectManagement() {
                                                     <span>20,000,000원</span>
                                                 </div> */}
                                                 <div className="project-card__meta-item">
-                                                    <span>👥</span>
+                                                    <span>정원 : </span>
                                                     <span>{myclass.capacity}명</span>
                                                 </div>
                                             </div>
