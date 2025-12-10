@@ -464,6 +464,8 @@ export default function UserPractice() {
     };
 
     const uploadFile = () => {
+        alert("Phase 2에서 구현 예정입니다");
+        return;
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*,.pdf,.doc,.docx,.txt';

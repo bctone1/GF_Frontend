@@ -304,6 +304,8 @@ export default function PartnerProjectManagement() {
     // 진행 중과 종료됨 강의 개수 계산
     const { activeCount, completedCount } = useMemo(() => {
         const now = new Date();
+        // 시간 정보를 제거하고 날짜만 비교하기 위해 시간을 00:00:00으로 설정
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         let active = 0;
         let completed = 0;
 
@@ -312,13 +314,17 @@ export default function PartnerProjectManagement() {
 
             const startDate = new Date(myclass.start_at);
             const endDate = new Date(myclass.end_at);
+            
+            // 시간 정보를 제거하고 날짜만 비교
+            const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
 
-            // 진행 중: 현재 날짜가 시작일과 종료일 사이에 있는 경우
-            if (now >= startDate && now <= endDate) {
+            // 진행 중: 현재 날짜가 시작일과 종료일 사이에 있는 경우 (종료일 포함)
+            if (today <= endDateOnly) {
                 active++;
             }
-            // 종료됨: 현재 날짜가 종료일을 지난 경우
-            else if (now > endDate) {
+            // 종료됨: 현재 날짜가 종료일을 지난 경우 (종료일 다음 날부터)
+            else if (today > endDateOnly) {
                 completed++;
             }
         });
