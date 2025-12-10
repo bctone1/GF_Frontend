@@ -29,12 +29,13 @@ import ManagerSettings from './ManagerComponents/ManagerSettings';
 
 import OrganizationDashboard from './OrganizationComponents/OrganizationDashboard';
 
+import SMS from './SMS';
 export default function App() {
   return (
     <>
       <Routes>
 
-
+        <Route path="/sms" element={<SMS />} />
 
         <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
@@ -69,7 +70,7 @@ export default function App() {
         <Route path="/manager/user-management" element={<ManagerUserManagement />} />
         <Route path="/manager/billing" element={<ManagerBilling />} />
         <Route path="/manager/settings" element={<ManagerSettings />} />
-        
+
 
 
 
