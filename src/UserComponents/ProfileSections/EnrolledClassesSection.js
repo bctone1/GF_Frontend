@@ -5,9 +5,11 @@ import { useNavigate } from 'react-router-dom';
 export default function EnrolledClassesSection({ classArray, onInviteClick, onClassSelect }) {
     const navigate = useNavigate();
 
-    const handlePracticeClick = (daysLeft, classInfo) => {
+    const handlePracticeClick = (daysUntilStart, daysLeft, classInfo) => {
         console.log(classInfo);
-        if (daysLeft < 0) {
+        if (daysUntilStart > 0) {
+            showToast(`강의가 아직 시작하지 않았습니다.`, 'error');
+        } else if (daysLeft < 0) {
             showToast(`강의가 종료되었습니다.`, 'error');
         } else {
             // 클래스 선택 핸들러 호출
@@ -34,15 +36,33 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
 
                 <div id="classList" className="class-list">
                     {classArray.map((classInfo) => {
+                        const now = new Date();
+                        const startDate = new Date(classInfo.class_start_at);
+                        const endDate = new Date(classInfo.class_end_at);
+
+                        const daysUntilStart = Math.floor(
+                            (startDate - now) / (1000 * 60 * 60 * 24) + 1
+                        );
                         const daysLeft = Math.floor(
-                            (new Date(classInfo.class_end_at) - new Date()) / (1000 * 60 * 60 * 24) + 1
+                            (endDate - now) / (1000 * 60 * 60 * 24) + 1
                         );
 
-                        const statusBadge = daysLeft < 0 ? (
-                            <span className="class-card__badge class-card__badge--ended">종료됨</span>
-                        ) : (
-                            <span className="class-card__badge class-card__badge--active">진행 중</span>
-                        );
+                        let statusBadge;
+                        let isDisabled = false;
+
+                        if (daysUntilStart > 0) {
+                            // 예정
+                            statusBadge = <span className="class-card__badge class-card__badge--scheduled">예정</span>;
+                            isDisabled = true;
+                        } else if (daysLeft < 0) {
+                            // 종료됨
+                            statusBadge = <span className="class-card__badge class-card__badge--ended">종료됨</span>;
+                            isDisabled = true;
+                        } else {
+                            // 진행 중
+                            statusBadge = <span className="class-card__badge class-card__badge--active">진행 중</span>;
+                            isDisabled = false;
+                        }
 
                         return (
                             <div className="class-card" key={classInfo.class_id}>
@@ -66,8 +86,10 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
                                 </div>
 
                                 <div className="class-card__actions">
-                                    <button className={`class-card__action-btn ${daysLeft < 0 ? 'class-card__action-btn--ended' : ''}`}
-                                        onClick={() => handlePracticeClick(daysLeft, classInfo)}
+                                    <button
+                                        className={`class-card__action-btn ${isDisabled ? 'class-card__action-btn--ended' : ''}`}
+                                        onClick={() => handlePracticeClick(daysUntilStart, daysLeft, classInfo)}
+                                        disabled={isDisabled}
                                     >
                                         실습하기
                                     </button>

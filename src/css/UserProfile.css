@@ -1044,6 +1044,11 @@
         color: var(--text-tertiary);
     }
 
+    .class-card__badge--scheduled {
+        background: rgba(255, 215, 0, 0.1);
+        color: var(--warning);
+    }
+
     .class-card__title {
         font-size: var(--text-lg);
         font-weight: var(--font-bold);
@@ -1113,8 +1118,6 @@
         background: var(--background);
         color: var(--text-tertiary);
     }
-
-
 
     .no-classes {
         text-align: center;

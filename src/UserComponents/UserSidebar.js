@@ -136,11 +136,22 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                             <option value="">📚 과목을 선택하세요</option>
 
                             {myClasses.map((myClass) => {
-                                const daysLeft = Math.floor(
-                                    (new Date(myClass.class_end_at) - new Date()) / (1000 * 60 * 60 * 24)
+                                const now = new Date();
+                                const startDate = new Date(myClass.class_start_at);
+                                const endDate = new Date(myClass.class_end_at);
+
+                                const daysUntilStart = Math.floor(
+                                    (startDate - now) / (1000 * 60 * 60 * 24) + 1
                                 );
+                                const daysLeft = Math.floor(
+                                    (endDate - now) / (1000 * 60 * 60 * 24) + 1
+                                );
+
+                                // 예정 상태(시작일 전) 또는 종료 상태(종료일 지남)일 때 비활성화
+                                const isDisabled = daysUntilStart > 0 || daysLeft < 0;
+
                                 return (
-                                    <option disabled={daysLeft < 0} value={myClass.class_id} key={myClass.class_id}>{myClass.class_title}</option>
+                                    <option disabled={isDisabled} value={myClass.class_id} key={myClass.class_id}>{myClass.class_title}</option>
                                 )
                             })}
 
@@ -151,7 +162,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
 
                 <nav className="sidebar__nav">
                     <ul className="sidebar__menu">
-                        <li className="sidebar__menu-item">
+                        {/* <li className="sidebar__menu-item">
                             <Link
                                 to="/user/dashboard"
                                 className={`sidebar__menu-link ${currentMenu === 'dashboard' ? 'sidebar__menu-link--active' : ''}`}
@@ -159,7 +170,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">🏠</span>
                                 <span>대시보드</span>
                             </Link>
-                        </li>
+                        </li> */}
 
 
                         <li className="sidebar__menu-item">
@@ -203,7 +214,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                         </li>
 
 
-
+                        {/* 
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/agent"
@@ -242,7 +253,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">📊</span>
                                 <span>내 기록</span>
                             </Link>
-                        </li>
+                        </li> */}
 
                         <li className="sidebar__menu-item">
                             <Link
@@ -257,13 +268,13 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                     </ul>
                 </nav>
 
-                <div className="sidebar__footer">
+                {/* <div className="sidebar__footer">
                     <div
                         style={{ padding: "var(--space-3)", background: "var(--surface)", borderRadius: "var(--radius-md)", fontSize: "var(--text-xs)" }}>
                         <div style={{ color: "var(--text-secondary)", marginBottom: "var(--space-1)" }}>이번 주 실습</div>
                         <div style={{ fontWeight: "var(--font-bold)", color: "var(--employee-primary)" }}>3시간 24분</div>
                     </div>
-                </div>
+                </div> */}
             </aside>
         </>
     )

@@ -148,10 +148,16 @@
      background: #d1fae5;
      color: var(--partner-success);
  }
+
  .project-card__status--end {
-    background: #fee2e2;
-    color: var(--partner-danger);
-}
+     background: #fee2e2;
+     color: var(--partner-danger);
+ }
+
+ .project-card__status--scheduled {
+     background: #fde68a;
+     color: var(--partner-warning);
+ }
 
  .status-dot {
      width: 6px;
@@ -608,47 +614,47 @@
      color: #92400e;
  }
 
-/* ========== 자동완성 드롭다운 ========== */
-.autocomplete-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--background);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    margin-top: 4px;
-}
+ /* ========== 자동완성 드롭다운 ========== */
+ .autocomplete-dropdown {
+     position: absolute;
+     top: 100%;
+     left: 0;
+     right: 0;
+     background: var(--background);
+     border: 1px solid var(--border);
+     border-radius: var(--radius-md);
+     box-shadow: var(--shadow-lg);
+     max-height: 200px;
+     overflow-y: auto;
+     z-index: 1000;
+     margin-top: 4px;
+ }
 
-.autocomplete-item {
-    padding: var(--space-3);
-    cursor: pointer;
-    font-size: var(--text-base);
-    color: var(--text-primary);
-    transition: all 0.2s;
-    border-bottom: 1px solid var(--border);
-}
+ .autocomplete-item {
+     padding: var(--space-3);
+     cursor: pointer;
+     font-size: var(--text-base);
+     color: var(--text-primary);
+     transition: all 0.2s;
+     border-bottom: 1px solid var(--border);
+ }
 
-.autocomplete-item:last-child {
-    border-bottom: none;
-}
+ .autocomplete-item:last-child {
+     border-bottom: none;
+ }
 
-.autocomplete-item:hover,
-.autocomplete-item--selected {
-    background: rgba(14, 165, 233, 0.1);
-    color: var(--partner-primary);
-}
+ .autocomplete-item:hover,
+ .autocomplete-item--selected {
+     background: rgba(14, 165, 233, 0.1);
+     color: var(--partner-primary);
+ }
 
-.autocomplete-item:active {
-    background: rgba(14, 165, 233, 0.2);
-}
+ .autocomplete-item:active {
+     background: rgba(14, 165, 233, 0.2);
+ }
 
-/* ========== 반응형 ========== */
-@media (max-width: 768px) {
+ /* ========== 반응형 ========== */
+ @media (max-width: 768px) {
      .stats-grid {
          grid-template-columns: repeat(2, 1fr);
      }
