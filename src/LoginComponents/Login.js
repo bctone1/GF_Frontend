@@ -10,6 +10,12 @@ export default function Login() {
         password: '',
         rememberMe: false
     });
+    const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({
+        email: '',
+        password: ''
+    });
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
@@ -21,30 +27,100 @@ export default function Login() {
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+        // 입력 시 에러 메시지 초기화
+        if (error) {
+            setError(null);
+        }
+        if (fieldErrors[name]) {
+            setFieldErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
     };
 
-    const handleSubmit = (e) => {
+    const getErrorMessage = (error) => {
+        // 네트워크 에러
+        if (!error.response) {
+            return '네트워크 연결을 확인해주세요. 인터넷 연결 상태를 확인하거나 잠시 후 다시 시도해주세요.';
+        }
+
+        const status = error.response.status;
+        const data = error.response.data;
+
+        // 상태 코드별 에러 메시지
+        switch (status) {
+            case 400:
+                return data.detail || '입력한 정보를 확인해주세요.';
+            case 401:
+                return data.detail || '이메일 또는 비밀번호가 올바르지 않습니다.';
+            case 403:
+                return data.detail || '접근 권한이 없습니다. 관리자에게 문의해주세요.';
+            case 404:
+                return data.detail || '요청한 리소스를 찾을 수 없습니다.';
+            case 422:
+                // 유효성 검사 에러 처리
+                if (data.detail && Array.isArray(data.detail)) {
+                    const errors = {};
+                    data.detail.forEach(err => {
+                        if (err.loc && err.loc.length > 1) {
+                            const field = err.loc[1];
+                            errors[field] = err.msg;
+                        }
+                    });
+                    setFieldErrors(prev => ({ ...prev, ...errors }));
+                    return '입력한 정보를 확인해주세요.';
+                }
+                return data.detail || '입력한 정보가 올바르지 않습니다.';
+            case 429:
+                return '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.';
+            case 500:
+            case 502:
+            case 503:
+                return '서버에 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            default:
+                return data.detail || data.message || '로그인 중 오류가 발생했습니다. 다시 시도해주세요.';
+        }
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        axios.post(`${process.env.REACT_APP_API_URL}/user/login`, {
-            email: formData.email,
-            password: formData.password,
-        }).then(response => {
-            console.log(response.data);
+        
+        // 에러 상태 초기화
+        setError(null);
+        setFieldErrors({ email: '', password: '' });
+        setIsLoading(true);
+
+        try {
+            const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/login`, {
+                email: formData.email,
+                password: formData.password,
+            });
+
+            // 로그인 성공
             sessionStorage.setItem("access_token", response.data.access_token);
             sessionStorage.setItem("refresh_token", response.data.refresh_token);
             sessionStorage.setItem("token_type", response.data.token_type);
             sessionStorage.setItem("email", formData.email);
 
             if (selectedRole === 'student') {
-                // navigate('/user/dashboard');
                 navigate('/user/profile');
             } else if (selectedRole === 'organization') {
                 navigate('/organization/dashboard');
             }
-        }).catch(error => {
-            alert(error.response.data.detail);
-            // console.log(error.response.data.detail);
-        });
+        } catch (error) {
+            const errorMessage = getErrorMessage(error);
+            setError(errorMessage);
+            
+            // 401 에러인 경우 비밀번호 필드에 포커스
+            if (error.response?.status === 401) {
+                setTimeout(() => {
+                    document.getElementById('password')?.focus();
+                }, 100);
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const roleDescriptions = {
@@ -132,6 +208,17 @@ export default function Login() {
                             {/* 숨겨진 역할 필드 */}
                             <input type="hidden" name="role" value={selectedRole} />
 
+                            {/* 에러 메시지 표시 */}
+                            {error && (
+                                <div className="auth-alert auth-alert--error" style={{ marginBottom: '20px' }}>
+                                    <span className="auth-alert__icon">⚠️</span>
+                                    <div className="auth-alert__content">
+                                        <strong>로그인 실패</strong><br />
+                                        {error}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* 이메일 */}
                             <div className="form-group">
                                 <label htmlFor="email" className="form-label form-label--required">이메일</label>
@@ -139,13 +226,20 @@ export default function Login() {
                                     type="email"
                                     id="email"
                                     name="email"
-                                    className="form-input"
+                                    className={`form-input ${fieldErrors.email ? 'form-input--error' : ''}`}
                                     placeholder="example@growfit.io"
                                     required
                                     autoComplete="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
+                                    disabled={isLoading}
                                 />
+                                {fieldErrors.email && (
+                                    <div className="form-error">
+                                        <span>⚠️</span>
+                                        <span>{fieldErrors.email}</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* 비밀번호 */}
@@ -155,13 +249,20 @@ export default function Login() {
                                     type="password"
                                     id="password"
                                     name="password"
-                                    className="form-input"
+                                    className={`form-input ${fieldErrors.password ? 'form-input--error' : ''}`}
                                     placeholder="비밀번호를 입력하세요"
                                     required
                                     autoComplete="current-password"
                                     value={formData.password}
                                     onChange={handleInputChange}
+                                    disabled={isLoading}
                                 />
+                                {fieldErrors.password && (
+                                    <div className="form-error">
+                                        <span>⚠️</span>
+                                        <span>{fieldErrors.password}</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* 로그인 유지 & 비밀번호 찾기 */}
@@ -186,8 +287,12 @@ export default function Login() {
                             </div>
 
                             {/* 로그인 버튼 */}
-                            <button type="submit" className="btn-auth btn-auth--primary">
-                                <span>{loginButtonText[selectedRole]}</span>
+                            <button 
+                                type="submit" 
+                                className={`btn-auth btn-auth--primary ${isLoading ? 'btn-auth--loading' : ''}`}
+                                disabled={isLoading}
+                            >
+                                <span>{isLoading ? '로그인 중...' : loginButtonText[selectedRole]}</span>
                             </button>
 
                             {/* 계정 안내 (역할별 동적 표시) */}

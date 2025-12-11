@@ -7,6 +7,8 @@ import { showToast } from '../utill/utill';
 export default function PartnerProjectManagement() {
     const [showModal, setShowModal] = useState(false);
     const [showCourseCreatedModal, setShowCourseCreatedModal] = useState(false);
+    const [showInviteCodeModal, setShowInviteCodeModal] = useState(false);
+    const [selectedClass, setSelectedClass] = useState(null);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [trainingDays, setTrainingDays] = useState(0);
@@ -481,6 +483,39 @@ export default function PartnerProjectManagement() {
         }
     };
 
+    const handleShowInviteCode = (myclass) => {
+        setSelectedClass(myclass);
+        setShowInviteCodeModal(true);
+    };
+
+    const handleCopyInviteCodeFromModal = async () => {
+        const inviteCode = selectedClass?.invite_codes?.[0]?.code;
+        if (!inviteCode) {
+            showToast('복사할 초대 코드가 없습니다.', 'error');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(inviteCode);
+            showToast('초대 코드가 복사되었습니다.', 'success');
+        } catch (err) {
+            // 클립보드 API가 지원되지 않는 경우 대체 방법 사용
+            const textArea = document.createElement('textarea');
+            textArea.value = inviteCode;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('초대 코드가 복사되었습니다.', 'success');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
     const [Assistant, setAssistant] = useState([
         { id: 1, provider: "openai", modality: "chat", model_name: "gpt-4o-mini" },
         { id: 2, provider: "google", modality: "chat", model_name: "gemini-2.5-flash" },
@@ -492,6 +527,78 @@ export default function PartnerProjectManagement() {
 
     return (
         <>
+            {/* 초대 코드 확인 모달 */}
+            <div className={`modal ${showInviteCodeModal ? 'modal--active' : ''}`} id="inviteCodeModal">
+                <div className="modal__content" style={{ maxWidth: '600px' }}>
+                    <div className="modal__header">
+                        <h2 className="modal__title">초대 코드</h2>
+                        <button className="modal__close" onClick={() => {
+                            setShowInviteCodeModal(false);
+                            setSelectedClass(null);
+                        }}>✕</button>
+                    </div>
+
+                    <div className="modal__body">
+                        <div className="invite-code-info">
+                            <div className="invite-code-info__header">
+                                <div className="invite-code-info__label">강의명</div>
+                                <div className="invite-code-info__title">{selectedClass?.name}</div>
+                            </div>
+                            <div className="invite-code-info__details">
+                                <div className="invite-code-info__detail">
+                                    <span className="invite-code-info__detail-label">교육 기간</span>
+                                    <span className="invite-code-info__detail-value">
+                                        {selectedClass?.start_at && selectedClass?.end_at
+                                            ? `${selectedClass.start_at.split('T')[0]} ~ ${selectedClass.end_at.split('T')[0]}`
+                                            : '-'}
+                                    </span>
+                                </div>
+                                <div className="invite-code-info__detail">
+                                    <span className="invite-code-info__detail-label">정원</span>
+                                    <span className="invite-code-info__detail-value">
+                                        {selectedClass?.capacity}명
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="invite-code-section">
+                            <label className="invite-code-section__label">초대 코드</label>
+                            <div className="invite-code-section__input-group">
+                                <input
+                                    type="text"
+                                    className="invite-code-section__input"
+                                    value={selectedClass?.invite_codes?.[0]?.code ?? ""}
+                                    readOnly
+                                />
+                                <button
+                                    className="btn btn--primary invite-code-section__copy-btn"
+                                    onClick={handleCopyInviteCodeFromModal}
+                                >
+                                    복사
+                                </button>
+                            </div>
+                            <div className="invite-code-section__hint">
+                                위 초대 코드를 학생들에게 공유해주세요
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="modal__footer">
+                        <button
+                            className="btn btn--primary"
+                            type="button"
+                            onClick={() => {
+                                setShowInviteCodeModal(false);
+                                setSelectedClass(null);
+                            }}
+                        >
+                            확인
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div className={`modal ${showCourseCreatedModal ? 'modal--active' : ''}`} id="courseCreatedModal">
                 <div className="modal__content" style={{ maxWidth: '600px' }}>
                     <div className="modal__header">
@@ -773,7 +880,7 @@ export default function PartnerProjectManagement() {
                             </div>
 
 
-                            <div className="stats-grid">
+                            <div className="partner-stats-grid">
                                 <div className="stat-card">
                                     <div className="stat-card__header">
                                         <div className="stat-icon stat-icon--primary">📁</div>
@@ -805,75 +912,138 @@ export default function PartnerProjectManagement() {
                             </div>
 
 
-                            <div className="projects-grid">
+                            {myClasses.length === 0 ? (
+                                <div className="partner-enrollment-guide">
+                                    <div className="partner-enrollment-guide__header">
+                                        <div className="partner-enrollment-guide__icon">📚</div>
+                                        <h3 className="partner-enrollment-guide__title">등록된 강의가 없습니다</h3>
+                                        <p className="partner-enrollment-guide__subtitle">아래 단계를 따라 첫 강의를 생성해보세요</p>
+                                    </div>
 
-                                {myClasses.map((myclass) => {
-                                    const now = new Date();
-                                    const startDate = new Date(myclass.start_at);
-                                    const endDate = new Date(myclass.end_at);
-
-                                    const daysUntilStart = Math.floor(
-                                        (startDate - now) / (1000 * 60 * 60 * 24) + 1
-                                    );
-                                    const daysLeft = Math.floor(
-                                        (endDate - now) / (1000 * 60 * 60 * 24) + 1
-                                    );
-
-                                    let statusClass = 'active';
-                                    let statusText = `D-${daysLeft} 남음`;
-
-                                    if (daysUntilStart > 0) {
-                                        // 시작일 전: 예정
-                                        statusClass = 'scheduled';
-                                        statusText = `D-${daysUntilStart} 예정`;
-                                    } else if (daysLeft < 0) {
-                                        // 종료일 지남: 종료
-                                        statusClass = 'end';
-                                        statusText = '종료';
-                                    } else {
-                                        // 진행 중
-                                        statusClass = 'active';
-                                        statusText = `D-${daysLeft} 남음`;
-                                    }
-
-                                    return (
-                                        <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
-                                            <div className="project-card__header">
-                                                <div className={`project-card__status project-card__status--${statusClass}`}>
-                                                    <span className="status-dot"></span>
-                                                    {statusText}
-                                                </div>
+                                    <div className="partner-enrollment-steps">
+                                        <div className="partner-enrollment-step partner-enrollment-step--highlight">
+                                            <div className="partner-enrollment-step__number">1</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">신규 강의 생성 버튼 클릭</div>
+                                                <div className="partner-enrollment-step__desc">오른쪽 상단의 "신규 강의 생성" 버튼을 클릭하세요</div>
                                             </div>
-
-                                            <h3 className="project-card__title">{myclass.name}</h3>
-
-                                            <div className="project-card__meta">
-                                                <div className="project-card__meta-item">
-                                                    <span>정원 : </span>
-                                                    <span>{myclass.capacity}명</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="project-card__meta">
-                                                <div className="project-card__meta-item">
-                                                    <span>📅</span>
-                                                    <span>{myclass.start_at.split('T')[0]} ~ {myclass.end_at.split('T')[0]}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="project-card__actions">
-                                                <button
-                                                    className="project-action-btn project-action-btn--primary"
-                                                    onClick={() => alert(myclass.invite_codes[0].code)}
-                                                >
-                                                    코드확인
-                                                </button>
+                                            <div className="partner-enrollment-step__arrow">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
                                             </div>
                                         </div>
-                                    );
-                                })}
 
-                            </div>
+                                        <div className="partner-enrollment-step">
+                                            <div className="partner-enrollment-step__number">2</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">강의 정보 입력</div>
+                                                <div className="partner-enrollment-step__desc">강의명, 과정명, LLM 모델, 교육 기간 등을 입력하세요</div>
+                                            </div>
+                                            <div className="partner-enrollment-step__arrow">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <div className="partner-enrollment-step">
+                                            <div className="partner-enrollment-step__number">3</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">초대 코드 생성</div>
+                                                <div className="partner-enrollment-step__desc">강의 생성 후 초대 코드가 자동으로 생성됩니다</div>
+                                            </div>
+                                            <div className="partner-enrollment-step__arrow">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <div className="partner-enrollment-step">
+                                            <div className="partner-enrollment-step__number">4</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">학생 초대</div>
+                                                <div className="partner-enrollment-step__desc">생성된 초대 코드를 학생들에게 공유하세요</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="partner-enrollment-guide__button-wrapper">
+                                        <button className="btn btn--primary btn--guide" onClick={() => setShowModal(true)}>
+                                            신규 강의 생성
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="projects-grid">
+                                    {myClasses.map((myclass) => {
+                                        const now = new Date();
+                                        const startDate = new Date(myclass.start_at);
+                                        const endDate = new Date(myclass.end_at);
+
+                                        const daysUntilStart = Math.floor(
+                                            (startDate - now) / (1000 * 60 * 60 * 24) + 1
+                                        );
+                                        const daysLeft = Math.floor(
+                                            (endDate - now) / (1000 * 60 * 60 * 24) + 1
+                                        );
+
+                                        let statusClass = 'active';
+                                        let statusText = `D-${daysLeft} 남음`;
+
+                                        if (daysUntilStart > 0) {
+                                            // 시작일 전: 예정
+                                            statusClass = 'scheduled';
+                                            statusText = `D-${daysUntilStart} 예정`;
+                                        } else if (daysLeft < 0) {
+                                            // 종료일 지남: 종료
+                                            statusClass = 'end';
+                                            statusText = '종료';
+                                        } else {
+                                            // 진행 중
+                                            statusClass = 'active';
+                                            statusText = `D-${daysLeft} 남음`;
+                                        }
+
+                                        return (
+                                            <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
+                                                <div className="project-card__header">
+                                                    <div className={`project-card__status project-card__status--${statusClass}`}>
+                                                        <span className="status-dot"></span>
+                                                        {statusText}
+                                                    </div>
+                                                </div>
+
+                                                <h3 className="project-card__title">{myclass.name}</h3>
+
+                                                <div className="project-card__meta">
+                                                    <div className="project-card__meta-item">
+                                                        <span>정원 : </span>
+                                                        <span>{myclass.capacity}명</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="project-card__meta">
+                                                    <div className="project-card__meta-item">
+                                                        <span>📅</span>
+                                                        <span>{myclass.start_at.split('T')[0]} ~ {myclass.end_at.split('T')[0]}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="project-card__actions">
+                                                    <button
+                                                        className="project-action-btn project-action-btn--primary"
+                                                        onClick={() => handleShowInviteCode(myclass)}
+                                                    >
+                                                        코드확인
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
 
                         </div>
