@@ -2,7 +2,7 @@ import React from 'react';
 import { showToast } from '../../utill/utill';
 import { useNavigate } from 'react-router-dom';
 
-export default function EnrolledClassesSection({ classArray, onInviteClick, onClassSelect }) {
+export default function EnrolledClassesSection({ classArray, onInviteClick, onClassSelect, onDeleteClass }) {
     const navigate = useNavigate();
 
     const handlePracticeClick = (daysUntilStart, daysLeft, classInfo) => {
@@ -19,6 +19,7 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
             navigate(`/user/practice/`);
         }
     }
+
 
 
     return (
@@ -51,7 +52,7 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
                                 </div>
                                 <div className="enrollment-step__arrow">
                                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 </div>
                             </div>
@@ -64,7 +65,7 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
                                 </div>
                                 <div className="enrollment-step__arrow">
                                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
                                 </div>
                             </div>
@@ -146,7 +147,10 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
                                             실습하기
                                         </button>
 
-                                        <button className="class-card__action-btn class-card__action-btn--danger">
+                                        <button className="class-card__action-btn class-card__action-btn--danger"
+
+                                            onClick={() => onDeleteClass(classInfo.enrollment_id)}
+                                        >
                                             삭제
                                         </button>
                                     </div>

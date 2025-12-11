@@ -138,6 +138,23 @@ export default function UserDashboard() {
             handleProfileData(updatedProfile);
         }
     };
+    const handleDeleteClass = (enrollment_id) => {
+        if (!window.confirm(`수강을 취소하겠습니까?`)) {
+            return;
+        }
+        console.log(enrollment_id);
+        axios.delete(`${process.env.REACT_APP_API_URL}/user/class/enrollments/${enrollment_id}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            console.log(response.data);
+            showToast(`강의가 삭제되었습니다.`, 'success');
+            setRefreshTrigger(prev => prev + 1);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
 
     // 현재 활성 섹션에 맞는 컴포넌트 렌더링
     const renderActiveSection = () => {
@@ -151,6 +168,7 @@ export default function UserDashboard() {
                             classArray={classArray}
                             onInviteClick={() => setInviteStatus(!inviteStatus)}
                             onClassSelect={handleClassSelect}
+                            onDeleteClass={handleDeleteClass}
                         />
                     </Suspense>
                 );

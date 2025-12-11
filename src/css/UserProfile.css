@@ -927,15 +927,14 @@
     }
 
     /* 선택 텍스트 스타일 */
-    ::selection {
+    /* ::selection {
         background: var(--employee-primary);
         color: white;
     }
-
     ::-moz-selection {
         background: var(--employee-primary);
         color: white;
-    }
+    } */
 
 
     /* ========== 수강 중인 강의 섹션 ========== */
@@ -1224,10 +1223,13 @@
     }
 
     @keyframes pulse {
-        0%, 100% {
+
+        0%,
+        100% {
             transform: scale(1);
             box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
         }
+
         50% {
             transform: scale(1.05);
             box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
@@ -1280,9 +1282,12 @@
     }
 
     @keyframes bounce {
-        0%, 100% {
+
+        0%,
+        100% {
             transform: translateY(0);
         }
+
         50% {
             transform: translateY(-4px);
         }
