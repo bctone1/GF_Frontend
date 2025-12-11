@@ -59,6 +59,7 @@ export default function UserPractice() {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
+        console.log(response.data.items);
         setSessions(response.data.items);
     }
     const [projectList, setProjectList] = useState([]);
@@ -330,7 +331,7 @@ export default function UserPractice() {
         setCurrentProject(project.name);
         setShowPlusMenu(false);
         setPlusMenuView('main');
-
+        fetchSessions();
     };
 
     const toggleModelDropdown = () => {
@@ -722,17 +723,16 @@ export default function UserPractice() {
                                 <div className="chat-sidebar__history" id="chatHistory">
                                     {filteredSessions.map((session) => (
                                         <div key={session.session_id} className={`chat-history-item ${currentSession === session.session_id ? 'chat-history-item--active' : ''}`} onClick={() => handleSessionClick(session.session_id)}>
-                                            <div className="chat-history-item__project">session_id : {session.session_id}</div>
+                                            {session.project_id && (
+                                                <div className="chat-history-item__project">{projectList.find(p => p.project_id === session.project_id)?.name || ''}</div>
+                                            )}
                                             <div className="chat-history-item__title">{session.title ? session.title : '대화하기'}</div>
                                             <div className="chat-history-item__meta">
-
-                                                <span>
-                                                    {session.started_at?.split('T')[0].slice(5)}{" "}
-                                                    {session.started_at?.split('T')[1].slice(0, 5)}
-                                                </span>
+                                                <span>{session.updated_at?.split('T')[0].slice(5)}{" "}{session.updated_at?.split('T')[1].slice(0, 5)}</span>
                                             </div>
                                         </div>
                                     ))}
+
                                 </div>
 
                                 <div className="chat-sidebar__files" id="attachedFiles">
