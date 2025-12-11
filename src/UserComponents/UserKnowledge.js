@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
-import { showToast } from '../utill/utill';
+import { showToast, showConfirm } from '../utill/utill';
 
 export default function UserKnowledge() {
     const [isUploading, setIsUploading] = useState(false);
@@ -177,7 +177,8 @@ export default function UserKnowledge() {
 
     // 문서 삭제 함수
     const handleDeleteDocument = async (knowledgeId, documentName) => {
-        if (!window.confirm(`"${getDisplayName(documentName)}" 문서를 삭제하시겠습니까?`)) {
+        const confirmed = await showConfirm(`"${getDisplayName(documentName)}" 문서를 삭제하시겠습니까?`);
+        if (!confirmed) {
             return;
         }
 

@@ -45,12 +45,29 @@ export default function UserPractice() {
         const stored = sessionStorage.getItem("allowed_model_ids");
         if (!stored) return [1]; // 기본값
         try {
-            return JSON.parse(stored);
+            const parsed = JSON.parse(stored);
+            // 배열인지 확인
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+            // 배열이 아니면 배열로 변환
+            if (typeof parsed === 'number') {
+                return [parsed];
+            }
+            if (typeof parsed === 'string') {
+                if (parsed.includes(',')) {
+                    return parsed.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+                }
+                const num = parseInt(parsed, 10);
+                return isNaN(num) ? [1] : [num];
+            }
+            return [1]; // 기본값
         } catch {
             if (typeof stored === 'string' && stored.includes(',')) {
-                return stored.split(',').map(id => parseInt(id.trim(), 10));
+                return stored.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
             }
-            return [parseInt(stored, 10)];
+            const num = parseInt(stored, 10);
+            return isNaN(num) ? [1] : [num];
         }
     });
     const [selectedModels, setSelectedModels] = useState(['gpt-4o-mini']);
@@ -99,8 +116,23 @@ export default function UserPractice() {
         setSavedClassId(classId);
         fetchProjects(classId);
 
-
-        const modelIds = allowedModelIdsArray || [1];
+        // allowedModelIdsArray가 배열인지 확인하고 배열로 변환
+        let modelIds = [1]; // 기본값
+        if (Array.isArray(allowedModelIdsArray)) {
+            modelIds = allowedModelIdsArray;
+        } else if (allowedModelIdsArray != null) {
+            // 배열이 아닌 경우 배열로 변환
+            if (typeof allowedModelIdsArray === 'number') {
+                modelIds = [allowedModelIdsArray];
+            } else if (typeof allowedModelIdsArray === 'string') {
+                if (allowedModelIdsArray.includes(',')) {
+                    modelIds = allowedModelIdsArray.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+                } else {
+                    const num = parseInt(allowedModelIdsArray, 10);
+                    modelIds = isNaN(num) ? [1] : [num];
+                }
+            }
+        }
         setAllowedModelIds(modelIds);
 
         // Assistant가 로드되었고, 첫 번째 허용된 모델을 찾아서 선택
@@ -146,7 +178,7 @@ export default function UserPractice() {
 
     // Assistant가 로드되고 allowedModelIds가 변경될 때 첫 번째 허용된 모델 자동 선택
     useEffect(() => {
-        if (Assistant && Assistant.length > 0 && allowedModelIds && allowedModelIds.length > 0) {
+        if (Assistant && Assistant.length > 0 && Array.isArray(allowedModelIds) && allowedModelIds.length > 0) {
             const firstAllowedModel = Assistant.find(model => allowedModelIds.includes(model.id));
             if (firstAllowedModel && !selectedModels.includes(firstAllowedModel.model_name)) {
                 setSelectedModels([firstAllowedModel.model_name]);
@@ -339,9 +371,9 @@ export default function UserPractice() {
     };
 
     const startNewChat = () => {
-        if (currentMessages.length > 0 || Object.keys(compareMessages).length > 0) {
-            if (!window.confirm('현재 대화를 저장하고 새 대화를 시작하시겠습니까?')) return;
-        }
+        // if (currentMessages.length > 0 || Object.keys(compareMessages).length > 0) {
+        //     if (!window.confirm('현재 대화를 저장하고 새 대화를 시작하시겠습니까?')) return;
+        // }
         setCurrentMessages([]);
         setCompareMessages({});
         setShowEmptyState(true);
@@ -1149,12 +1181,14 @@ export default function UserPractice() {
 
                                     {/* {showModelDropdown && ( */}
                                     <div className="model-selector-dropdown" id="modelDropdown" ref={modelDropdownRef}>
-                                        {Assistant.map((model) => (
+                                        {Assistant.map((model) => {
+                                            const isAllowed = Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id);
+                                            return (
                                             <label
                                                 key={model.id}
                                                 className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
                                                     }`}
-                                                style={{ opacity: !allowedModelIds.includes(model.id) ? 0.5 : 1 }}
+                                                style={{ opacity: !isAllowed ? 0.5 : 1 }}
                                             >
                                                 <input
                                                     type="checkbox"
@@ -1162,7 +1196,7 @@ export default function UserPractice() {
                                                     value={model.id}
                                                     checked={selectedModels.includes(model.model_name)}
                                                     onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
-                                                    disabled={!allowedModelIds.includes(model.id)}
+                                                    disabled={!isAllowed}
                                                 />
                                                 <div
                                                     className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
@@ -1178,7 +1212,8 @@ export default function UserPractice() {
                                                     {selectedModels.includes(model.id) ? '✓' : ''}
                                                 </span>
                                             </label>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                     {/* )} */}
                                 </div>

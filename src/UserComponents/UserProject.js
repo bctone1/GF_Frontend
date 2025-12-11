@@ -1,7 +1,7 @@
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import { useState, useEffect, useMemo } from 'react';
-import { getSelectedClassId } from '../utill/utill';
+import { getSelectedClassId, showConfirm } from '../utill/utill';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -20,7 +20,7 @@ export default function UserProject() {
             const res = await axios.get(`${process.env.REACT_APP_API_URL}/projects/${projectId}/sessions`,
                 { headers: { Authorization: `Bearer ${accessToken}`, }, }
             );
-            
+
             // session_id별로 그룹화하여 고유한 세션 개수 계산
             const sessionMap = new Map();
             res.data.forEach(session => {
@@ -29,7 +29,7 @@ export default function UserProject() {
                     sessionMap.set(sessionId, true);
                 }
             });
-            
+
             return sessionMap.size;
         } catch (error) {
             console.error(`프로젝트 ${projectId}의 세션 수 조회 실패:`, error);
@@ -57,7 +57,7 @@ export default function UserProject() {
             // API가 클래스 필터링을 지원하지 않는 경우 클라이언트 측에서 필터링
             const projects = response.data.items || [];
             const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
-            
+
             // 각 프로젝트의 세션 수를 병렬로 조회
             const projectsWithSessionCount = await Promise.all(
                 filteredProjects.map(async (project) => {
@@ -68,7 +68,7 @@ export default function UserProject() {
                     };
                 })
             );
-            
+
             setProjectList(projectsWithSessionCount);
         } catch (error) {
             console.error('프로젝트 조회 실패:', error);
@@ -174,9 +174,8 @@ export default function UserProject() {
     const handleDeleteProject = async () => {
         if (!selectedProject) return;
         console.log(selectedProject);
-
-        const confirmMessage = `"${selectedProject.name}" 프로젝트를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`;
-        if (!window.confirm(confirmMessage)) {
+        const confirmed = await showConfirm(`"${selectedProject.name}" 프로젝트를 삭제하시겠습니까?`);
+        if (!confirmed) {
             return;
         }
 
@@ -195,7 +194,7 @@ export default function UserProject() {
             setSessionModalStatus(false);
             setSelectedProject(null);
             setSessionList([]);
-            
+
             // 프로젝트 목록 새로고침
             fetchProjects(savedClassId);
         } catch (error) {
@@ -212,7 +211,7 @@ export default function UserProject() {
         // 검색 필터링
         if (searchQuery.trim()) {
             const query = searchQuery.toLowerCase();
-            filtered = filtered.filter(project => 
+            filtered = filtered.filter(project =>
                 project.name.toLowerCase().includes(query) ||
                 (project.description && project.description.toLowerCase().includes(query))
             );
@@ -421,8 +420,8 @@ export default function UserProject() {
                     <main className="main">
                         <div className="filter-bar">
                             <div className="user-project-filter-group">
-                                <select 
-                                    className="filter-select" 
+                                <select
+                                    className="filter-select"
                                     id="sortBy"
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
@@ -448,15 +447,15 @@ export default function UserProject() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                             <div className="view-switcher">
-                                <button 
-                                    className={`view-btn ${viewMode === 'grid' ? 'view-btn--active' : ''}`} 
+                                <button
+                                    className={`view-btn ${viewMode === 'grid' ? 'view-btn--active' : ''}`}
                                     title="그리드 뷰"
                                     onClick={() => setViewMode('grid')}
                                 >
                                     ⊞
                                 </button>
-                                <button 
-                                    className={`view-btn ${viewMode === 'list' ? 'view-btn--active' : ''}`} 
+                                <button
+                                    className={`view-btn ${viewMode === 'list' ? 'view-btn--active' : ''}`}
                                     title="리스트 뷰"
                                     onClick={() => setViewMode('list')}
                                 >
@@ -500,9 +499,9 @@ export default function UserProject() {
                                         )
                                     })
                                 ) : searchQuery.trim() ? (
-                                    <div style={{ 
-                                        gridColumn: '1 / -1', 
-                                        textAlign: 'center', 
+                                    <div style={{
+                                        gridColumn: '1 / -1',
+                                        textAlign: 'center',
                                         padding: 'var(--space-8)',
                                         color: 'var(--text-secondary)'
                                     }}>
@@ -524,23 +523,23 @@ export default function UserProject() {
                                 {filteredAndSortedProjects.length > 0 ? (
                                     filteredAndSortedProjects.map((project) => {
                                         return (
-                                            <div 
-                                                className="project-list-item" 
-                                                onClick={() => handleProjectClick(project)} 
+                                            <div
+                                                className="project-list-item"
+                                                onClick={() => handleProjectClick(project)}
                                                 key={project.project_id}
                                             >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', gap: 'var(--space-4)' }}>
                                                     <div style={{ flex: 1 }}>
-                                                        <h3 style={{ 
-                                                            fontSize: 'var(--text-lg)', 
-                                                            fontWeight: 'var(--font-semibold)', 
+                                                        <h3 style={{
+                                                            fontSize: 'var(--text-lg)',
+                                                            fontWeight: 'var(--font-semibold)',
                                                             color: 'var(--text-primary)',
                                                             marginBottom: 'var(--space-2)'
                                                         }}>
                                                             {project.name}
                                                         </h3>
-                                                        <p style={{ 
-                                                            fontSize: 'var(--text-sm)', 
+                                                        <p style={{
+                                                            fontSize: 'var(--text-sm)',
                                                             color: 'var(--text-secondary)',
                                                             marginBottom: 'var(--space-3)'
                                                         }}>
@@ -560,8 +559,8 @@ export default function UserProject() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div style={{ 
-                                                        fontSize: 'var(--text-xs)', 
+                                                    <div style={{
+                                                        fontSize: 'var(--text-xs)',
                                                         color: 'var(--text-secondary)',
                                                         whiteSpace: 'nowrap'
                                                     }}>
@@ -572,8 +571,8 @@ export default function UserProject() {
                                         )
                                     })
                                 ) : searchQuery.trim() ? (
-                                    <div style={{ 
-                                        textAlign: 'center', 
+                                    <div style={{
+                                        textAlign: 'center',
                                         padding: 'var(--space-8)',
                                         color: 'var(--text-secondary)'
                                     }}>

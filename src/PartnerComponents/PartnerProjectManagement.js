@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
-import { showToast } from '../utill/utill';
+import { showToast, showConfirm } from '../utill/utill';
 
 export default function PartnerProjectManagement() {
     const [showModal, setShowModal] = useState(false);
@@ -107,9 +107,14 @@ export default function PartnerProjectManagement() {
             }
 
             // allowed_model_ids: 문자열 ID들을 숫자 배열로 변환 (예: ["1","2"] → [1,2])
-            const allowedModelIds = selectedLLMs
+            let allowedModelIds = selectedLLMs
                 .map(v => parseInt(v, 10))
                 .filter(v => !Number.isNaN(v));
+
+            // id가 4인 모델은 필수이므로 없으면 추가
+            if (!allowedModelIds.includes(4)) {
+                allowedModelIds.push(4);
+            }
 
             // 백엔드로 전송할 데이터 구성
             const requestData = {
@@ -318,6 +323,22 @@ export default function PartnerProjectManagement() {
         fetchAssistant();
     }, []);
 
+    // 강의 생성 모달이 열릴 때 id가 4인 모델을 자동으로 체크
+    useEffect(() => {
+        if (showModal) {
+            // 모달이 열린 후 약간의 지연을 두고 체크박스를 체크
+            setTimeout(() => {
+                const form = document.getElementById('createClassForm');
+                if (form) {
+                    const checkbox = form.querySelector('input[name="llm"][value="4"]');
+                    if (checkbox && !checkbox.checked) {
+                        checkbox.checked = true;
+                    }
+                }
+            }, 100);
+        }
+    }, [showModal]);
+
     // 예정, 진행 중, 종료됨 강의 개수 계산
     const { scheduledCount, activeCount, completedCount } = useMemo(() => {
         const now = new Date();
@@ -505,6 +526,13 @@ export default function PartnerProjectManagement() {
     const handleShowEditModal = (myclass) => {
         setSelectedClass(myclass);
         // 수정 폼 데이터 초기화
+        let allowedModelIds = Array.isArray(myclass.allowed_model_ids) ? myclass.allowed_model_ids : [];
+
+        // id가 4인 모델은 필수이므로 없으면 추가
+        if (!allowedModelIds.includes(4)) {
+            allowedModelIds.push(4);
+        }
+
         setEditFormData({
             name: myclass.name || '',
             start_at: myclass.start_at ? myclass.start_at.split('T')[0] : '',
@@ -513,18 +541,54 @@ export default function PartnerProjectManagement() {
             description: myclass.description || '',
             status: myclass.status || 'active',
             course_id: myclass.course_id || 0,
-            allowed_model_ids: myclass.allowed_model_ids || []
+            allowed_model_ids: allowedModelIds
         });
         setShowInviteCodeModal(false);
         setShowEditModal(true);
     };
 
     const handleEditFormChange = (e) => {
-        const { name, value } = e.target;
-        setEditFormData(prev => ({
-            ...prev,
-            [name]: name === 'capacity' ? parseInt(value, 10) || 0 : value
-        }));
+        const { name, value, type, checked } = e.target;
+
+        if (type === 'checkbox' && name === 'llm') {
+            // LLM 체크박스 처리
+            const modelId = parseInt(value, 10);
+
+            // id가 4인 모델은 체크 해제 불가
+            if (modelId === 4 && !checked) {
+                return;
+            }
+
+            setEditFormData(prev => {
+                const currentIds = prev.allowed_model_ids || [];
+
+                // id가 4인 모델은 항상 포함되도록 보장
+                let newIds;
+                if (checked) {
+                    // 체크된 경우: 배열에 추가 (중복 방지)
+                    newIds = [...new Set([...currentIds, modelId])];
+                } else {
+                    // 체크 해제된 경우: 배열에서 제거 (단, id 4는 제외)
+                    newIds = currentIds.filter(id => id !== modelId);
+                }
+
+                // id가 4인 모델이 없으면 추가
+                if (!newIds.includes(4)) {
+                    newIds.push(4);
+                }
+
+                return {
+                    ...prev,
+                    allowed_model_ids: newIds
+                };
+            });
+        } else {
+            // 일반 input 처리
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: name === 'capacity' ? parseInt(value, 10) || 0 : value
+            }));
+        }
     };
 
     const handleSaveEdit = async (e) => {
@@ -544,6 +608,19 @@ export default function PartnerProjectManagement() {
                 throw new Error('수강 학생 수를 올바르게 입력해주세요.');
             }
 
+            // LLM 모델 선택 확인
+            const form = document.getElementById('editClassForm');
+            let selectedLLMs = form ? Array.from(form.querySelectorAll('input[name="llm"]:checked')).map(cb => parseInt(cb.value, 10)) : editFormData.allowed_model_ids;
+
+            if (selectedLLMs.length === 0) {
+                throw new Error('최소 하나의 LLM 모델을 선택해주세요.');
+            }
+
+            // id가 4인 모델은 필수이므로 없으면 추가
+            if (!selectedLLMs.includes(4)) {
+                selectedLLMs.push(4);
+            }
+
             // 날짜를 ISO 형식으로 변환
             const startAtISO = new Date(editFormData.start_at + 'T00:00:00').toISOString();
             const endAtISO = new Date(editFormData.end_at + 'T23:59:59').toISOString();
@@ -561,10 +638,8 @@ export default function PartnerProjectManagement() {
                 online_url: selectedClass?.online_url || "string",
                 invite_only: selectedClass?.invite_only || false,
                 course_id: editFormData.course_id || selectedClass?.course_id || 0,
-                primary_model_id: selectedClass?.primary_model_id || 0,
-                allowed_model_ids: editFormData.allowed_model_ids.length > 0
-                    ? editFormData.allowed_model_ids
-                    : (selectedClass?.allowed_model_ids || [])
+                primary_model_id: 4,
+                allowed_model_ids: selectedLLMs
             };
 
             console.log('수정 요청 데이터:', requestData);
@@ -638,9 +713,8 @@ export default function PartnerProjectManagement() {
 
     const handleDeleteClass = async () => {
         if (!selectedClass) return;
-
-        const confirmMessage = `"${selectedClass.name}" 강의를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`;
-        if (!window.confirm(confirmMessage)) {
+        const confirmed = await showConfirm(`"${selectedClass.name}" 강의를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
+        if (!confirmed) {
             return;
         }
 
@@ -928,21 +1002,40 @@ export default function PartnerProjectManagement() {
                             </div>
 
                             <div className="form-section">
-                                <h3 className="form-section-title">사용할 LLM 모델</h3>
+                                <h3 className="form-section-title">사용할 LLM 모델 <span className="required">*</span></h3>
                                 <div className="llm-selection">
-                                    {Assistant?.map((assistant) => (
-                                        <label className="llm-checkbox" key={assistant.id}>
-                                            <input type="checkbox" name="llm" value={assistant.id} />
-                                            <div className="llm-card">
-                                                {/* <div className="llm-icon">🟢</div> */}
-                                                {/* <div className="llm-icon">{assistant.provider}</div> */}
-                                                <div className="llm-info">
-                                                    <div className="llm-name">{assistant.model_name}</div>
+                                    {Assistant?.map((assistant) => {
+                                        const isRequired = assistant.id === 4;
+                                        const isChecked = isRequired || (() => {
+                                            const form = document.getElementById('createClassForm');
+                                            if (form) {
+                                                const checkbox = form.querySelector(`input[name="llm"][value="${assistant.id}"]`);
+                                                return checkbox?.checked || false;
+                                            }
+                                            return false;
+                                        })();
+
+                                        return (
+                                            <label className="llm-checkbox" key={assistant.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    name="llm"
+                                                    value={assistant.id}
+                                                    defaultChecked={isRequired}
+                                                    disabled={isRequired}
+                                                />
+                                                <div className="llm-card" style={isRequired ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>
+                                                    <div className="llm-info">
+                                                        <div className="llm-name">
+                                                            {assistant.model_name}
+                                                            {isRequired && <span className="required" style={{ marginLeft: '4px', fontSize: '12px' }}>(필수)</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="llm-checkmark">✓</div>
                                                 </div>
-                                                <div className="llm-checkmark">✓</div>
-                                            </div>
-                                        </label>
-                                    ))}
+                                            </label>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -1060,6 +1153,38 @@ export default function PartnerProjectManagement() {
                                         placeholder="강의명을 입력하세요"
                                         required
                                     />
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">사용할 LLM 모델 <span className="required">*</span></h3>
+                                <div className="llm-selection">
+                                    {Assistant?.map((assistant) => {
+                                        const isRequired = assistant.id === 4;
+                                        const isChecked = editFormData.allowed_model_ids?.includes(assistant.id) || isRequired;
+
+                                        return (
+                                            <label className="llm-checkbox" key={assistant.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    name="llm"
+                                                    value={assistant.id}
+                                                    checked={isChecked}
+                                                    onChange={handleEditFormChange}
+                                                    disabled={isRequired}
+                                                />
+                                                <div className="llm-card" style={isRequired ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>
+                                                    <div className="llm-info">
+                                                        <div className="llm-name">
+                                                            {assistant.model_name}
+                                                            {isRequired && <span className="required" style={{ marginLeft: '4px', fontSize: '12px' }}>(필수)</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="llm-checkmark">✓</div>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

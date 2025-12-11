@@ -2,7 +2,7 @@ import { useState, useRef, Suspense, lazy, useEffect } from 'react';
 import UserHeader from './UserHeader';
 import UserSidebar from './UserSidebar';
 import axios from 'axios';
-import { showToast } from '../utill/utill';
+import { showToast, showConfirm } from '../utill/utill';
 import { useSearchParams } from 'react-router-dom';
 
 // Lazy load 섹션 컴포넌트들
@@ -138,10 +138,12 @@ export default function UserDashboard() {
             handleProfileData(updatedProfile);
         }
     };
-    const handleDeleteClass = (enrollment_id) => {
-        if (!window.confirm(`수강을 취소하겠습니까?`)) {
+    const handleDeleteClass = async (enrollment_id) => {
+        const confirmed = await showConfirm('수강을 취소하겠습니까?');
+        if (!confirmed) {
             return;
         }
+
         console.log(enrollment_id);
         axios.delete(`${process.env.REACT_APP_API_URL}/user/class/enrollments/${enrollment_id}`, {
             headers: {
