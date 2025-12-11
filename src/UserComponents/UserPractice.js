@@ -245,7 +245,8 @@ export default function UserPractice() {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
                         "Content-Type": "application/json",
-                    }
+                    },
+                    timeout: 60000, // 60초 타임아웃
                 }
             );
             console.log(res.data);
@@ -255,8 +256,9 @@ export default function UserPractice() {
             }
             return res.data;
         } catch (err) {
-            console.log(err);
-            return null;
+            console.error('API 호출 오류:', err);
+            // 에러를 throw하여 상위에서 처리하도록 함
+            throw err;
         }
     };
 
@@ -416,31 +418,67 @@ export default function UserPractice() {
 
         try {
             const responseData = await getCompareResponse(message);
-            if (responseData && responseData.results) {
-                responseData.results.forEach((result) => {
 
-                    const modelName = result.model_name;
-                    // console.log("modelName : ", modelName);
+            // 응답 데이터 검증
+            if (!responseData) {
+                throw new Error('응답 데이터가 없습니다.');
+            }
 
+            if (!responseData.results || !Array.isArray(responseData.results) || responseData.results.length === 0) {
+                throw new Error('응답 결과가 없습니다.');
+            }
+
+            // 각 모델별로 응답 처리
+            const processedModels = new Set();
+            responseData.results.forEach((result) => {
+                if (!result || !result.model_name) {
+                    console.warn('유효하지 않은 응답 결과:', result);
+                    return;
+                }
+
+                const modelName = result.model_name;
+                processedModels.add(modelName);
+
+                setCompareMessages(prev => ({
+                    ...prev,
+                    [modelName]: [
+                        ...(prev[modelName] || []),
+                        {
+                            type: 'assistant',
+                            content: result.response_text || '응답이 비어있습니다.',
+                            time: result.created_at
+                                ? new Date(result.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                                : currentTime,
+                            modelName: result.model_name,
+                            latency: result.latency_ms,
+                            tokenUsage: result.token_usage
+                        }
+                    ]
+                }));
+            });
+
+            // 선택된 모델 중 응답이 없는 모델에 대해 에러 메시지 표시
+            selectedModels.forEach(model => {
+                if (!processedModels.has(model)) {
                     setCompareMessages(prev => ({
                         ...prev,
-                        [modelName]: [
-                            ...(prev[modelName] || []),
+                        [model]: [
+                            ...(prev[model] || []),
                             {
                                 type: 'assistant',
-                                content: result.response_text,
-                                time: new Date(result.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-                                modelName: result.model_name,
-                                latency: result.latency_ms,
-                                tokenUsage: result.token_usage
+                                content: '서버 오류가 발생했습니다. 관리자에게 문의해주세요.',
+                                time: currentTime,
+                                isError: true
                             }
                         ]
                     }));
+                }
+            });
 
-                });
-            }
         } catch (err) {
             console.error('응답 생성 중 오류:', err);
+
+            // 모든 선택된 모델에 에러 메시지 표시
             selectedModels.forEach(model => {
                 setCompareMessages(prev => ({
                     ...prev,
@@ -448,13 +486,30 @@ export default function UserPractice() {
                         ...(prev[model] || []),
                         {
                             type: 'assistant',
-                            content: '서버와 통신중 오류가 발생했습니다. 다시 시도해주세요.',
+                            content: '서버 오류가 발생했습니다. 관리자에게 문의해주세요.',
                             time: currentTime,
                             isError: true
                         }
                     ]
                 }));
             });
+
+            // 사용자에게 토스트 메시지 표시 (선택사항)
+            if (err.response) {
+                // 서버 응답이 있는 경우
+                const status = err.response.status;
+                if (status === 401) {
+                    showToast('인증이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                } else if (status === 403) {
+                    showToast('접근 권한이 없습니다.', 'error');
+                } else if (status >= 500) {
+                    showToast('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                }
+            } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+                showToast('요청 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
+            } else if (err.message?.includes('Network Error') || !err.response) {
+                showToast('네트워크 연결을 확인해주세요.', 'error');
+            }
         }
 
         setIsGenerating(false);
@@ -468,7 +523,8 @@ export default function UserPractice() {
     };
 
     const uploadFile = () => {
-        alert("Phase 2에서 구현 예정입니다");
+        showToast('Phase 2에서 구현 예정입니다', 'error');
+        // alert("Phase 2에서 구현 예정입니다");
         return;
         const input = document.createElement('input');
         input.type = 'file';
@@ -732,7 +788,7 @@ export default function UserPractice() {
                                                     <h3 className="empty-state__title">새로운 대화를 시작하세요</h3>
                                                     <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.
                                                         여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
-                                                    
+
                                                 </div>
                                             ) : (
                                                 currentMessages.map((msg, index) => (
@@ -1062,7 +1118,7 @@ export default function UserPractice() {
                                 <div className="model-panel__body">
                                     <div className="selected-model-display" id="selectedModelDisplay">
                                         <div className="selected-model-display__label">현재 선택</div>
-                                        <button
+                                        {/* <button
                                             className={`selected-model-display__button ${showModelDropdown ? 'open' : ''}`}
                                             ref={modelDisplayRef}
                                             onClick={toggleModelDropdown}
@@ -1072,43 +1128,43 @@ export default function UserPractice() {
                                             </span>
                                             <span className="selected-model-display__text">{selectedDisplay.text}</span>
                                             <span className="selected-model-display__arrow">▼</span>
-                                        </button>
+                                        </button> */}
                                     </div>
 
-                                    {showModelDropdown && (
-                                        <div className="model-selector-dropdown" id="modelDropdown" ref={modelDropdownRef}>
-                                            {Assistant.map((model) => (
-                                                <label
-                                                    key={model.id}
-                                                    className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
-                                                        }`}
-                                                    style={{ opacity: !allowedModelIds.includes(model.id) ? 0.5 : 1 }}
+                                    {/* {showModelDropdown && ( */}
+                                    <div className="model-selector-dropdown" id="modelDropdown" ref={modelDropdownRef}>
+                                        {Assistant.map((model) => (
+                                            <label
+                                                key={model.id}
+                                                className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
+                                                    }`}
+                                                style={{ opacity: !allowedModelIds.includes(model.id) ? 0.5 : 1 }}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    className="model-checkbox-input"
+                                                    value={model.id}
+                                                    checked={selectedModels.includes(model.model_name)}
+                                                    onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
+                                                    disabled={!allowedModelIds.includes(model.id)}
+                                                />
+                                                <div
+                                                    className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
+                                                    style={model.iconStyle || {}}
                                                 >
-                                                    <input
-                                                        type="checkbox"
-                                                        className="model-checkbox-input"
-                                                        value={model.id}
-                                                        checked={selectedModels.includes(model.model_name)}
-                                                        onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
-                                                        disabled={!allowedModelIds.includes(model.id)}
-                                                    />
-                                                    <div
-                                                        className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
-                                                        style={model.iconStyle || {}}
-                                                    >
-                                                        🤖
-                                                    </div>
-                                                    <div className="model-selector-dropdown__info">
-                                                        <div className="model-selector-dropdown__name">{model.model_name}</div>
-                                                        <div className="model-selector-dropdown__desc">{model.provider}</div>
-                                                    </div>
-                                                    <span className="model-selector-dropdown__check">
-                                                        {selectedModels.includes(model.id) ? '✓' : ''}
-                                                    </span>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
+                                                    🤖
+                                                </div>
+                                                <div className="model-selector-dropdown__info">
+                                                    <div className="model-selector-dropdown__name">{model.model_name}</div>
+                                                    <div className="model-selector-dropdown__desc">{model.provider}</div>
+                                                </div>
+                                                <span className="model-selector-dropdown__check">
+                                                    {selectedModels.includes(model.id) ? '✓' : ''}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {/* )} */}
                                 </div>
                             </aside>
 
