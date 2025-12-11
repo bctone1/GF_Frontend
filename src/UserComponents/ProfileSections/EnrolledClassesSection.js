@@ -27,7 +27,7 @@ export default function EnrolledClassesSection({ classArray, onInviteClick, onCl
             <p className="user-settings-section__desc">현재 수강 중인 강의 목록을 관리하세요</p>
             <div className="enrolled-classes-section">
                 <div className="enrolled-classes-header">
-                    <div className="enrolled-classes-title">내 강의 목록</div>
+                    <div className="enrolled-classes-title"></div>
                     <button className="btn-add-class" onClick={onInviteClick}>
                         <span>+</span>
                         <span>새 강의 등록</span>

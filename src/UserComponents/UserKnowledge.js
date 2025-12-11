@@ -343,22 +343,83 @@ export default function UserKnowledge() {
                                 )}
 
                                 <div className="documents-content">
+                                    {documents.length === 0 ? (
+                                        <div className="document-guide">
+                                            <div className="document-guide__header">
+                                                <div className="document-guide__icon">📚</div>
+                                                <h3 className="document-guide__title">등록된 문서가 없습니다</h3>
+                                                <p className="document-guide__subtitle">아래 단계를 따라 문서를 업로드해보세요</p>
+                                            </div>
 
-                                    <div className="view-controls">
-                                        <div className="view-tabs">
-                                            <button className={`view-tab ${viewType === 'grid' ? 'view-tab--active' : ''}`} onClick={() => setViewType('grid')}>
-                                                ⊞ 그리드
-                                            </button>
-                                            <button className={`view-tab ${viewType === 'list' ? 'view-tab--active' : ''}`} onClick={() => setViewType('list')}>
-                                                ☰ 리스트
-                                            </button>
+                                            <div className="document-guide-steps">
+                                                <div className="document-guide-step document-guide-step--highlight">
+                                                    <div className="document-guide-step__number">1</div>
+                                                    <div className="document-guide-step__content">
+                                                        <div className="document-guide-step__title">파일 드래그 또는 클릭</div>
+                                                        <div className="document-guide-step__desc">위의 업로드 영역에 파일을 드래그하거나 클릭하여 업로드하세요</div>
+                                                    </div>
+                                                    <div className="document-guide-step__arrow">
+                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+
+                                                <div className="document-guide-step">
+                                                    <div className="document-guide-step__number">2</div>
+                                                    <div className="document-guide-step__content">
+                                                        <div className="document-guide-step__title">지원 형식 확인</div>
+                                                        <div className="document-guide-step__desc">
+                                                            <div className="document-guide-step__format-list">
+                                                                <span className="format-badge">TXT</span>
+                                                                <span className="format-badge">PDF</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="document-guide-step__arrow">
+                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+
+                                                <div className="document-guide-step">
+                                                    <div className="document-guide-step__number">3</div>
+                                                    <div className="document-guide-step__content">
+                                                        <div className="document-guide-step__title">최대 용량 확인</div>
+                                                        <div className="document-guide-step__desc">파일 크기는 최대 10MB까지 업로드 가능합니다</div>
+                                                    </div>
+                                                    <div className="document-guide-step__arrow">
+                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                        </svg>
+                                                    </div>
+                                                </div>
+
+                                                <div className="document-guide-step">
+                                                    <div className="document-guide-step__number">4</div>
+                                                    <div className="document-guide-step__content">
+                                                        <div className="document-guide-step__title">AI 분석 완료</div>
+                                                        <div className="document-guide-step__desc">업로드된 문서는 AI가 분석하여 대화에 활용할 수 있습니다</div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <>
+                                            <div className="view-controls">
+                                                <div className="view-tabs">
+                                                    <button className={`view-tab ${viewType === 'grid' ? 'view-tab--active' : ''}`} onClick={() => setViewType('grid')}>
+                                                        ⊞ 그리드
+                                                    </button>
+                                                    <button className={`view-tab ${viewType === 'list' ? 'view-tab--active' : ''}`} onClick={() => setViewType('list')}>
+                                                        ☰ 리스트
+                                                    </button>
+                                                </div>
+                                            </div>
 
-
-                                    <div id="documentsGrid" className="documents-grid" style={{ display: viewType === 'grid' ? '' : 'none' }}>
-
-                                        {filteredAndSortedDocuments.map((document) => (
+                                            <div id="documentsGrid" className="documents-grid" style={{ display: viewType === 'grid' ? '' : 'none' }}>
+                                                {filteredAndSortedDocuments.map((document) => (
                                             <div className="document-card" key={document.knowledge_id}>
                                                 <button className="document-card__menu" >
                                                     ⋮
@@ -441,72 +502,73 @@ export default function UserKnowledge() {
                                                         <div className="stat-label">크기</div>
                                                     </div>
                                                 </div>
+                                                </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
 
-
-                                    <div id="documentsList" className="documents-list" style={{ display: viewType === 'list' ? '' : 'none' }}>
-                                        {filteredAndSortedDocuments.map((document) => (
-                                            <div className="document-list-item" key={document.knowledge_id}>
-                                                <div className="document-icon document-icon--pdf" style={{ width: '40px', height: '40px', fontSize: '20px' }}>
-                                                    📄
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontWeight: 'var(--font-semibold)', marginBottom: '4px' }}>{document.name}</div>
-                                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                                                        {document.updated_at.split('T')[0]}
-                                                    </div>
-                                                </div>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontWeight: 'var(--font-bold)', color: 'var(--employee-primary)' }}>{document.chunk_count}</div>
-                                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>청크</div>
-                                                </div>
-                                                <div style={{ textAlign: 'center' }}>
-                                                    <div style={{ fontWeight: 'var(--font-bold)', color: 'var(--employee-primary)' }}>{formatFileSize(document.file_size_bytes)}</div>
-                                                    <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>크기</div>
-                                                </div>
-                                                <div>
-                                                    <span
-                                                        className={`session-badge ${document.status === 'ready' ? 'session-badge--active' : ''}`}
-                                                        style={{
-                                                            fontSize: 'var(--text-xs)',
-                                                            backgroundColor: document.status === 'ready' ? undefined : getStatusColor(document.status),
-                                                            color: document.status === 'ready' ? undefined : 'white',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px'
-                                                        }}
-                                                    >
-                                                        {getStatusLabel(document.status)}
-                                                        {document.status !== 'ready' && document.status !== 'failed' && (
-                                                            <span style={{
-                                                                animation: 'pulse 1.5s ease-in-out infinite'
-                                                            }}>⋯</span>
-                                                        )}
-                                                    </span>
-                                                    {document.status !== 'ready' && document.status !== 'failed' && (
-                                                        <div style={{
-                                                            width: '100px',
-                                                            height: '3px',
-                                                            backgroundColor: 'var(--gray-200)',
-                                                            borderRadius: 'var(--radius-full)',
-                                                            marginTop: '4px',
-                                                            overflow: 'hidden'
-                                                        }}>
-                                                            <div style={{
-                                                                width: `${document.progress || 0}%`,
-                                                                height: '100%',
-                                                                backgroundColor: getStatusColor(document.status),
-                                                                borderRadius: 'var(--radius-full)',
-                                                                transition: 'width 0.3s ease'
-                                                            }}></div>
+                                            <div id="documentsList" className="documents-list" style={{ display: viewType === 'list' ? '' : 'none' }}>
+                                                {filteredAndSortedDocuments.map((document) => (
+                                                    <div className="document-list-item" key={document.knowledge_id}>
+                                                        <div className="document-icon document-icon--pdf" style={{ width: '40px', height: '40px', fontSize: '20px' }}>
+                                                            📄
                                                         </div>
-                                                    )}
-                                                </div>
+                                                        <div>
+                                                            <div style={{ fontWeight: 'var(--font-semibold)', marginBottom: '4px' }}>{document.name}</div>
+                                                            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                                                                {document.updated_at.split('T')[0]}
+                                                            </div>
+                                                        </div>
+                                                        <div style={{ textAlign: 'center' }}>
+                                                            <div style={{ fontWeight: 'var(--font-bold)', color: 'var(--employee-primary)' }}>{document.chunk_count}</div>
+                                                            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>청크</div>
+                                                        </div>
+                                                        <div style={{ textAlign: 'center' }}>
+                                                            <div style={{ fontWeight: 'var(--font-bold)', color: 'var(--employee-primary)' }}>{formatFileSize(document.file_size_bytes)}</div>
+                                                            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>크기</div>
+                                                        </div>
+                                                        <div>
+                                                            <span
+                                                                className={`session-badge ${document.status === 'ready' ? 'session-badge--active' : ''}`}
+                                                                style={{
+                                                                    fontSize: 'var(--text-xs)',
+                                                                    backgroundColor: document.status === 'ready' ? undefined : getStatusColor(document.status),
+                                                                    color: document.status === 'ready' ? undefined : 'white',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px'
+                                                                }}
+                                                            >
+                                                                {getStatusLabel(document.status)}
+                                                                {document.status !== 'ready' && document.status !== 'failed' && (
+                                                                    <span style={{
+                                                                        animation: 'pulse 1.5s ease-in-out infinite'
+                                                                    }}>⋯</span>
+                                                                )}
+                                                            </span>
+                                                            {document.status !== 'ready' && document.status !== 'failed' && (
+                                                                <div style={{
+                                                                    width: '100px',
+                                                                    height: '3px',
+                                                                    backgroundColor: 'var(--gray-200)',
+                                                                    borderRadius: 'var(--radius-full)',
+                                                                    marginTop: '4px',
+                                                                    overflow: 'hidden'
+                                                                }}>
+                                                                    <div style={{
+                                                                        width: `${document.progress || 0}%`,
+                                                                        height: '100%',
+                                                                        backgroundColor: getStatusColor(document.status),
+                                                                        borderRadius: 'var(--radius-full)',
+                                                                        transition: 'width 0.3s ease'
+                                                                    }}></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </>
+                                    )}
 
 
 

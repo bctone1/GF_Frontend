@@ -585,3 +585,180 @@
   .sidebar__menu-item--class-only.visible {
       display: block;
   }
+
+  /* ========== 문서 등록 가이드 ========== */
+  .document-guide {
+      background: var(--background);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      margin-top: var(--space-4);
+  }
+
+  .document-guide__header {
+      text-align: center;
+      margin-bottom: var(--space-8);
+  }
+
+  .document-guide__icon {
+      font-size: 64px;
+      margin-bottom: var(--space-4);
+      opacity: 0.8;
+  }
+
+  .document-guide__title {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-bold);
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+  }
+
+  .document-guide__subtitle {
+      font-size: var(--text-base);
+      color: var(--text-secondary);
+  }
+
+  .document-guide-steps {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      margin-bottom: var(--space-4);
+      position: relative;
+  }
+
+  .document-guide-step {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-4);
+      padding: var(--space-5);
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      transition: all 0.3s;
+      position: relative;
+  }
+
+  .document-guide-step--highlight {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(16, 185, 129, 0.02));
+      border-color: var(--employee-primary);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+  }
+
+  .document-guide-step__number {
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--employee-primary), var(--employee-secondary));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-xl);
+      font-weight: var(--font-bold);
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
+  }
+
+  .document-guide-step--highlight .document-guide-step__number {
+      animation: documentPulse 2s infinite;
+  }
+
+  @keyframes documentPulse {
+      0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 4px 8px rgba(16, 185, 129, 0.2);
+      }
+      50% {
+          transform: scale(1.05);
+          box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
+      }
+  }
+
+  .document-guide-step__content {
+      flex: 1;
+  }
+
+  .document-guide-step__title {
+      font-size: var(--text-lg);
+      font-weight: var(--font-semibold);
+      color: var(--text-primary);
+      margin-bottom: var(--space-2);
+  }
+
+  .document-guide-step__desc {
+      font-size: var(--text-sm);
+      color: var(--text-secondary);
+      line-height: 1.6;
+  }
+
+  .document-guide-step__format-list {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-2);
+  }
+
+  .format-badge {
+      padding: var(--space-1) var(--space-3);
+      background: var(--employee-primary);
+      color: white;
+      border-radius: var(--radius-base);
+      font-size: var(--text-sm);
+      font-weight: var(--font-semibold);
+  }
+
+  .document-guide-step__arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--employee-primary);
+      opacity: 0.6;
+      transform: rotate(90deg);
+      margin-top: var(--space-2);
+  }
+
+  .document-guide-step:last-child .document-guide-step__arrow {
+      display: none;
+  }
+
+  /* ========== 반응형: 문서 등록 가이드 ========== */
+  @media (max-width: 768px) {
+      .document-guide {
+          padding: var(--space-5);
+      }
+
+      .document-guide__icon {
+          font-size: 48px;
+      }
+
+      .document-guide__title {
+          font-size: var(--text-xl);
+      }
+
+      .document-guide-step {
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: var(--space-4);
+      }
+
+      .document-guide-step__arrow {
+          transform: rotate(0deg);
+          margin-top: var(--space-2);
+          margin-bottom: var(--space-2);
+      }
+
+      .document-guide-step__content {
+          width: 100%;
+      }
+
+      .document-guide-step__number {
+          width: 40px;
+          height: 40px;
+          min-width: 40px;
+          font-size: var(--text-lg);
+      }
+
+      .document-guide-step__format-list {
+          justify-content: center;
+      }
+  }
