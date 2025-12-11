@@ -314,6 +314,10 @@ export default function UserPractice() {
     };
 
     const selectProjectFromPlusMenu = async (project) => {
+        if (!currentSession) {
+            showToast('대화를 먼저 시작해주세요', 'error');
+            return;
+        }
         const res = await axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
             {
                 project_id: project.project_id
