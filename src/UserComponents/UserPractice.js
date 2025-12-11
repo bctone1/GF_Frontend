@@ -658,10 +658,13 @@ export default function UserPractice() {
             setShowEmptyState(false);
             setCurrentProject(projectList.find(p => p.project_id === sessionData.project_id)?.name || '');
 
-            // 사용된 모델들을 selectedModels에 설정
+            // 사용된 모델들을 selectedModels에 설정 (상위 3개만)
             const usedModels = Object.keys(newCompareMessages);
+            console.log("usedModels : ", usedModels);
             if (usedModels.length > 0) {
-                setSelectedModels(usedModels);
+                // 상위 3개만 선택
+                const top3Models = usedModels.slice(0, 3);
+                setSelectedModels(top3Models);
             }
         } catch (error) {
             console.error('세션 로드 중 오류:', error);
