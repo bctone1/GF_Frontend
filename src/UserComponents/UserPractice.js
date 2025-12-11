@@ -705,10 +705,23 @@ export default function UserPractice() {
         }
     }, [searchParams, sessions, handleSessionClick, setSearchParams, setCurrentProject, projectList, setCurrentProjectId]);
 
+    const [myprofile, setMyprofile] = useState(null);
+    const handleAccountData = (accountData) => {
+        // console.log(accountData);
+    }
+
+    const handleProfileData = (profileData) => {
+        setMyprofile(profileData);
+        console.log(profileData);
+    }
+
     return (
         <>
             <div id="app">
-                <UserHeader />
+                <UserHeader
+                    onAccountData={handleAccountData}
+                    onProfileData={handleProfileData}
+                />
                 <div className="container">
                     <UserSidebar onClassChange={handleClassChange} />
 
@@ -797,7 +810,7 @@ export default function UserPractice() {
                                                 currentMessages.map((msg, index) => (
                                                     <div key={index} className={`chat-message ${msg.type === 'user' ? 'chat-message--user' : 'chat-message--assistant'}`}>
                                                         <div className="chat-message__avatar">
-                                                            {msg.type === 'user' ? 'U' : '🤖'}
+                                                            {msg.type === 'user' ? `${myprofile?.full_name.charAt(0)}` : '🤖'}
                                                         </div>
                                                         <div className="chat-message__content">
                                                             <div className="chat-message__bubble">
@@ -870,7 +883,7 @@ export default function UserPractice() {
                                                                 {messages.map((msg, index) => (
                                                                     <div key={index} className={`chat-message ${msg.type === 'user' ? 'chat-message--user' : 'chat-message--assistant'}`}>
                                                                         <div className="chat-message__avatar">
-                                                                            {msg.type === 'user' ? 'U' : '🤖'}
+                                                                            {msg.type === 'user' ? `${myprofile?.full_name.charAt(0)}` : '🤖'}
                                                                         </div>
                                                                         <div className="chat-message__content">
                                                                             <div className="chat-message__bubble">
@@ -958,14 +971,14 @@ export default function UserPractice() {
 
                                                         <div className="plus-menu__divider"></div>
 
-                                                        <button className="plus-menu__item" onClick={showAgentMenu}>
+                                                        {/* <button className="plus-menu__item" onClick={showAgentMenu}>
                                                             <span className="plus-menu__icon">👨‍💻</span>
                                                             <div className="plus-menu__text">
                                                                 <div className="plus-menu__title">AI 에이전트</div>
                                                                 <div className="plus-menu__desc">AI 에이전트 선택 및 관리</div>
                                                             </div>
                                                             <span style={{ marginLeft: 'auto', color: 'var(--text-tertiary)' }}>›</span>
-                                                        </button>
+                                                        </button> */}
                                                         <button className="plus-menu__item" onClick={showKnowledgeMenu}>
                                                             <span className="plus-menu__icon">📚</span>
                                                             <div className="plus-menu__text">
@@ -981,14 +994,14 @@ export default function UserPractice() {
                                                                 <div className="plus-menu__desc">현재 대화에 파일 첨부</div>
                                                             </div>
                                                         </button>
-                                                        <button className="plus-menu__item" onClick={showIntegrationMenu}>
+                                                        {/* <button className="plus-menu__item" onClick={showIntegrationMenu}>
                                                             <span className="plus-menu__icon">🔗</span>
                                                             <div className="plus-menu__text">
                                                                 <div className="plus-menu__title">외부 연동</div>
                                                                 <div className="plus-menu__desc">외부 서비스 연결</div>
                                                             </div>
                                                             <span style={{ marginLeft: 'auto', color: 'var(--text-tertiary)' }}>›</span>
-                                                        </button>
+                                                        </button> */}
                                                     </div>
                                                 )}
 

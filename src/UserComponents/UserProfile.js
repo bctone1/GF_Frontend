@@ -115,6 +115,7 @@ export default function UserDashboard() {
 
     // UserSidebar에서 클래스 데이터를 받아오는 콜백
     const handleClassesData = (classes, isLoading) => {
+        console.log(classes);
         if (!isLoading) {
             setClassArray(classes);
         }
@@ -365,13 +366,13 @@ export default function UserDashboard() {
                                         <span className="user-settings-nav__icon">📊</span>
                                         <span>사용량</span>
                                     </div> */}
-                                    <div
+                                    {/* <div
                                         className={`user-settings-nav__item ${activeSection === 'help' ? 'user-settings-nav__item--active' : ''}`}
                                         onClick={() => showSection('help')}
                                     >
                                         <span className="user-settings-nav__icon">❓</span>
                                         <span>도움말</span>
-                                    </div>
+                                    </div> */}
                                 </nav>
                             </div>
 

@@ -8,6 +8,7 @@ export default function PartnerProjectManagement() {
     const [showModal, setShowModal] = useState(false);
     const [showCourseCreatedModal, setShowCourseCreatedModal] = useState(false);
     const [showInviteCodeModal, setShowInviteCodeModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedClass, setSelectedClass] = useState(null);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -18,6 +19,19 @@ export default function PartnerProjectManagement() {
     const partnerId = sessionStorage.getItem("partner_id");
     const accessToken = sessionStorage.getItem("access_token");
     const [selectedCourseId, setSelectedCourseId] = useState(null);
+
+    // 수정 모달 관련 상태
+    const [editFormData, setEditFormData] = useState({
+        name: '',
+        start_at: '',
+        end_at: '',
+        capacity: 0,
+        description: '',
+        status: 'active',
+        course_id: 0,
+        allowed_model_ids: []
+    });
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleCreateClass = async (e) => {
         e.preventDefault();
@@ -488,6 +502,112 @@ export default function PartnerProjectManagement() {
         setShowInviteCodeModal(true);
     };
 
+    const handleShowEditModal = (myclass) => {
+        setSelectedClass(myclass);
+        // 수정 폼 데이터 초기화
+        setEditFormData({
+            name: myclass.name || '',
+            start_at: myclass.start_at ? myclass.start_at.split('T')[0] : '',
+            end_at: myclass.end_at ? myclass.end_at.split('T')[0] : '',
+            capacity: myclass.capacity || 0,
+            description: myclass.description || '',
+            status: myclass.status || 'active',
+            course_id: myclass.course_id || 0,
+            allowed_model_ids: myclass.allowed_model_ids || []
+        });
+        setShowInviteCodeModal(false);
+        setShowEditModal(true);
+    };
+
+    const handleEditFormChange = (e) => {
+        const { name, value } = e.target;
+        setEditFormData(prev => ({
+            ...prev,
+            [name]: name === 'capacity' ? parseInt(value, 10) || 0 : value
+        }));
+    };
+
+    const handleSaveEdit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setIsSaving(true);
+
+        try {
+            // 유효성 검사
+            if (!editFormData.name || !editFormData.name.trim()) {
+                throw new Error('강의명을 입력해주세요.');
+            }
+            if (!editFormData.start_at || !editFormData.end_at) {
+                throw new Error('교육 시작일과 종료일을 모두 입력해주세요.');
+            }
+            if (!editFormData.capacity || editFormData.capacity < 1) {
+                throw new Error('수강 학생 수를 올바르게 입력해주세요.');
+            }
+
+            // 날짜를 ISO 형식으로 변환
+            const startAtISO = new Date(editFormData.start_at + 'T00:00:00').toISOString();
+            const endAtISO = new Date(editFormData.end_at + 'T23:59:59').toISOString();
+
+            // PATCH 요청 데이터 구성
+            const requestData = {
+                name: editFormData.name.trim(),
+                status: editFormData.status,
+                description: editFormData.description.trim() || '',
+                start_at: startAtISO,
+                end_at: endAtISO,
+                capacity: editFormData.capacity,
+                timezone: selectedClass?.timezone || "UTC",
+                location: selectedClass?.location || "string",
+                online_url: selectedClass?.online_url || "string",
+                invite_only: selectedClass?.invite_only || false,
+                course_id: editFormData.course_id || selectedClass?.course_id || 0,
+                primary_model_id: selectedClass?.primary_model_id || 0,
+                allowed_model_ids: editFormData.allowed_model_ids.length > 0
+                    ? editFormData.allowed_model_ids
+                    : (selectedClass?.allowed_model_ids || [])
+            };
+
+            console.log('수정 요청 데이터:', requestData);
+
+            // PATCH 요청
+            const response = await axios.patch(
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes/${selectedClass.id}`,
+                requestData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            console.log('수정 응답 데이터:', response.data);
+
+            showToast('강의 정보가 성공적으로 수정되었습니다.', 'success');
+            setShowEditModal(false);
+            setSelectedClass(null);
+            fetchMyClasses(); // 목록 새로고침
+
+        } catch (error) {
+            console.error('수정 에러 발생:', error);
+
+            // 에러 메시지 설정
+            if (error.response) {
+                const errorMessage = error.response.data?.message || error.response.data?.error || '서버 오류가 발생했습니다.';
+                setError(errorMessage);
+                showToast(errorMessage, 'error');
+            } else if (error.request) {
+                setError('서버에 연결할 수 없습니다. 네트워크를 확인해주세요.');
+                showToast('서버에 연결할 수 없습니다.', 'error');
+            } else {
+                setError(error.message || '알 수 없는 오류가 발생했습니다.');
+                showToast(error.message || '알 수 없는 오류가 발생했습니다.', 'error');
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleCopyInviteCodeFromModal = async () => {
         const inviteCode = selectedClass?.invite_codes?.[0]?.code;
         if (!inviteCode) {
@@ -513,6 +633,36 @@ export default function PartnerProjectManagement() {
                 showToast('복사에 실패했습니다.', 'error');
             }
             document.body.removeChild(textArea);
+        }
+    };
+
+    const handleDeleteClass = async () => {
+        if (!selectedClass) return;
+
+        const confirmMessage = `"${selectedClass.name}" 강의를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`;
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            await axios.delete(
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes/${selectedClass.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    }
+                }
+            );
+
+            showToast('강의가 성공적으로 삭제되었습니다.', 'success');
+            setShowInviteCodeModal(false);
+            setSelectedClass(null);
+            fetchMyClasses(); // 목록 새로고침
+        } catch (error) {
+            console.error('강의 삭제 실패:', error);
+            const errorMessage = error.response?.data?.message || '강의 삭제 중 오류가 발생했습니다.';
+            showToast(errorMessage, 'error');
         }
     };
 
@@ -584,7 +734,25 @@ export default function PartnerProjectManagement() {
                         </div>
                     </div>
 
-                    <div className="modal__footer">
+                    <div className="modal__footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                            className="btn btn--outline"
+                            type="button"
+                            onClick={handleDeleteClass}
+                            style={{
+                                color: 'var(--error)',
+                                borderColor: 'var(--error)'
+                            }}
+                        >
+                            삭제
+                        </button>
+                        <button
+                            className="btn btn--outline"
+                            type="button"
+                            onClick={() => handleShowEditModal(selectedClass)}
+                        >
+                            수정
+                        </button>
                         <button
                             className="btn btn--primary"
                             type="button"
@@ -865,6 +1033,129 @@ export default function PartnerProjectManagement() {
                 </div>
             </div>
 
+            {/* 수정 모달 */}
+            <div className={`modal ${showEditModal ? 'modal--active' : ''}`} id="editClassModal">
+                <div className="modal__content" style={{ maxWidth: '600px' }}>
+                    <div className="modal__header">
+                        <h2 className="modal__title">강의 정보 수정</h2>
+                        <button className="modal__close" onClick={() => {
+                            setShowEditModal(false);
+                            setSelectedClass(null);
+                            setError(null);
+                        }}>✕</button>
+                    </div>
+
+                    <div className="modal__body">
+                        <form id="editClassForm" onSubmit={handleSaveEdit}>
+                            <div className="form-section">
+                                <h3 className="form-section-title">기본 정보</h3>
+                                <div className="form-group">
+                                    <label htmlFor="editClassName">강의명 <span className="required">*</span></label>
+                                    <input
+                                        type="text"
+                                        id="editClassName"
+                                        name="name"
+                                        value={editFormData.name}
+                                        onChange={handleEditFormChange}
+                                        placeholder="강의명을 입력하세요"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">교육 설정</h3>
+                                <div className="form-group">
+                                    <label htmlFor="editStudentCount">수강 학생 수 <span className="required">*</span></label>
+                                    <input
+                                        type="number"
+                                        id="editStudentCount"
+                                        name="capacity"
+                                        value={editFormData.capacity}
+                                        onChange={handleEditFormChange}
+                                        placeholder="20"
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group form-group--inline">
+                                    <div>
+                                        <label htmlFor="editStartDate">교육 시작일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="editStartDate"
+                                            name="start_at"
+                                            value={editFormData.start_at}
+                                            onChange={handleEditFormChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="editEndDate">교육 종료일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="editEndDate"
+                                            name="end_at"
+                                            value={editFormData.end_at}
+                                            onChange={handleEditFormChange}
+                                            min={editFormData.start_at || ''}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">강의 설명 (선택)</h3>
+                                <div className="form-group">
+                                    <textarea
+                                        id="editClassDescription"
+                                        name="description"
+                                        value={editFormData.description}
+                                        onChange={handleEditFormChange}
+                                        placeholder="강의에 대한 간단한 설명을 입력하세요..."
+                                        rows="3"
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            {/* 에러 메시지 표시 */}
+                            {error && (
+                                <div className="alert alert--error" style={{ marginTop: '16px' }}>
+                                    <div className="alert__content">
+                                        <div className="alert__title">오류</div>
+                                        <div className="alert__message">{error}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </form>
+                    </div>
+
+                    <div className="modal__footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                            className="btn btn--outline"
+                            type="button"
+                            onClick={() => {
+                                setShowEditModal(false);
+                                setSelectedClass(null);
+                                setError(null);
+                            }}
+                            disabled={isSaving}
+                        >
+                            취소
+                        </button>
+                        <button
+                            className="btn btn--primary"
+                            type="submit"
+                            form="editClassForm"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? '저장 중...' : '저장'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div id="app">
                 <PartnerHeader />
                 <div className="container">
@@ -929,7 +1220,7 @@ export default function PartnerProjectManagement() {
                                             </div>
                                             <div className="partner-enrollment-step__arrow">
                                                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
                                             </div>
                                         </div>
@@ -942,7 +1233,7 @@ export default function PartnerProjectManagement() {
                                             </div>
                                             <div className="partner-enrollment-step__arrow">
                                                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
                                             </div>
                                         </div>
@@ -955,7 +1246,7 @@ export default function PartnerProjectManagement() {
                                             </div>
                                             <div className="partner-enrollment-step__arrow">
                                                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                 </svg>
                                             </div>
                                         </div>

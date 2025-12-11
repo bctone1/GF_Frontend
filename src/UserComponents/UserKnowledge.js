@@ -175,6 +175,31 @@ export default function UserKnowledge() {
         setUploadError(null);
     };
 
+    // 문서 삭제 함수
+    const handleDeleteDocument = async (knowledgeId, documentName) => {
+        if (!window.confirm(`"${getDisplayName(documentName)}" 문서를 삭제하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            await axios.delete(
+                `${process.env.REACT_APP_API_URL}/user/document/${knowledgeId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+
+            showToast('문서가 성공적으로 삭제되었습니다.', 'success');
+            fetchDocuments(); // 목록 새로고침
+        } catch (error) {
+            console.error('Failed to delete document:', error);
+            const errorMessage = error.response?.data?.message || '문서 삭제 중 오류가 발생했습니다.';
+            showToast(errorMessage, 'error');
+        }
+    };
+
     // 검색 및 정렬된 문서 목록 계산
     const filteredAndSortedDocuments = documents
         .filter((document) => {
@@ -325,7 +350,7 @@ export default function UserKnowledge() {
                                                 </div>
                                                 <div className="upload-hint">AI가 문서를 분석하여 대화에 활용할 수 있습니다</div>
                                                 <div className="upload-formats">
-                                                    지원 형식: PDF, TXT, CSV(최대 10MB)
+                                                    지원 형식: PDF, TXT, DOCS(최대 10MB)
                                                 </div>
                                             </>
                                         )}
@@ -335,7 +360,7 @@ export default function UserKnowledge() {
                                             id="fileInput"
                                             style={{ display: 'none' }}
                                             multiple
-                                            accept=".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx,.jpg,.jpeg,.png,.gif"
+                                            accept=".pdf,.txt,.doc,.docx"
                                             onChange={handleFileInputChange}
                                             disabled={isUploading || uploadError}
                                         />
@@ -360,7 +385,7 @@ export default function UserKnowledge() {
                                                     </div>
                                                     <div className="document-guide-step__arrow">
                                                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>
                                                     </div>
                                                 </div>
@@ -371,14 +396,15 @@ export default function UserKnowledge() {
                                                         <div className="document-guide-step__title">지원 형식 확인</div>
                                                         <div className="document-guide-step__desc">
                                                             <div className="document-guide-step__format-list">
-                                                                <span className="format-badge">TXT</span>
                                                                 <span className="format-badge">PDF</span>
+                                                                <span className="format-badge">TXT</span>
+                                                                <span className="format-badge">DOCS</span>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="document-guide-step__arrow">
                                                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>
                                                     </div>
                                                 </div>
@@ -391,7 +417,7 @@ export default function UserKnowledge() {
                                                     </div>
                                                     <div className="document-guide-step__arrow">
                                                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                            <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                                                         </svg>
                                                     </div>
                                                 </div>
@@ -420,89 +446,100 @@ export default function UserKnowledge() {
 
                                             <div id="documentsGrid" className="documents-grid" style={{ display: viewType === 'grid' ? '' : 'none' }}>
                                                 {filteredAndSortedDocuments.map((document) => (
-                                            <div className="document-card" key={document.knowledge_id}>
-                                                <button className="document-card__menu" >
-                                                    ⋮
-                                                </button>
-                                                <div className="document-card__header">
-                                                    <div className="document-icon document-icon--pdf">📄</div>
-                                                    <div className="document-info">
-                                                        <div className="document-name">{getDisplayName(document.name)}</div>
-                                                        <div className="document-meta">{document.updated_at.split('T')[0]}</div>
-                                                    </div>
-                                                </div>
+                                                    <div className="document-card" key={document.knowledge_id}>
+                                                        <div className="document-card__header">
+                                                            <div className="document-icon document-icon--pdf">📄</div>
+                                                            <div className="document-info">
+                                                                <div className="document-name">{getDisplayName(document.name)}</div>
+                                                                <div className="document-meta">{document.updated_at.split('T')[0]}</div>
+                                                            </div>
+                                                            <button
+                                                                className="btn btn--sm btn--outline"
+                                                                onClick={() => handleDeleteDocument(document.knowledge_id, document.name)}
+                                                                style={{
+                                                                    marginLeft: 'auto',
+                                                                    padding: '4px 8px',
+                                                                    fontSize: 'var(--text-xs)',
+                                                                    color: 'var(--error)',
+                                                                    borderColor: 'var(--error)'
+                                                                }}
+                                                                title="문서 삭제"
+                                                            >
+                                                                삭제
+                                                            </button>
+                                                        </div>
 
-                                                <div className="document-status">
-                                                    <div className="status-bar">
-                                                        <div
-                                                            className={`status-indicator ${document.status === 'ready' ? 'status-indicator--ready' : 'status-indicator--processing'}`}
-                                                            style={document.status !== 'ready' ? {
-                                                                animation: 'pulse 1.5s ease-in-out infinite'
-                                                            } : {}}
-                                                        ></div>
-                                                        <span style={{
-                                                            color: getStatusColor(document.status),
-                                                            fontWeight: 'var(--font-semibold)',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px'
-                                                        }}>
-                                                            {getStatusLabel(document.status)}
-                                                            {document.status !== 'ready' && document.status !== 'failed' && (
+                                                        <div className="document-status">
+                                                            <div className="status-bar">
+                                                                <div
+                                                                    className={`status-indicator ${document.status === 'ready' ? 'status-indicator--ready' : 'status-indicator--processing'}`}
+                                                                    style={document.status !== 'ready' ? {
+                                                                        animation: 'pulse 1.5s ease-in-out infinite'
+                                                                    } : {}}
+                                                                ></div>
                                                                 <span style={{
-                                                                    fontSize: '0.75em',
-                                                                    animation: 'pulse 1.5s ease-in-out infinite'
-                                                                }}>⋯</span>
+                                                                    color: getStatusColor(document.status),
+                                                                    fontWeight: 'var(--font-semibold)',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '4px'
+                                                                }}>
+                                                                    {getStatusLabel(document.status)}
+                                                                    {document.status !== 'ready' && document.status !== 'failed' && (
+                                                                        <span style={{
+                                                                            fontSize: '0.75em',
+                                                                            animation: 'pulse 1.5s ease-in-out infinite'
+                                                                        }}>⋯</span>
+                                                                    )}
+                                                                </span>
+                                                            </div>
+                                                            {document.status !== 'ready' && document.status !== 'failed' && (
+                                                                <div style={{
+                                                                    width: '100%',
+                                                                    height: '4px',
+                                                                    backgroundColor: 'var(--gray-200)',
+                                                                    borderRadius: 'var(--radius-full)',
+                                                                    marginTop: '8px',
+                                                                    overflow: 'hidden'
+                                                                }}>
+                                                                    <div style={{
+                                                                        width: `${document.progress || 0}%`,
+                                                                        height: '100%',
+                                                                        backgroundColor: getStatusColor(document.status),
+                                                                        borderRadius: 'var(--radius-full)',
+                                                                        transition: 'width 0.3s ease',
+                                                                        animation: document.progress < 100 ? 'pulse 1.5s ease-in-out infinite' : 'none'
+                                                                    }}></div>
+                                                                </div>
                                                             )}
-                                                        </span>
-                                                    </div>
-                                                    {document.status !== 'ready' && document.status !== 'failed' && (
-                                                        <div style={{
-                                                            width: '100%',
-                                                            height: '4px',
-                                                            backgroundColor: 'var(--gray-200)',
-                                                            borderRadius: 'var(--radius-full)',
-                                                            marginTop: '8px',
-                                                            overflow: 'hidden'
-                                                        }}>
-                                                            <div style={{
-                                                                width: `${document.progress || 0}%`,
-                                                                height: '100%',
-                                                                backgroundColor: getStatusColor(document.status),
-                                                                borderRadius: 'var(--radius-full)',
-                                                                transition: 'width 0.3s ease',
-                                                                animation: document.progress < 100 ? 'pulse 1.5s ease-in-out infinite' : 'none'
-                                                            }}></div>
+                                                            {document.status === 'failed' && document.error_message && (
+                                                                <div style={{
+                                                                    fontSize: 'var(--text-xs)',
+                                                                    color: 'var(--error)',
+                                                                    marginTop: '4px'
+                                                                }}>
+                                                                    {document.error_message}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                    )}
-                                                    {document.status === 'failed' && document.error_message && (
-                                                        <div style={{
-                                                            fontSize: 'var(--text-xs)',
-                                                            color: 'var(--error)',
-                                                            marginTop: '4px'
-                                                        }}>
-                                                            {document.error_message}
+
+                                                        {/* <div className="document-tags">
+                                                    <span className="doc-tag">태그</span>
+                                                    <span className="doc-tag">태그</span>
+                                                    <span className="doc-tag">태그</span>
+                                                </div> */}
+
+                                                        <div className="document-stats">
+                                                            <div className="stat-item">
+                                                                <div className="stat-value">{document.chunk_count}</div>
+                                                                <div className="stat-label">청크</div>
+                                                            </div>
+                                                            <div className="stat-item">
+                                                                <div className="stat-value">{formatFileSize(document.file_size_bytes)}</div>
+                                                                <div className="stat-label">크기</div>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="document-tags">
-                                                    <span className="doc-tag">태그</span>
-                                                    <span className="doc-tag">태그</span>
-                                                    <span className="doc-tag">태그</span>
-                                                </div>
-
-                                                <div className="document-stats">
-                                                    <div className="stat-item">
-                                                        <div className="stat-value">{document.chunk_count}</div>
-                                                        <div className="stat-label">청크</div>
                                                     </div>
-                                                    <div className="stat-item">
-                                                        <div className="stat-value">{formatFileSize(document.file_size_bytes)}</div>
-                                                        <div className="stat-label">크기</div>
-                                                    </div>
-                                                </div>
-                                                </div>
                                                 ))}
                                             </div>
 
@@ -563,6 +600,21 @@ export default function UserKnowledge() {
                                                                     }}></div>
                                                                 </div>
                                                             )}
+                                                        </div>
+                                                        <div>
+                                                            <button
+                                                                className="btn btn--sm btn--outline"
+                                                                onClick={() => handleDeleteDocument(document.knowledge_id, document.name)}
+                                                                style={{
+                                                                    padding: '4px 8px',
+                                                                    fontSize: 'var(--text-xs)',
+                                                                    color: 'var(--error)',
+                                                                    borderColor: 'var(--error)'
+                                                                }}
+                                                                title="문서 삭제"
+                                                            >
+                                                                삭제
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 ))}

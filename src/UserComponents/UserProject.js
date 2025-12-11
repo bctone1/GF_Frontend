@@ -171,6 +171,40 @@ export default function UserProject() {
         navigate(`/user/practice?sessionId=${sessionId}`);
     };
 
+    const handleDeleteProject = async () => {
+        if (!selectedProject) return;
+        console.log(selectedProject);
+
+        const confirmMessage = `"${selectedProject.name}" 프로젝트를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`;
+        if (!window.confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            await axios.delete(
+                `${process.env.REACT_APP_API_URL}/projects/${selectedProject.project_id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    }
+                }
+            );
+
+            // 모달 닫기
+            setSessionModalStatus(false);
+            setSelectedProject(null);
+            setSessionList([]);
+            
+            // 프로젝트 목록 새로고침
+            fetchProjects(savedClassId);
+        } catch (error) {
+            console.error('프로젝트 삭제 실패:', error);
+            const errorMessage = error.response?.data?.message || '프로젝트 삭제 중 오류가 발생했습니다.';
+            alert(errorMessage);
+        }
+    };
+
     // 필터링 및 정렬된 프로젝트 리스트
     const filteredAndSortedProjects = useMemo(() => {
         let filtered = [...projectList];
@@ -252,9 +286,23 @@ export default function UserProject() {
                 }
             }}>
                 <div className="modal-container" style={{ maxWidth: '700px' }}>
-                    <div className="modal-header">
+                    <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h2 className="modal-title">{selectedProject?.name || '프로젝트'}</h2>
-                        <button className="modal-close" onClick={() => setSessionModalStatus(false)}>✕</button>
+                        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                            <button
+                                type="button"
+                                className="btn btn--sm btn--outline"
+                                onClick={handleDeleteProject}
+                                style={{
+                                    color: 'var(--error)',
+                                    borderColor: 'var(--error)',
+                                    padding: 'var(--space-2) var(--space-3)'
+                                }}
+                            >
+                                삭제
+                            </button>
+                            <button className="modal-close" onClick={() => setSessionModalStatus(false)}>✕</button>
+                        </div>
                     </div>
                     <div className="modal-body">
                         <button

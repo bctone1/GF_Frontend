@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { createNotificationDropdown } from '../utill/utill';
+import { createNotificationDropdown, showToast } from '../utill/utill';
 
 export default function PartnerHeader() {
     const accessToken = sessionStorage.getItem("access_token");
@@ -87,11 +87,17 @@ export default function PartnerHeader() {
 
                     <div id="profileDropdown" className={`dropdown dropdown--profile ${profileDropdownOpen ? 'dropdown--open' : ''}`}>
                         <div className="dropdown__body">
-                            <a href="/partner/settings?tab=profile" className="dropdown__item">
+                            {/* <a href="/partner/settings?tab=profile" className="dropdown__item"> */}
+                            <a href="#" className="dropdown__item"
+                                onClick={() => showToast('준비중입니다.', 'error')}
+                            >
                                 <span className="dropdown__item-icon">👤</span>
                                 <span>내 프로필</span>
                             </a>
-                            <a href="/partner/settings?tab=project" className="dropdown__item">
+                            {/* <a href="/partner/settings?tab=project" className="dropdown__item"> */}
+                            <a href="#" className="dropdown__item"
+                                onClick={() => showToast('준비중입니다.', 'error')}
+                            >
                                 <span className="dropdown__item-icon">⚙️</span>
                                 <span>설정</span>
                             </a>
