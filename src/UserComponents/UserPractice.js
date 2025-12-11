@@ -730,15 +730,9 @@ export default function UserPractice() {
                                             {showEmptyState && currentMessages.length === 0 ? (
                                                 <div className="empty-state">
                                                     <h3 className="empty-state__title">새로운 대화를 시작하세요</h3>
-                                                    <p className="empty-state__desc">질문을 입력하거나 아래 제안 중 하나를 선택해보세요</p>
                                                     <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.
                                                         여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
-                                                    {/* <div className="empty-state__suggestions" style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)', flexWrap: 'wrap', justifyContent: 'center' }}>
-                                                        <button className="suggestion-chip" onClick={() => applySuggestion('코드 리뷰 부탁해')}>코드 리뷰 부탁해</button>
-                                                        <button className="suggestion-chip" onClick={() => applySuggestion('버그 찾아줘')}>버그 찾아줘</button>
-                                                        <button className="suggestion-chip" onClick={() => applySuggestion('성능 최적화 방법')}>성능 최적화 방법</button>
-                                                        <button className="suggestion-chip" onClick={() => applySuggestion('테스트 코드 작성')}>테스트 코드 작성</button>
-                                                    </div> */}
+                                                    
                                                 </div>
                                             ) : (
                                                 currentMessages.map((msg, index) => (
