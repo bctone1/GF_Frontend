@@ -57,12 +57,12 @@ export default function UserKnowledge() {
         if (!files || files.length === 0) return;
         if (uploadError) return; // 오류 상태일 때 업로드 차단
 
-        // 파일 크기 검증 (50MB)
-        const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+        // 파일 크기 검증 (10MB)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
         const invalidFiles = Array.from(files).filter(file => file.size > maxSize);
 
         if (invalidFiles.length > 0) {
-            showToast('파일 크기는 50MB를 초과할 수 없습니다.', 'error');
+            showToast('파일 크기는 10MB를 초과할 수 없습니다.', 'error');
             return;
         }
 
@@ -325,7 +325,7 @@ export default function UserKnowledge() {
                                                 </div>
                                                 <div className="upload-hint">AI가 문서를 분석하여 대화에 활용할 수 있습니다</div>
                                                 <div className="upload-formats">
-                                                    지원 형식: PDF, TXT, CSV(최대 50MB)
+                                                    지원 형식: PDF, TXT, CSV(최대 10MB)
                                                 </div>
                                             </>
                                         )}

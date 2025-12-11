@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
+import { showToast } from '../utill/utill';
 
 export default function PartnerProjectManagement() {
     const [showModal, setShowModal] = useState(false);
@@ -301,9 +302,12 @@ export default function PartnerProjectManagement() {
         fetchAssistant();
     }, []);
 
-    // 진행 중과 종료됨 강의 개수 계산
-    const { activeCount, completedCount } = useMemo(() => {
+    // 예정, 진행 중, 종료됨 강의 개수 계산
+    const { scheduledCount, activeCount, completedCount } = useMemo(() => {
         const now = new Date();
+        // 시간 정보를 제거하고 날짜만 비교하기 위해 시간을 00:00:00으로 설정
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let scheduled = 0;
         let active = 0;
         let completed = 0;
 
@@ -313,17 +317,25 @@ export default function PartnerProjectManagement() {
             const startDate = new Date(myclass.start_at);
             const endDate = new Date(myclass.end_at);
 
-            // 진행 중: 현재 날짜가 시작일과 종료일 사이에 있는 경우
-            if (now >= startDate && now <= endDate) {
+            // 시간 정보를 제거하고 날짜만 비교
+            const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+            // 예정: 현재 날짜가 시작일보다 이전인 경우
+            if (today < startDateOnly) {
+                scheduled++;
+            }
+            // 진행 중: 현재 날짜가 시작일과 종료일 사이에 있는 경우 (시작일과 종료일 포함)
+            else if (today >= startDateOnly && today <= endDateOnly) {
                 active++;
             }
-            // 종료됨: 현재 날짜가 종료일을 지난 경우
-            else if (now > endDate) {
+            // 종료됨: 현재 날짜가 종료일을 지난 경우 (종료일 다음 날부터)
+            else if (today > endDateOnly) {
                 completed++;
             }
         });
 
-        return { activeCount: active, completedCount: completed };
+        return { scheduledCount: scheduled, activeCount: active, completedCount: completed };
     }, [myClasses]);
 
     // 과정명 자동완성 필터링
@@ -411,7 +423,63 @@ export default function PartnerProjectManagement() {
         setEndDate(e.target.value);
     };
 
+    const handleCopyInviteCode = async () => {
+        const inviteCode = newClass?.invite_codes?.[0]?.code;
+        if (!inviteCode) {
+            showToast('복사할 초대 코드가 없습니다.', 'error');
+            return;
+        }
 
+        try {
+            await navigator.clipboard.writeText(inviteCode);
+            showToast('초대 코드가 복사되었습니다.', 'success');
+        } catch (err) {
+            // 클립보드 API가 지원되지 않는 경우 대체 방법 사용
+            const textArea = document.createElement('textarea');
+            textArea.value = inviteCode;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('초대 코드가 복사되었습니다.', 'success');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
+    const handleCopyInviteLink = async () => {
+        const inviteCode = newClass?.invite_codes?.[0]?.code;
+        if (!inviteCode) {
+            showToast('복사할 초대 링크가 없습니다.', 'error');
+            return;
+        }
+
+        const inviteLink = `https://growfit.com/join?code=${inviteCode}`;
+
+        try {
+            await navigator.clipboard.writeText(inviteLink);
+            showToast('초대 링크가 복사되었습니다.', 'success');
+        } catch (err) {
+            // 클립보드 API가 지원되지 않는 경우 대체 방법 사용
+            const textArea = document.createElement('textarea');
+            textArea.value = inviteLink;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('초대 링크가 복사되었습니다.', 'success');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
 
     const [Assistant, setAssistant] = useState([
         { id: 1, provider: "openai", modality: "chat", model_name: "gpt-4o-mini" },
@@ -453,7 +521,11 @@ export default function PartnerProjectManagement() {
                                 <div>
                                     <span style={{ color: 'var(--text-secondary)' }}>📅 교육 기간:</span>
                                     <span style={{ fontWeight: 'var(--font-semibold)', marginLeft: '4px' }}
-                                        id="createdCourseDates">{trainingDays}일</span>
+                                        id="createdCourseDates">
+                                        {newClass?.start_at && newClass?.end_at
+                                            ? calculateTrainingDays(newClass.start_at, newClass.end_at)
+                                            : trainingDays}일
+                                    </span>
                                 </div>
                                 <div>
                                     <span style={{ color: 'var(--text-secondary)' }}>👥 예상 학생:</span>
@@ -475,61 +547,33 @@ export default function PartnerProjectManagement() {
                                     textAlign: 'center', background: 'var(--primary-50)', color: 'var(--primary-700)',
                                     fontFamily: 'var(--font-mono)', letterSpacing: '2px'
                                 }} />
-                                <button className="btn btn--primary" style={{ minWidth: '80px' }}>
+                                <button className="btn btn--primary" style={{ minWidth: '80px' }} onClick={handleCopyInviteCode}>
                                     복사
                                 </button>
                             </div>
                         </div>
 
 
-                        <div style={{ marginBottom: '24px' }}>
+                        {/* <div style={{ marginBottom: '24px' }}>
                             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
                                 🔗 초대 링크
                             </label>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                                <input type="text" id="generatedInviteUrl" value="https://growfit.com/join?code=GF2K4M" readOnly
+                                <input type="text" id="generatedInviteUrl" value={newClass?.invite_codes?.[0]?.code ? `https://growfit.com/join?code=${newClass.invite_codes[0].code}` : ""} readOnly
                                     style={{
                                         flex: 1, padding: '12px 16px', border: '1px solid var(--border)',
                                         borderRadius: 'var(--radius-md)', fontSize: 'var(--text-sm)',
                                         background: 'var(--gray-50)'
                                     }} />
-                                <button className="btn btn--outline" style={{ minWidth: '80px' }}>
+                                <button className="btn btn--outline" style={{ minWidth: '80px' }} onClick={handleCopyInviteLink}>
                                     복사
                                 </button>
                             </div>
-                        </div>
-
-
-                        {/* <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border)' }}>
-                            <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', marginBottom: '12px' }}>
-                                💰 예상 비용 정보
-                            </div>
-                            <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: '12px' }}>
-                                <div
-                                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', marginBottom: '8px' }}>
-                                    <span style={{ color: 'var(--text-secondary)' }}>플랫폼 사용료</span>
-                                    <span style={{ fontWeight: 'var(--font-semibold)' }} id="createdPlatformFee">100,000원</span>
-                                </div>
-                                <div
-                                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)', marginBottom: '12px' }}>
-                                    <span style={{ color: 'var(--text-secondary)' }}>API 사용료 (예상)</span>
-                                    <span style={{ fontWeight: 'var(--font-semibold)' }} id="createdAPIFee">213,200원</span>
-                                </div>
-                                <div
-                                    style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-base)', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
-                                    <span style={{ fontWeight: 'var(--font-bold)' }}>총 예상 비용</span>
-                                    <span
-                                        style={{ fontWeight: 'var(--font-bold)', color: 'var(--primary-600)', fontSize: 'var(--text-lg)' }}
-                                        id="createdTotalCost">313,200원</span>
-                                </div>
-                            </div>
                         </div> */}
+
                     </div>
 
                     <div className="modal__footer">
-                        {/* <button className="btn btn--outline">
-                            📄 초대 정보 다운로드
-                        </button> */}
                         <button className="btn btn--primary" type="button" onClick={() => {
                             setShowCourseCreatedModal(false);
                             fetchMyClasses();
@@ -571,7 +615,7 @@ export default function PartnerProjectManagement() {
                                     <input type="text" id="ClassName" name="ClassName" placeholder="Rag 구축" required />
                                 </div>
                                 <div className="form-group" style={{ position: 'relative' }}>
-                                    <label htmlFor="courseName">과정명 <span className="required">*</span></label>
+                                    <label htmlFor="courseName">과정명 </label>
                                     <input
                                         type="text"
                                         id="courseName"
@@ -683,64 +727,6 @@ export default function PartnerProjectManagement() {
                                     </div>
                                 </div>
                             )}
-
-
-                            {/* <div className="cost-estimate-section">
-                                <h3 className="cost-estimate-title">💰 예상 비용 계산</h3>
-                                <div className="cost-breakdown">
-                                    <div className="cost-row">
-                                        <span className="cost-label">
-                                            <span className="cost-icon">💳</span>
-                                            플랫폼 사용료
-                                        </span>
-                                        <span className="cost-value" id="costPlatformFee">0원</span>
-                                    </div>
-                                    <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × <span
-                                        id="platformFeeStudents">0</span>명</p>
-
-                                    <div className="cost-divider"></div>
-
-                                    <div className="cost-row">
-                                        <span className="cost-label">
-                                            <span className="cost-icon">🤖</span>
-                                            API 사용료 (예상)
-                                        </span>
-                                        <span className="cost-value" id="costAPIFee">0원</span>
-                                    </div>
-                                    <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × <span
-                                        id="apiFeeTrainingDays">0</span>일 (70% 사용률 가정)</p>
-
-                                    <div className="cost-divider"></div>
-
-                                    <div className="cost-row cost-row--total">
-                                        <span className="cost-label">
-                                            <span className="cost-icon">💰</span>
-                                            총 예상 비용
-                                        </span>
-                                        <span className="cost-value cost-value--total" id="costTotalCost">0원</span>
-                                    </div>
-                                </div>
-
-                                <div className="cost-details">
-                                    <div className="cost-detail-item">
-                                        <span className="cost-detail-label">선택된 LLM</span>
-                                        <span className="cost-detail-value" id="selectedLLMCount">3개</span>
-                                    </div>
-                                    <div className="cost-detail-item">
-                                        <span className="cost-detail-label">예상 토큰 사용량</span>
-                                        <span className="cost-detail-value" id="estimatedTokens">0 tokens</span>
-                                    </div>
-                                    <div className="cost-detail-item">
-                                        <span className="cost-detail-label">1인당 일평균 실습</span>
-                                        <span className="cost-detail-value">100회</span>
-                                    </div>
-                                </div>
-
-                                <div className="cost-warning">
-                                    <span className="cost-warning-icon">⚠️</span>
-                                    <span className="cost-warning-text">API 사용료는 실제 사용량에 따라 변동될 수 있습니다</span>
-                                </div>
-                            </div> */}
                         </form>
                     </div>
                     <div className="modal__footer">
@@ -780,12 +766,6 @@ export default function PartnerProjectManagement() {
                     <main className="main">
                         <div className="main__content">
 
-                            {/* <div className="page-header">
-                                <h1 className="page-title">📁 강의 관리</h1>
-                                <p className="page-subtitle">교육 프로젝트 생성 및 관리</p>
-                            </div> */}
-
-
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-6)' }}>
                                 <button className="btn btn--primary" onClick={() => setShowModal(true)}>
                                     <span>신규 강의 생성</span>
@@ -803,6 +783,13 @@ export default function PartnerProjectManagement() {
                                 </div>
                                 <div className="stat-card">
                                     <div className="stat-card__header">
+                                        <div className="stat-icon stat-icon--warning">📅</div>
+                                    </div>
+                                    <div className="stat-card__label">예정</div>
+                                    <div className="stat-card__value">{scheduledCount}개</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-card__header">
                                         <div className="stat-icon stat-icon--success">🚀</div>
                                     </div>
                                     <div className="stat-card__label">진행 중</div>
@@ -815,41 +802,54 @@ export default function PartnerProjectManagement() {
                                     <div className="stat-card__label">종료됨</div>
                                     <div className="stat-card__value">{completedCount}개</div>
                                 </div>
-                                {/* <div className="stat-card">
-                                    <div className="stat-card__header">
-                                        <div className="stat-icon stat-icon--warning">👥</div>
-                                    </div>
-                                    <div className="stat-card__label">총 학생 수</div>
-                                    <div className="stat-card__value">127명</div>
-                                </div> */}
                             </div>
 
 
                             <div className="projects-grid">
 
                                 {myClasses.map((myclass) => {
-                                    const daysLeft = Math.floor(
-                                        (new Date(myclass.end_at) - new Date()) / (1000 * 60 * 60 * 24)
+                                    const now = new Date();
+                                    const startDate = new Date(myclass.start_at);
+                                    const endDate = new Date(myclass.end_at);
+
+                                    const daysUntilStart = Math.floor(
+                                        (startDate - now) / (1000 * 60 * 60 * 24) + 1
                                     );
+                                    const daysLeft = Math.floor(
+                                        (endDate - now) / (1000 * 60 * 60 * 24) + 1
+                                    );
+
+                                    let statusClass = 'active';
+                                    let statusText = `D-${daysLeft} 남음`;
+
+                                    if (daysUntilStart > 0) {
+                                        // 시작일 전: 예정
+                                        statusClass = 'scheduled';
+                                        statusText = `D-${daysUntilStart} 예정`;
+                                    } else if (daysLeft < 0) {
+                                        // 종료일 지남: 종료
+                                        statusClass = 'end';
+                                        statusText = '종료';
+                                    } else {
+                                        // 진행 중
+                                        statusClass = 'active';
+                                        statusText = `D-${daysLeft} 남음`;
+                                    }
 
                                     return (
                                         <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
                                             <div className="project-card__header">
-                                                <div className={`project-card__status project-card__status--${daysLeft < 0 ? 'end' : 'active'}`}>
+                                                <div className={`project-card__status project-card__status--${statusClass}`}>
                                                     <span className="status-dot"></span>
-                                                    {daysLeft < 0 ? '종료' : `D-${daysLeft} 남음`}
+                                                    {statusText}
                                                 </div>
                                             </div>
 
                                             <h3 className="project-card__title">{myclass.name}</h3>
 
                                             <div className="project-card__meta">
-                                                {/* <div className="project-card__meta-item">
-                                                    <span>💰</span>
-                                                    <span>20,000,000원</span>
-                                                </div> */}
                                                 <div className="project-card__meta-item">
-                                                    <span>👥</span>
+                                                    <span>정원 : </span>
                                                     <span>{myclass.capacity}명</span>
                                                 </div>
                                             </div>
@@ -860,29 +860,6 @@ export default function PartnerProjectManagement() {
                                                     <span>{myclass.start_at.split('T')[0]} ~ {myclass.end_at.split('T')[0]}</span>
                                                 </div>
                                             </div>
-
-                                            {/* <div className="project-settlement">
-                                                <div className="settlement-row">
-                                                    <span className="settlement-label">플랫폼 사용료</span>
-                                                    <span className="settlement-value">100,000원</span>
-                                                </div>
-                                                <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 5,000원 × 20명</p>
-
-                                                <div className="cost-divider"></div>
-
-                                                <div className="settlement-row">
-                                                    <span className="settlement-label">API 사용료 (예상)</span>
-                                                    <span className="settlement-value">1,200,000원</span>
-                                                </div>
-                                                <p className="form-hint" style={{ margin: '4px 0 12px 30px' }}>학생당 일평균 100회 실습 × 59일 (70% 사용률 가정)</p>
-
-                                                <div className="cost-divider"></div>
-
-                                                <div className="settlement-row settlement-row--total">
-                                                    <span className="settlement-label">총 예상 비용</span>
-                                                    <span className="settlement-value">1,300,000원</span>
-                                                </div>
-                                            </div> */}
 
                                             <div className="project-card__actions">
                                                 <button
