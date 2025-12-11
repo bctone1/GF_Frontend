@@ -62,7 +62,7 @@ export default function PartnerSidebar() {
                     </ul>
                 </nav>
 
-                <div className="sidebar__footer">
+                {/* <div className="sidebar__footer">
                     <div style={{ padding: 'var(--space-3)', background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(139, 92, 246, 0.1))', borderRadius: 'var(--radius-md)', fontSize: 'var(--text-xs)' }}>
                         <div style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-1)' }}>이번 달 수익 (75%)</div>
                         <div style={{ fontWeight: 'var(--font-bold)', color: 'var(--partner-primary)' }}>45,000,000원</div>
@@ -70,7 +70,7 @@ export default function PartnerSidebar() {
                             <div style={{ height: '100%', width: '75%', background: 'linear-gradient(to right, var(--partner-primary), var(--partner-secondary))' }}></div>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </aside>
         </>
     )
