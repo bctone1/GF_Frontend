@@ -8,7 +8,7 @@ export default function PartnerSidebar() {
     return (
         <>
             <aside className="sidebar sidebar--open">
-                <div className="sidebar__user">
+                {/* <div className="sidebar__user">
                     <div className="sidebar__user-info">
                         <div className="sidebar__user-avatar" style={{ background: 'linear-gradient(135deg, #0ea5e9, #38bdf8)' }}>박</div>
                         <div className="sidebar__user-details">
@@ -16,7 +16,7 @@ export default function PartnerSidebar() {
                             <div className="sidebar__user-role">교육 파트너</div>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 <nav className="sidebar__nav">
                     <ul className="sidebar__menu">
