@@ -162,7 +162,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
 
                 <nav className="sidebar__nav">
                     <ul className="sidebar__menu">
-                        {/* <li className="sidebar__menu-item">
+                        <li className="sidebar__menu-item">
                             <Link
                                 to="/user/dashboard"
                                 className={`sidebar__menu-link ${currentMenu === 'dashboard' ? 'sidebar__menu-link--active' : ''}`}
@@ -170,7 +170,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">🏠</span>
                                 <span>대시보드</span>
                             </Link>
-                        </li> */}
+                        </li>
 
 
                         <li className="sidebar__menu-item">
@@ -214,7 +214,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                         </li>
 
 
-                        {/* 
+
                         <li className="sidebar__menu-item">
                             <Link
                                 to="/user/agent"
@@ -253,7 +253,7 @@ export default function UserSidebar({ onClassChange, onClassesData, refreshTrigg
                                 <span className="sidebar__menu-icon">📊</span>
                                 <span>내 기록</span>
                             </Link>
-                        </li> */}
+                        </li>
 
                         <li className="sidebar__menu-item">
                             <Link
