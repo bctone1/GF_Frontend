@@ -347,7 +347,7 @@ export default function UserPractice() {
 
     const selectProjectFromPlusMenu = async (project) => {
         if (!currentSession) {
-            showToast('대화를 먼저 시작해주세요', 'error');
+            showToast('채팅을 먼저 시작해주세요', 'error');
             return;
         }
         const res = await axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
@@ -368,15 +368,11 @@ export default function UserPractice() {
     };
 
     const startNewChat = () => {
-        // if (currentMessages.length > 0 || Object.keys(compareMessages).length > 0) {
-        //     if (!window.confirm('현재 대화를 저장하고 새 대화를 시작하시겠습니까?')) return;
-        // }
         setCurrentMessages([]);
         setCompareMessages({});
         setShowEmptyState(true);
         setCurrentSession(0);
-        // CreateSession(); // 세션 생성
-        showToast('새 대화가 시작되었습니다', 'success');
+        showToast('새 채팅이 시작되었습니다', 'success');
     };
 
 
@@ -759,9 +755,8 @@ export default function UserPractice() {
                             {/* 좌측: 히스토리 사이드바 */}
                             <aside className={`chat-sidebar ${isSidebarCollapsed ? 'chat-sidebar--collapsed' : ''}`} id="chatSidebar">
                                 <div className="chat-sidebar__header">
-                                    <h2 className="chat-sidebar__title">최근 대화</h2>
                                     <button className="chat-sidebar__new-chat" onClick={startNewChat}>
-                                        <span>새 대화</span>
+                                        <span>새 채팅</span>
                                     </button>
                                 </div>
 
@@ -830,7 +825,7 @@ export default function UserPractice() {
                                         <div className="chat-messages" id="chatMessages">
                                             {showEmptyState && currentMessages.length === 0 ? (
                                                 <div className="empty-state">
-                                                    <h3 className="empty-state__title">새로운 대화를 시작하세요</h3>
+                                                    <h3 className="empty-state__title">새로운 채팅를 시작하세요</h3>
                                                     <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.
                                                         여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
 
@@ -1020,7 +1015,7 @@ export default function UserPractice() {
                                                             <span className="plus-menu__icon">📎</span>
                                                             <div className="plus-menu__text">
                                                                 <div className="plus-menu__title">파일 첨부</div>
-                                                                <div className="plus-menu__desc">현재 대화에 파일 첨부</div>
+                                                                <div className="plus-menu__desc">현재 채팅에 파일 첨부</div>
                                                             </div>
                                                         </button>
                                                     </div>

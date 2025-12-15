@@ -122,7 +122,7 @@
        color: var(--text-secondary);
    }
 
-   .agent-badge {
+   .user-agent-badge {
        padding: 2px 6px;
        background: var(--employee-primary);
        color: white;
