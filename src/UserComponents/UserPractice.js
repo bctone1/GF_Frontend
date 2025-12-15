@@ -814,7 +814,7 @@ export default function UserPractice() {
                                         <span className="tuning-slider__label">Max Length</span>
                                         <span className="tuning-slider__value" id="maxLengthValue">{tuningParams.maxLength}</span>
                                     </div>
-                                    <input name="maxLength" type="range" className="tuning-slider__input" id="maxLengthSlider" min="256" max="4096" step="256" value={tuningParams.maxLength} onInput={(e) => setTuningParams({ ...tuningParams, maxLength: e.target.value })} />
+                                    <input name="maxLength" type="range" className="tuning-slider__input" id="maxLengthSlider" min="256" max="10000" step="256" value={tuningParams.maxLength} onInput={(e) => setTuningParams({ ...tuningParams, maxLength: e.target.value })} />
                                     <div className="tuning-slider__desc">생성할 최대 토큰 수</div>
                                 </div>
                             </div>

@@ -593,6 +593,18 @@
         transition: transform 0.2s;
     }
 
+    /* 다크 모드 지원 */
+    @media (prefers-color-scheme: dark) {
+        :root:not(.light-mode) {
+            --background: #1a1a1a;
+            --surface: #2a2a2a;
+            --border: #3a3a3a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #808080;
+        }
+    }
+
     /* 인쇄 스타일 */
     @media print {
 

@@ -1,0 +1,255 @@
+/* ========== CSS Variables ========== */
+:root {
+    --primary-50: #faf5ff;
+    --primary-100: #f3e8ff;
+    --primary-200: #e9d5ff;
+    --primary-300: #d8b4fe;
+    --primary-400: #c084fc;
+    --primary-500: #a855f7;
+    --primary-600: #9333ea;
+    --primary-700: #7e22ce;
+    --primary-800: #6b21a8;
+    --primary-900: #581c87;
+
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+
+    --background: #ffffff;
+    --surface: #f8fafc;
+    --border: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-tertiary: #94a3b8;
+
+    --gpt-color: #10a37f;
+    --gpt-bg: #ecfdf5;
+    --claude-color: #d97757;
+    --claude-bg: #fff7ed;
+    --gemini-color: #4285f4;
+    --gemini-bg: #eff6ff;
+    --exaone-color: #a50034;
+    --exaone-bg: #fdf2f8;
+
+    --sidebar-width: 260px;
+    --header-height: 56px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", sans-serif;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Tuning Settings Styles */
+.tuning-section {
+    margin-bottom: 20px;
+}
+
+.tuning-section:last-child {
+    margin-bottom: 0;
+}
+
+.tuning-section__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tuning-section__title-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--primary-600);
+}
+
+.tuning-slider {
+    margin-bottom: 16px;
+}
+
+.tuning-slider__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tuning-slider__label {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.tuning-slider__value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-600);
+    background: var(--primary-50);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.tuning-slider__input {
+    width: 100%;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--gray-200);
+    border-radius: var(--radius-full);
+    outline: none;
+}
+
+.tuning-slider__input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--primary-600);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.tuning-slider__input::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.tuning-slider__desc {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 6px;
+}
+
+.tuning-presets {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.tuning-preset {
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tuning-preset:hover {
+    border-color: var(--primary-300);
+    background: var(--primary-50);
+}
+
+.tuning-preset--active {
+    border-color: var(--primary-500);
+    background: var(--primary-50);
+}
+
+.tuning-preset__name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.tuning-preset__value {
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+.tuning-fewshot {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+}
+
+.tuning-fewshot__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.tuning-fewshot__title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.tuning-fewshot__add {
+    font-size: 12px;
+    color: var(--primary-600);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tuning-fewshot__add:hover {
+    text-decoration: underline;
+}
+
+.tuning-fewshot__item {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.tuning-fewshot__item:last-child {
+    margin-bottom: 0;
+}
+
+.tuning-fewshot__label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.tuning-fewshot__input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    resize: none;
+}
+
+.tuning-fewshot__input:focus {
+    outline: none;
+    border-color: var(--primary-400);
+}
+
+.tuning-fewshot__remove {
+    font-size: 11px;
+    color: var(--error);
+    cursor: pointer;
+    margin-top: 8px;
+    text-align: right;
+}
