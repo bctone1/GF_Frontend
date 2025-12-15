@@ -28,6 +28,8 @@ import './css/UserProfile.css';
 import './css/UserProject.css';
 import './css/UserWorkflow.css';
 
+import './css/tuning.css';
+
 
 
 import App from './App';

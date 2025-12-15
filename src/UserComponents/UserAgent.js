@@ -56,7 +56,16 @@ export default function UserAgent() {
         }
     ];
 
-    const [selectedAgent, setSelectedAgent] = useState(null);
+    const [selectedAgent, setSelectedAgent] = useState({
+        id: 0,
+        name: '',
+        role: '',
+        usage: 0,
+        lastUsed: '',
+        isActive: false,
+        description: '',
+        systemPrompt: ''
+    });
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleAgentClick = (agent) => {

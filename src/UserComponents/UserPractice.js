@@ -73,7 +73,7 @@ export default function UserPractice() {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
-        console.log(response.data.items);
+        // console.log(response.data.items);
         setSessions(response.data.items);
     }
     const [projectList, setProjectList] = useState([]);
@@ -338,12 +338,6 @@ export default function UserPractice() {
         setPlusMenuView('knowledge');
     };
 
-    const showIntegrationMenu = (e) => {
-        if (e) {
-            e.stopPropagation();
-        }
-        setPlusMenuView('integration');
-    };
 
     const selectProjectFromPlusMenu = async (project) => {
         if (!currentSession) {
@@ -375,15 +369,6 @@ export default function UserPractice() {
         showToast('새 채팅이 시작되었습니다', 'success');
     };
 
-
-
-    const applySuggestion = (text) => {
-        setMessageInput(text);
-        if (messageInputRef.current) {
-            messageInputRef.current.focus();
-        }
-    };
-
     const handleModelCheckboxChange = (modelValue, checked) => {
         if (checked) {
             if (selectedModels.length >= 3) {
@@ -395,25 +380,12 @@ export default function UserPractice() {
             const remainingModels = selectedModels.filter(m => m !== modelValue);
             if (remainingModels.length < 1) {
                 showToast('최소 1개 이상의 모델을 선택해야 합니다.', 'error');
-                // alert('최소 1개 이상의 모델을 선택해야 합니다.');
                 return;
             }
             setSelectedModels(remainingModels);
         }
     };
 
-    const updateSelectedDisplay = () => {
-        if (selectedModels.length === 1) {
-            const model = Assistant.find(m => m.id === selectedModels[0]);
-            return { text: model?.model_name || '모델 선택' };
-        } else if (selectedModels.length > 1) {
-            return { text: `${selectedModels.length}개 모델 선택됨` };
-        }
-        if (Assistant.length > 0) {
-            return { text: Assistant[0].model_name || '모델 선택' };
-        }
-        return { text: '모델 선택' };
-    };
 
     const sendMessage = async () => {
         const currentTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
@@ -604,7 +576,7 @@ export default function UserPractice() {
         showToast(`${document.name}이(가) 첨부되었습니다.`, 'success');
     };
 
-    const selectedDisplay = updateSelectedDisplay();
+
 
     const handleSessionClick = useCallback(async (sessionId) => {
         console.log("sessionId : ", sessionId);
@@ -737,11 +709,158 @@ export default function UserPractice() {
 
     const handleProfileData = (profileData) => {
         setMyprofile(profileData);
-        console.log(profileData);
+        // console.log(profileData);
     }
+
+    const [settingModalStatus, setSettingModalStatus] = useState(false);
+    const showSettingModal = () => {
+        setSettingModalStatus(true);
+        setShowPlusMenu(false);
+    };
+
+    const handleSettingForm = (e) => {
+        e.preventDefault();
+        console.log("settingForm : ", e.target.temperature.value, e.target.topP.value, e.target.maxLength.value);
+        setSettingModalStatus(false);
+
+
+    };
+
+    const [tuningParams, setTuningParams] = useState({
+        temperature: 1,
+        topP: 0.9,
+        maxLength: 2048
+    });
+
+    const [preset, setPreset] = useState('balanced');
+
+    const [fewShotExamples, setFewShotExamples] = useState([]);
+    const addFewShotExample = () => {
+        setFewShotExamples([...fewShotExamples, { input: '', output: '' }]);
+        console.log("fewShotExamples : ", fewShotExamples);
+    };
+
+    const removeFewShotExample = (index) => {
+        setFewShotExamples(fewShotExamples.filter((_, i) => i !== index));
+    };
+
+    const handlePreset = (preset, temperature) => {
+        setPreset(preset);
+        setTuningParams({ ...tuningParams, temperature: temperature });
+    };
 
     return (
         <>
+            <div id="settingModal" className={`modal-overlay ${settingModalStatus ? 'modal-overlay--active' : ''}`}>
+                <div className="modal-container">
+                    <div className="modal-header">
+                        <h2 className="modal-title">⚙ 상세 설정</h2>
+                        <button className="modal-close" onClick={() => setSettingModalStatus(false)}>✕</button>
+                    </div>
+                    <div className="modal-body">
+                        <form id="settingForm" onSubmit={handleSettingForm}>
+
+                            <div className="tuning-section">
+                                <div className="tuning-section__title">
+                                    <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>
+                                    스타일 프리셋
+                                </div>
+                                <div className="tuning-presets">
+                                    <div className={`tuning-preset ${preset === 'precise' ? 'tuning-preset--active' : ''}`} onClick={() => handlePreset('precise', 0.3)}>
+                                        <div className="tuning-preset__name">정확한</div>
+                                        <div className="tuning-preset__value">T: 0.3</div>
+                                    </div>
+                                    <div className={`tuning-preset ${preset === 'balanced' ? 'tuning-preset--active' : ''}`} onClick={() => handlePreset('balanced', 0.7)}>
+                                        <div className="tuning-preset__name">균형잡힌</div>
+                                        <div className="tuning-preset__value">T: 0.7</div>
+                                    </div>
+                                    <div className={`tuning-preset ${preset === 'creative' ? 'tuning-preset--active' : ''}`} onClick={() => handlePreset('creative', 1.0)}>
+                                        <div className="tuning-preset__name">창의적</div>
+                                        <div className="tuning-preset__value">T: 1.0</div>
+                                    </div>
+                                    <div className={`tuning-preset ${preset === 'custom' ? 'tuning-preset--active' : ''}`} onClick={() => handlePreset('custom', 1.0)}>
+                                        <div className="tuning-preset__name">사용자 정의</div>
+                                        <div className="tuning-preset__value">커스텀</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="tuning-section">
+                                <div className="tuning-section__title">
+                                    <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /></svg>
+                                    파라미터 조정
+                                </div>
+
+                                <div className="tuning-slider">
+                                    <div className="tuning-slider__header">
+                                        <span className="tuning-slider__label">Temperature</span>
+                                        <span className="tuning-slider__value" id="tempValue">{tuningParams.temperature}</span>
+                                    </div>
+                                    <input name="temperature" type="range" className="tuning-slider__input" id="tempSlider" min="0" max="2" step="0.1" value={tuningParams.temperature} onInput={(e) => setTuningParams({ ...tuningParams, temperature: e.target.value })} />
+                                    <div className="tuning-slider__desc">낮을수록 일관된 응답, 높을수록 창의적인 응답</div>
+                                </div>
+
+                                <div className="tuning-slider">
+                                    <div className="tuning-slider__header">
+                                        <span className="tuning-slider__label">Top P</span>
+                                        <span className="tuning-slider__value" id="topPValue">{tuningParams.topP}</span>
+                                    </div>
+                                    <input name="topP" type="range" className="tuning-slider__input" id="topPSlider" min="0" max="1" step="0.05" value={tuningParams.topP} onInput={(e) => setTuningParams({ ...tuningParams, topP: e.target.value })} />
+                                    <div className="tuning-slider__desc">확률 기반 토큰 선택 범위 (0.9 권장)</div>
+                                </div>
+
+                                <div className="tuning-slider">
+                                    <div className="tuning-slider__header">
+                                        <span className="tuning-slider__label">Max Length</span>
+                                        <span className="tuning-slider__value" id="maxLengthValue">{tuningParams.maxLength}</span>
+                                    </div>
+                                    <input name="maxLength" type="range" className="tuning-slider__input" id="maxLengthSlider" min="256" max="4096" step="256" value={tuningParams.maxLength} onInput={(e) => setTuningParams({ ...tuningParams, maxLength: e.target.value })} />
+                                    <div className="tuning-slider__desc">생성할 최대 토큰 수</div>
+                                </div>
+                            </div>
+
+                            <div className="tuning-section">
+                                <div className="tuning-section__title">
+                                    <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                    Few-shot 예시
+                                </div>
+                                <div className="tuning-fewshot">
+                                    <div className="tuning-fewshot__header">
+                                        <span className="tuning-fewshot__title">입출력 예시 (선택사항)</span>
+                                        <span className="tuning-fewshot__add" onClick={() => addFewShotExample()}>+ 예시 추가</span>
+                                    </div>
+                                    <div id="fewShotContainer">
+                                        <div className="tuning-fewshot__item">
+                                            <div className="tuning-fewshot__label">입력 (Input)</div>
+                                            <textarea className="tuning-fewshot__input" rows="2" placeholder="예시 입력을 작성하세요..."></textarea>
+                                            <div className="tuning-fewshot__label" style={{ marginTop: '8px' }}>출력 (Output)</div>
+                                            <textarea className="tuning-fewshot__input" rows="2" placeholder="예시 출력을 작성하세요..."></textarea>
+                                        </div>
+                                        {fewShotExamples.map((example, index) => (
+                                            <div className="tuning-fewshot__item" key={index}>
+                                                <div className="tuning-fewshot__label">입력 (Input)</div>
+                                                <textarea className="tuning-fewshot__input" rows="2" placeholder="예시 입력을 작성하세요..."></textarea>
+                                                <div className="tuning-fewshot__label" style={{ marginTop: '8px' }}>출력 (Output)</div>
+                                                <textarea className="tuning-fewshot__input" rows="2" placeholder="예시 출력을 작성하세요..."></textarea>
+                                                <div className="tuning-fewshot__remove" onClick={() => removeFewShotExample(index)}>삭제</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn--secondary" onClick={() => setSettingModalStatus(false)}>
+                            취소
+                        </button>
+                        <button type="submit" form="settingForm" className="btn btn--primary" style={{ background: 'var(--employee-primary)' }} >
+                            저장
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div id="app">
                 <UserHeader
                     onAccountData={handleAccountData}
@@ -1016,6 +1135,14 @@ export default function UserPractice() {
                                                             <div className="plus-menu__text">
                                                                 <div className="plus-menu__title">파일 첨부</div>
                                                                 <div className="plus-menu__desc">현재 채팅에 파일 첨부</div>
+                                                            </div>
+                                                        </button>
+
+                                                        <button className="plus-menu__item" onClick={showSettingModal}>
+                                                            <span className="plus-menu__icon">⚙</span>
+                                                            <div className="plus-menu__text">
+                                                                <div className="plus-menu__title">상세 설정</div>
+                                                                <div className="plus-menu__desc">상세 설정 페이지로 이동</div>
                                                             </div>
                                                         </button>
                                                     </div>

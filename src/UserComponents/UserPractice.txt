@@ -25,8 +25,6 @@ export default function UserPractice() {
     const [currentSession, setCurrentSession] = useState(0);
     const [currentProjectId, setCurrentProjectId] = useState(0);
 
-
-
     const messageInputRef = useRef(null);
     const plusMenuRef = useRef(null);
     const plusBtnRef = useRef(null);
@@ -35,8 +33,7 @@ export default function UserPractice() {
     const messagesEndRef = useRef(null);
     const compareMessagesRefs = useRef({});
     const accessToken = sessionStorage.getItem("access_token");
-    const userId = sessionStorage.getItem("user_id");
-    const userEmail = sessionStorage.getItem("user_email");
+
 
     const [sessions, setSessions] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
@@ -340,17 +337,15 @@ export default function UserPractice() {
         }
         setPlusMenuView('knowledge');
     };
-
-    const showIntegrationMenu = (e) => {
-        if (e) {
-            e.stopPropagation();
-        }
-        setPlusMenuView('integration');
+    const [settingModalStatus, setSettingModalStatus] = useState(false);
+    const showSettingModal = () => {
+        setSettingModalStatus(true);
+        setShowPlusMenu(false);
     };
 
     const selectProjectFromPlusMenu = async (project) => {
         if (!currentSession) {
-            showToast('대화를 먼저 시작해주세요', 'error');
+            showToast('채팅을 먼저 시작해주세요', 'error');
             return;
         }
         const res = await axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
@@ -371,24 +366,11 @@ export default function UserPractice() {
     };
 
     const startNewChat = () => {
-        // if (currentMessages.length > 0 || Object.keys(compareMessages).length > 0) {
-        //     if (!window.confirm('현재 대화를 저장하고 새 대화를 시작하시겠습니까?')) return;
-        // }
         setCurrentMessages([]);
         setCompareMessages({});
         setShowEmptyState(true);
         setCurrentSession(0);
-        // CreateSession(); // 세션 생성
-        showToast('새 대화가 시작되었습니다', 'success');
-    };
-
-
-
-    const applySuggestion = (text) => {
-        setMessageInput(text);
-        if (messageInputRef.current) {
-            messageInputRef.current.focus();
-        }
+        showToast('새 채팅이 시작되었습니다', 'success');
     };
 
     const handleModelCheckboxChange = (modelValue, checked) => {
@@ -402,25 +384,12 @@ export default function UserPractice() {
             const remainingModels = selectedModels.filter(m => m !== modelValue);
             if (remainingModels.length < 1) {
                 showToast('최소 1개 이상의 모델을 선택해야 합니다.', 'error');
-                // alert('최소 1개 이상의 모델을 선택해야 합니다.');
                 return;
             }
             setSelectedModels(remainingModels);
         }
     };
 
-    const updateSelectedDisplay = () => {
-        if (selectedModels.length === 1) {
-            const model = Assistant.find(m => m.id === selectedModels[0]);
-            return { text: model?.model_name || '모델 선택' };
-        } else if (selectedModels.length > 1) {
-            return { text: `${selectedModels.length}개 모델 선택됨` };
-        }
-        if (Assistant.length > 0) {
-            return { text: Assistant[0].model_name || '모델 선택' };
-        }
-        return { text: '모델 선택' };
-    };
 
     const sendMessage = async () => {
         const currentTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
@@ -611,7 +580,7 @@ export default function UserPractice() {
         showToast(`${document.name}이(가) 첨부되었습니다.`, 'success');
     };
 
-    const selectedDisplay = updateSelectedDisplay();
+
 
     const handleSessionClick = useCallback(async (sessionId) => {
         console.log("sessionId : ", sessionId);
@@ -762,9 +731,8 @@ export default function UserPractice() {
                             {/* 좌측: 히스토리 사이드바 */}
                             <aside className={`chat-sidebar ${isSidebarCollapsed ? 'chat-sidebar--collapsed' : ''}`} id="chatSidebar">
                                 <div className="chat-sidebar__header">
-                                    <h2 className="chat-sidebar__title">최근 대화</h2>
                                     <button className="chat-sidebar__new-chat" onClick={startNewChat}>
-                                        <span>새 대화</span>
+                                        <span>새 채팅</span>
                                     </button>
                                 </div>
 
@@ -833,7 +801,7 @@ export default function UserPractice() {
                                         <div className="chat-messages" id="chatMessages">
                                             {showEmptyState && currentMessages.length === 0 ? (
                                                 <div className="empty-state">
-                                                    <h3 className="empty-state__title">새로운 대화를 시작하세요</h3>
+                                                    <h3 className="empty-state__title">새로운 채팅를 시작하세요</h3>
                                                     <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.
                                                         여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
 
@@ -1023,17 +991,17 @@ export default function UserPractice() {
                                                             <span className="plus-menu__icon">📎</span>
                                                             <div className="plus-menu__text">
                                                                 <div className="plus-menu__title">파일 첨부</div>
-                                                                <div className="plus-menu__desc">현재 대화에 파일 첨부</div>
+                                                                <div className="plus-menu__desc">현재 채팅에 파일 첨부</div>
                                                             </div>
                                                         </button>
-                                                        {/* <button className="plus-menu__item" onClick={showIntegrationMenu}>
-                                                            <span className="plus-menu__icon">🔗</span>
+
+                                                        <button className="plus-menu__item" onClick={showSettingModal}>
+                                                            <span className="plus-menu__icon">⚙</span>
                                                             <div className="plus-menu__text">
-                                                                <div className="plus-menu__title">외부 연동</div>
-                                                                <div className="plus-menu__desc">외부 서비스 연결</div>
+                                                                <div className="plus-menu__title">상세 설정</div>
+                                                                <div className="plus-menu__desc">상세 설정 페이지로 이동</div>
                                                             </div>
-                                                            <span style={{ marginLeft: 'auto', color: 'var(--text-tertiary)' }}>›</span>
-                                                        </button> */}
+                                                        </button>
                                                     </div>
                                                 )}
 
@@ -1184,34 +1152,34 @@ export default function UserPractice() {
                                         {Assistant.map((model) => {
                                             const isAllowed = Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id);
                                             return (
-                                            <label
-                                                key={model.id}
-                                                className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
-                                                    }`}
-                                                style={{ opacity: !isAllowed ? 0.5 : 1 }}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    className="model-checkbox-input"
-                                                    value={model.id}
-                                                    checked={selectedModels.includes(model.model_name)}
-                                                    onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
-                                                    disabled={!isAllowed}
-                                                />
-                                                <div
-                                                    className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
-                                                    style={model.iconStyle || {}}
+                                                <label
+                                                    key={model.id}
+                                                    className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
+                                                        }`}
+                                                    style={{ opacity: !isAllowed ? 0.5 : 1 }}
                                                 >
-                                                    🤖
-                                                </div>
-                                                <div className="model-selector-dropdown__info">
-                                                    <div className="model-selector-dropdown__name">{model.model_name}</div>
-                                                    <div className="model-selector-dropdown__desc">{model.provider}</div>
-                                                </div>
-                                                <span className="model-selector-dropdown__check">
-                                                    {selectedModels.includes(model.id) ? '✓' : ''}
-                                                </span>
-                                            </label>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="model-checkbox-input"
+                                                        value={model.id}
+                                                        checked={selectedModels.includes(model.model_name)}
+                                                        onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
+                                                        disabled={!isAllowed}
+                                                    />
+                                                    <div
+                                                        className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
+                                                        style={model.iconStyle || {}}
+                                                    >
+                                                        🤖
+                                                    </div>
+                                                    <div className="model-selector-dropdown__info">
+                                                        <div className="model-selector-dropdown__name">{model.model_name}</div>
+                                                        <div className="model-selector-dropdown__desc">{model.provider}</div>
+                                                    </div>
+                                                    <span className="model-selector-dropdown__check">
+                                                        {selectedModels.includes(model.id) ? '✓' : ''}
+                                                    </span>
+                                                </label>
                                             );
                                         })}
                                     </div>
