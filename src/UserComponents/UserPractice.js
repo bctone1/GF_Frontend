@@ -13,7 +13,6 @@ export default function UserPractice() {
     const [currentProject, setCurrentProject] = useState('AI 실습 기초');
     const [showPlusMenu, setShowPlusMenu] = useState(false);
     const [plusMenuView, setPlusMenuView] = useState('main');
-    const [showModelDropdown, setShowModelDropdown] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [messageInput, setMessageInput] = useState('');
     const [showEmptyState, setShowEmptyState] = useState(true);
@@ -192,16 +191,11 @@ export default function UserPractice() {
                 setShowPlusMenu(false);
             }
 
-            if (showModelDropdown && modelDropdownRef.current && modelDisplayRef.current &&
-                !modelDisplayRef.current.contains(e.target) &&
-                !modelDropdownRef.current.contains(e.target)) {
-                setShowModelDropdown(false);
-            }
         };
 
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
-    }, [showPlusMenu, showModelDropdown]);
+    }, [showPlusMenu]);
 
     // 메시지 스크롤
     useEffect(() => {
@@ -357,9 +351,6 @@ export default function UserPractice() {
         fetchSessions();
     };
 
-    const toggleModelDropdown = () => {
-        setShowModelDropdown(!showModelDropdown);
-    };
 
     const startNewChat = () => {
         setCurrentMessages([]);
@@ -718,6 +709,12 @@ export default function UserPractice() {
         setShowPlusMenu(false);
     };
 
+    const [modelModalStatus, setModelModalStatus] = useState(false);
+    const showModelModal = () => {
+        setModelModalStatus(true);
+        setShowPlusMenu(false);
+    };
+
     const handleSettingForm = (e) => {
         e.preventDefault();
         console.log("settingForm : ", e.target.temperature.value, e.target.topP.value, e.target.maxLength.value);
@@ -751,6 +748,84 @@ export default function UserPractice() {
 
     return (
         <>
+            <div id="modelModal" className={`modal-overlay ${modelModalStatus ? 'modal-overlay--active' : ''}`}>
+                <div className="modal-container">
+                    <div className="modal-header">
+                        <h2 className="modal-title">🤖 모델 설정</h2>
+                        <button className="modal-close" onClick={() => setModelModalStatus(false)}>✕</button>
+                    </div>
+                    <div className="modal-body">
+                        <div className="model-selector-modal">
+                            <div className="model-selector-modal__info">
+                                <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>
+                                    사용할 LLM 모델을 선택하세요. 최대 3개까지 선택 가능합니다.
+                                </p>
+                            </div>
+                            <div className="model-selector-dropdown" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                {Assistant.map((model) => {
+                                    const isAllowed = Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id);
+                                    return (
+                                        <label
+                                            key={model.id}
+                                            className={`model-selector-dropdown__item ${selectedModels.includes(model.model_name) ? 'model-selector-dropdown__item--selected' : ''
+                                                }`}
+                                            style={{ opacity: !isAllowed ? 0.5 : 1, cursor: !isAllowed ? 'not-allowed' : 'pointer' }}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                className="model-checkbox-input"
+                                                value={model.id}
+                                                checked={selectedModels.includes(model.model_name)}
+                                                onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
+                                                disabled={!isAllowed}
+                                            />
+                                            <div
+                                                className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
+                                                style={model.iconStyle || {}}
+                                            >
+                                                🤖
+                                            </div>
+                                            <div className="model-selector-dropdown__info">
+                                                <div className="model-selector-dropdown__name">{model.model_name}</div>
+                                                <div className="model-selector-dropdown__desc">{model.provider}</div>
+                                            </div>
+                                            <span className="model-selector-dropdown__check">
+                                                {selectedModels.includes(model.model_name) ? '✓' : ''}
+                                            </span>
+                                        </label>
+                                    );
+                                })}
+                            </div>
+                            <div style={{ marginTop: 'var(--space-4)', padding: 'var(--space-3)', background: 'var(--surface)', borderRadius: 'var(--radius-md)', fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
+                                <div style={{ fontWeight: 'var(--font-semibold)', marginBottom: 'var(--space-2)' }}>현재 선택된 모델:</div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                                    {selectedModels.length > 0 ? (
+                                        selectedModels.map((modelName, index) => (
+                                            <span key={index} style={{
+                                                padding: 'var(--space-1) var(--space-2)',
+                                                background: 'var(--employee-primary)',
+                                                color: 'white',
+                                                borderRadius: 'var(--radius-base)',
+                                                fontSize: 'var(--text-xs)'
+                                            }}>
+                                                {modelName}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <span style={{ color: 'var(--text-tertiary)' }}>모델이 선택되지 않았습니다</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="modal-footer">
+                        <button type="button" className="btn btn--secondary" onClick={() => setModelModalStatus(false)}>
+                            닫기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div id="settingModal" className={`modal-overlay ${settingModalStatus ? 'modal-overlay--active' : ''}`}>
                 <div className="modal-container">
                     <div className="modal-header">
@@ -1145,6 +1220,13 @@ export default function UserPractice() {
                                                                 <div className="plus-menu__desc">상세 설정 페이지로 이동</div>
                                                             </div>
                                                         </button>
+                                                        <button className="plus-menu__item" onClick={showModelModal}>
+                                                            <span className="plus-menu__icon">🤖</span>
+                                                            <div className="plus-menu__text">
+                                                                <div className="plus-menu__title">모델 설정</div>
+                                                                <div className="plus-menu__desc">LLM 모델 선택 및 관리</div>
+                                                            </div>
+                                                        </button>
                                                     </div>
                                                 )}
 
@@ -1268,67 +1350,6 @@ export default function UserPractice() {
                                 </div>
                             </section>
 
-                            {/* 우측: 모델 선택 패널 */}
-                            <aside className="model-panel" id="modelPanel">
-                                <div className="model-panel__header">
-                                    <h2 className="model-panel__title">LLM 모델</h2>
-                                </div>
-
-                                <div className="model-panel__body">
-                                    <div className="selected-model-display" id="selectedModelDisplay">
-                                        <div className="selected-model-display__label">현재 선택</div>
-                                        {/* <button
-                                            className={`selected-model-display__button ${showModelDropdown ? 'open' : ''}`}
-                                            ref={modelDisplayRef}
-                                            onClick={toggleModelDropdown}
-                                        >
-                                            <span className="selected-model-display__icon" >
-                                                🤖
-                                            </span>
-                                            <span className="selected-model-display__text">{selectedDisplay.text}</span>
-                                            <span className="selected-model-display__arrow">▼</span>
-                                        </button> */}
-                                    </div>
-
-                                    {/* {showModelDropdown && ( */}
-                                    <div className="model-selector-dropdown" id="modelDropdown" ref={modelDropdownRef}>
-                                        {Assistant.map((model) => {
-                                            const isAllowed = Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id);
-                                            return (
-                                                <label
-                                                    key={model.id}
-                                                    className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
-                                                        }`}
-                                                    style={{ opacity: !isAllowed ? 0.5 : 1 }}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        className="model-checkbox-input"
-                                                        value={model.id}
-                                                        checked={selectedModels.includes(model.model_name)}
-                                                        onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
-                                                        disabled={!isAllowed}
-                                                    />
-                                                    <div
-                                                        className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
-                                                        style={model.iconStyle || {}}
-                                                    >
-                                                        🤖
-                                                    </div>
-                                                    <div className="model-selector-dropdown__info">
-                                                        <div className="model-selector-dropdown__name">{model.model_name}</div>
-                                                        <div className="model-selector-dropdown__desc">{model.provider}</div>
-                                                    </div>
-                                                    <span className="model-selector-dropdown__check">
-                                                        {selectedModels.includes(model.id) ? '✓' : ''}
-                                                    </span>
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                    {/* )} */}
-                                </div>
-                            </aside>
 
 
                         </div>

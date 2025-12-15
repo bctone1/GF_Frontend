@@ -13,7 +13,7 @@ import UserAgent from './UserComponents/UserAgent';
 import UserWorkflow from './UserComponents/UserWorkflow';
 import UserHistory from './UserComponents/UserHistory';
 import UserProfile from './UserComponents/UserProfile';
-
+import UserPracticeNew from './UserComponents/UserPracticeNew';
 
 import PartnerDashboard from './PartnerComponents/PartnerDashboard';
 import PartnerProjectManagement from './PartnerComponents/PartnerProjectManagement';
@@ -51,6 +51,8 @@ export default function App() {
         <Route path="/user/workflow" element={<UserWorkflow />} />
         <Route path="/user/history" element={<UserHistory />} />
         <Route path="/user/profile" element={<UserProfile />} />
+        <Route path="/user/practice_new" element={<UserPracticeNew />} />
+
 
 
         {/* 파트너 컴포넌트 */}
