@@ -25,8 +25,6 @@ export default function UserPractice() {
     const [currentSession, setCurrentSession] = useState(0);
     const [currentProjectId, setCurrentProjectId] = useState(0);
 
-
-
     const messageInputRef = useRef(null);
     const plusMenuRef = useRef(null);
     const plusBtnRef = useRef(null);
@@ -35,8 +33,7 @@ export default function UserPractice() {
     const messagesEndRef = useRef(null);
     const compareMessagesRefs = useRef({});
     const accessToken = sessionStorage.getItem("access_token");
-    const userId = sessionStorage.getItem("user_id");
-    const userEmail = sessionStorage.getItem("user_email");
+
 
     const [sessions, setSessions] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
@@ -1003,14 +1000,14 @@ export default function UserPractice() {
 
                                                         <div className="plus-menu__divider"></div>
 
-                                                        {/* <button className="plus-menu__item" onClick={showAgentMenu}>
+                                                        <button className="plus-menu__item" onClick={showAgentMenu}>
                                                             <span className="plus-menu__icon">👨‍💻</span>
                                                             <div className="plus-menu__text">
                                                                 <div className="plus-menu__title">AI 에이전트</div>
                                                                 <div className="plus-menu__desc">AI 에이전트 선택 및 관리</div>
                                                             </div>
                                                             <span style={{ marginLeft: 'auto', color: 'var(--text-tertiary)' }}>›</span>
-                                                        </button> */}
+                                                        </button>
                                                         <button className="plus-menu__item" onClick={showKnowledgeMenu}>
                                                             <span className="plus-menu__icon">📚</span>
                                                             <div className="plus-menu__text">
@@ -1026,14 +1023,6 @@ export default function UserPractice() {
                                                                 <div className="plus-menu__desc">현재 대화에 파일 첨부</div>
                                                             </div>
                                                         </button>
-                                                        {/* <button className="plus-menu__item" onClick={showIntegrationMenu}>
-                                                            <span className="plus-menu__icon">🔗</span>
-                                                            <div className="plus-menu__text">
-                                                                <div className="plus-menu__title">외부 연동</div>
-                                                                <div className="plus-menu__desc">외부 서비스 연결</div>
-                                                            </div>
-                                                            <span style={{ marginLeft: 'auto', color: 'var(--text-tertiary)' }}>›</span>
-                                                        </button> */}
                                                     </div>
                                                 )}
 
@@ -1184,34 +1173,34 @@ export default function UserPractice() {
                                         {Assistant.map((model) => {
                                             const isAllowed = Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id);
                                             return (
-                                            <label
-                                                key={model.id}
-                                                className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
-                                                    }`}
-                                                style={{ opacity: !isAllowed ? 0.5 : 1 }}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    className="model-checkbox-input"
-                                                    value={model.id}
-                                                    checked={selectedModels.includes(model.model_name)}
-                                                    onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
-                                                    disabled={!isAllowed}
-                                                />
-                                                <div
-                                                    className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
-                                                    style={model.iconStyle || {}}
+                                                <label
+                                                    key={model.id}
+                                                    className={`model-selector-dropdown__item ${selectedModels.includes(model.id) ? 'model-selector-dropdown__item--selected' : ''
+                                                        }`}
+                                                    style={{ opacity: !isAllowed ? 0.5 : 1 }}
                                                 >
-                                                    🤖
-                                                </div>
-                                                <div className="model-selector-dropdown__info">
-                                                    <div className="model-selector-dropdown__name">{model.model_name}</div>
-                                                    <div className="model-selector-dropdown__desc">{model.provider}</div>
-                                                </div>
-                                                <span className="model-selector-dropdown__check">
-                                                    {selectedModels.includes(model.id) ? '✓' : ''}
-                                                </span>
-                                            </label>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="model-checkbox-input"
+                                                        value={model.id}
+                                                        checked={selectedModels.includes(model.model_name)}
+                                                        onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
+                                                        disabled={!isAllowed}
+                                                    />
+                                                    <div
+                                                        className={`model-selector-dropdown__icon ${model.iconClass || ''}`}
+                                                        style={model.iconStyle || {}}
+                                                    >
+                                                        🤖
+                                                    </div>
+                                                    <div className="model-selector-dropdown__info">
+                                                        <div className="model-selector-dropdown__name">{model.model_name}</div>
+                                                        <div className="model-selector-dropdown__desc">{model.provider}</div>
+                                                    </div>
+                                                    <span className="model-selector-dropdown__check">
+                                                        {selectedModels.includes(model.id) ? '✓' : ''}
+                                                    </span>
+                                                </label>
                                             );
                                         })}
                                     </div>
