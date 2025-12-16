@@ -51,8 +51,9 @@ export default function App() {
         <Route path="/user/workflow" element={<UserWorkflow />} />
         <Route path="/user/history" element={<UserHistory />} />
         <Route path="/user/profile" element={<UserProfile />} />
-        <Route path="/user/practice_new" element={<UserPracticeNew />} />
 
+        {/* 유저 리뉴얼 컴포넌트 */}
+        <Route path="/user/practice_new" element={<UserPracticeNew />} />
 
 
         {/* 파트너 컴포넌트 */}
