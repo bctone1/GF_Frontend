@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { setSelectedClass, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
-export default function UserSidebar2026({ onClassChange, onClassesData, refreshTrigger, externalClassSelect }) {
+export default function UserSidebar2026({ onClassChange, onClassesData, refreshTrigger, externalClassSelect, getProjecList }) {
 
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
@@ -11,6 +11,33 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
     const [selectedClassId, setSelectedClassId] = useState('');
     const accessToken = sessionStorage.getItem("access_token");
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
+    const [projectList, setProjectList] = useState([]);
+    const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
+
+    const fetchProjects = async (classId) => {
+        if (!classId) {
+            setProjectList([]);
+            return;
+        }
+        try {
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/projects?class_id=${classId}`, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                }
+            });
+            const projects = response.data.items || [];
+            const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
+            console.log('프로젝트 목록 : ', filteredProjects);
+            getProjecList(filteredProjects);
+            setProjectList(filteredProjects);
+        } catch (error) {
+            console.error('프로젝트 조회 실패:', error);
+            setProjectList([]);
+        }
+    }
+
+
 
     const fetchMyClasses = () => {
         if (!accessToken) {
@@ -31,7 +58,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             if (onClassesData) {
                 onClassesData(classes, false);
             }
-            const savedClassId = getSelectedClassId();
+            // const savedClassId = getSelectedClassId();
             if (savedClassId) {
                 const isValid = classes.some(c => String(c.class_id) === String(savedClassId));
                 if (isValid) {
@@ -55,8 +82,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
 
     // URL경로가 바뀔때마다 실행
     useEffect(() => {
-        console.log(location.pathname);
-        const savedClassId = getSelectedClassId();
+        // console.log(location.pathname);
+        // const savedClassId = getSelectedClassId();
         if (savedClassId) {
             setSelectedClassId(savedClassId);
         }
@@ -67,6 +94,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
         fetchSessions();
         getMyAccount();
         getMyProfile();
+        fetchProjects(savedClassId);
+
     }, []);
 
     // refreshTrigger가 변경되면 클래스 목록 다시 가져오기 (0보다 클 때만)
@@ -85,13 +114,14 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             const allowed_model_ids = selectedClass ? selectedClass.allowed_model_ids : [1];
             sessionStorage.setItem("allowed_model_ids", allowed_model_ids);
             setSelectedClass(classId, classTitle);
+            fetchProjects(classId);
             if (onClassChange) {
-                onClassChange(classId, allowed_model_ids);
+                onClassChange(classId, allowed_model_ids, projectList);
             }
         } else {
             setSelectedClass(null, null);
             if (onClassChange) {
-                onClassChange(null, [1]);
+                onClassChange(null, [1], []);
             }
         }
         setClassSelectorOpen(false);
@@ -161,7 +191,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             sessionStorage.setItem("partner_id", response.data.partner_id);
             sessionStorage.setItem("user_id", response.data.user_id);
             sessionStorage.setItem("user_email", response.data.email);
-            console.log(response.data);
+            // console.log(response.data);
             setMyaccount(response.data);
         }).catch(error => {
             console.log(error);
@@ -174,7 +204,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 Authorization: `Bearer ${accessToken}`,
             },
         }).then(response => {
-            console.log(response.data);
+            // console.log(response.data);
             setMyprofile(response.data);
         }).catch(error => {
             console.log(error);
@@ -310,7 +340,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                             </div>
                         </div>
                     </div>
-                    <div className="modal__footer" style={{ display: 'flex' }}><button className="modal__btn modal__btn--primary" >확인</button></div>
+                    <div className="modal__footer" style={{ display: 'flex' }}><button className="modal__btn modal__btn--primary" onClick={() => setSettingsModalStatus(false)}>확인</button></div>
                 </div>
             </div>
 
@@ -570,13 +600,33 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                             onClick={() => handleSessionClick(session.session_id)}
                             key={session.session_id}
                         >
+                            {currentSession === session.session_id && (
+                                <div className="chat-item__pin-dot"></div>
+                            )}
+
                             <div className="chat-item__icon">
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                             </div>
+
                             <div className="chat-item__info">
                                 <div className="chat-item__title">{session.title}</div>
-                                <div className="chat-item__time">{session.created_at.split('T')[0]} {session.created_at.split('T')[1].split('.')[0]}</div>
+                                <div className="chat-item__meta">
+                                    <div className="chat-item__time">
+                                        {session.created_at.split('T')[0].slice(5)}{' '}
+                                        {session.created_at.split('T')[1].split(':').slice(0, 2).join(':')}
+                                    </div>
+                                    {session.project_id && (
+                                        <span className="chat-item__project-badge">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                            </svg>
+                                            {projectList?.find(project => project.project_id === session.project_id)?.name}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
+
+
                             <button
                                 className="chat-item__menu"
                                 onClick={(e) => showChatContextMenu(e, session.session_id)}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import UserSidebar2026 from './UserSidebar2026';
-import { showToast2026 } from '../utill/utill';
+import { showToast2026, getSelectedClassId } from '../utill/utill';
+import axios from 'axios';
 
 export default function UserPractice2026() {
 
@@ -24,6 +25,14 @@ export default function UserPractice2026() {
 
     // 모든 토글을 닫는 헬퍼 함수
     const closeAllToggles = (exceptType = null) => {
+
+        if (exceptType !== 'attachmentList') {
+            const attachmentList = document.getElementById('attachmentList');
+            if (attachmentList) {
+                attachmentList.classList.remove('attachment-dropdown--open');
+            }
+        }
+
         // plus-menu 닫기
         if (exceptType !== 'plusMenu') {
             const plusMenu = document.getElementById('plusMenu');
@@ -82,11 +91,26 @@ export default function UserPractice2026() {
         }
     };
 
+    const toggleAttachmentDropdown = () => {
+        const dropdown = document.getElementById('attachmentList');
+        const btn = document.getElementById('attachmentListBtn');
+        if (!dropdown || !btn) return;
+        const isOpen = dropdown.classList.contains('attachment-dropdown--open');
+
+        if (!isOpen) {
+            closeAllToggles('attachmentList');
+            dropdown.classList.add('attachment-dropdown--open');
+            // btn.classList.add('attachment-btn--visible');
+        } else {
+            dropdown.classList.remove('attachment-dropdown--open');
+            // btn.classList.remove('attachment-btn--visible');
+        }
+    }
+
     const toggleInputSettings = () => {
         const dropdownMenu = document.getElementById('inputSettingsDropdown');
         const btn = document.getElementById('inputSettingsBtn');
         if (!dropdownMenu || !btn) return;
-
         const isOpen = dropdownMenu.classList.contains('dropdown--open');
 
         if (!isOpen) {
@@ -157,8 +181,10 @@ export default function UserPractice2026() {
         if (!isOpen) {
             closeAllToggles('knowledgeBaseModal');
             modal.classList.add('modal-overlay--open');
+            setSelectedDocument(currentKnowledgeIds);
         } else {
             modal.classList.remove('modal-overlay--open');
+            setSelectedDocument([]);
         }
     }
     // 외부 클릭 감지로 토글 닫기
@@ -166,10 +192,16 @@ export default function UserPractice2026() {
         const handleClickOutside = (event) => {
             const plusMenu = document.getElementById('plusMenu');
             const plusBtn = document.getElementById('plusBtn');
+
             const inputSettingsDropdown = document.getElementById('inputSettingsDropdown');
             const inputSettingsBtn = document.getElementById('inputSettingsBtn');
+
             const modelListboxDropdown = document.getElementById('modelListboxDropdown');
             const modelListboxTrigger = document.getElementById('modelListboxTrigger');
+
+            const attachmentList = document.getElementById('attachmentList');
+            const attachmentListBtn = document.getElementById('attachmentListBtn');
+
 
             // plus-menu 외부 클릭 체크
             if (plusMenu && plusMenu.classList.contains('plus-menu--open')) {
@@ -193,6 +225,13 @@ export default function UserPractice2026() {
                     modelListboxTrigger?.classList.remove('open');
                 }
             }
+            if (attachmentList && attachmentList.classList.contains('attachment-dropdown--open')) {
+                if (!attachmentList.contains(event.target) && !attachmentListBtn?.contains(event.target)) {
+                    attachmentList.classList.remove('attachment-dropdown--open');
+                    attachmentListBtn?.classList.remove('attachment-btn--visible');
+                    
+                }
+            }
         };
 
         document.addEventListener('mousedown', handleClickOutside);
@@ -204,12 +243,165 @@ export default function UserPractice2026() {
 
 
 
+    // 사용할 데이터 요청
+    const accessToken = sessionStorage.getItem("access_token");
+    const [Assistant, setAssistant] = useState([]);
+    const [documents, setDocuments] = useState([]);
+    const [projectList, setProjectList] = useState([]);
+    const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
+    const [selectedModels, setSelectedModels] = useState([]);
+
+    const [allowedModelIds, setAllowedModelIds] = useState(() => {
+        const stored = sessionStorage.getItem("allowed_model_ids");
+        if (!stored) return [0];
+        try {
+            const parsed = JSON.parse(stored);
+            // 배열인지 확인
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+            // 배열이 아니면 배열로 변환
+            if (typeof parsed === 'number') {
+                return [parsed];
+            }
+            if (typeof parsed === 'string') {
+                if (parsed.includes(',')) {
+                    return parsed.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+                }
+                const num = parseInt(parsed, 10);
+                return isNaN(num) ? [1] : [num];
+            }
+            return [1]; // 기본값
+        } catch {
+            if (typeof stored === 'string' && stored.includes(',')) {
+                return stored.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+            }
+            const num = parseInt(stored, 10);
+            return isNaN(num) ? [1] : [num];
+        }
+    });
+
+
+
+    const fetchAssistant = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/models`);
+        // console.log(response.data.items);
+        setAssistant(response.data.items);
+    }
+    const fetchDocuments = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/document`,
+            { headers: { Authorization: `Bearer ${accessToken}`, }, }
+        );
+        setDocuments(response.data.items);
+    }
+
+    useEffect(() => {
+        fetchAssistant();
+        fetchDocuments();
+
+    }, []);
+
+
+    // 클래스 변경 함수 (강의 변경 시 허용된 모델 아이디 및 선택된 모델 업데이트)
+    const getProjecList = (projectList) => {
+        console.log('header에서 받아온 프로젝트 목록 : ', projectList);
+        setProjectList(projectList);
+    }
+
+    const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
+        console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
+        console.log('선택된 강의 아이디 : ', classId);
+        console.log('선택된 프로젝트 목록 : ', projectList);
+        setProjectList(projectList);
+        // setCurrentMessages([]);
+        // setCompareMessages({});
+        // setShowEmptyState(true);
+        // setCurrentSession(0);
+        setSavedClassId(classId);
+
+        let modelIds = [1]; // 기본값
+        if (Array.isArray(allowedModelIdsArray)) {
+            modelIds = allowedModelIdsArray;
+        } else if (allowedModelIdsArray != null) {
+            // 배열이 아닌 경우 배열로 변환
+            if (typeof allowedModelIdsArray === 'number') {
+                modelIds = [allowedModelIdsArray];
+            } else if (typeof allowedModelIdsArray === 'string') {
+                if (allowedModelIdsArray.includes(',')) {
+                    modelIds = allowedModelIdsArray.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+                } else {
+                    const num = parseInt(allowedModelIdsArray, 10);
+                    modelIds = isNaN(num) ? [1] : [num];
+                }
+            }
+        }
+        setAllowedModelIds(modelIds);
+
+        if (Assistant && Assistant.length > 0) {
+            const firstAllowedModel = Assistant.find(model => model.id === modelIds[0]);
+            firstAllowedModel ? setSelectedModels([firstAllowedModel.model_name]) : setSelectedModels([Assistant[0].model_name]);
+        }
+    };
+
+
+    const handleModelCheckboxChange = (modelValue, checked) => {
+        if (checked) {
+            if (selectedModels.length >= 3) {
+                alert('최대 3개 모델까지 선택 가능합니다');
+                return;
+            }
+            setSelectedModels([...selectedModels, modelValue]);
+        } else {
+            const remainingModels = selectedModels.filter(m => m !== modelValue);
+            if (remainingModels.length < 1) {
+                showToast2026('최소 1개 이상의 모델을 선택해야 합니다.', 'error');
+                return;
+            }
+            setSelectedModels(remainingModels);
+        }
+    };
+
+
+
+
+
+    const [selectedDocument, setSelectedDocument] = useState([]);
+
+    const handleDocumentSelection = (document) => {
+        setSelectedDocument(prev =>
+            prev.some(doc => doc.knowledge_id === document.knowledge_id)
+                ? prev.filter(doc => doc.knowledge_id !== document.knowledge_id) // 제거
+                : [...prev, document] // 추가
+        );
+    };
+    // const handleRemoveCurrentKBIds= (document)=>{
+    //     setCurrentKnowledgeIds(prev => prev.filter(doc => doc.knowledge_id !== document.knowledge_id));
+    // }
+
+    const [currentKnowledgeIds, setCurrentKnowledgeIds] = useState([]);
+    const handleConfirmKBSelection = () => {
+        console.log('저장할 문서 ids : ', selectedDocument);
+        setCurrentKnowledgeIds(selectedDocument.map(doc => doc));
+        setSelectedDocument([]);
+        toggleKnowledgeBaseModal();
+        showToast2026(`${selectedDocument.length}개의 문서가 첨부되었습니다.`, 'success');
+
+    }
+
+
+
+
+
+
     return (
         <>
 
             <div className="app">
 
-                <UserSidebar2026 />
+                <UserSidebar2026
+                    onClassChange={handleClassChange}
+                    getProjecList={getProjecList}
+                />
 
                 <main className="main">
                     <header className="chat-header">
@@ -280,36 +472,84 @@ export default function UserPractice2026() {
                                 </div>
                                 <div className="input-box">
                                     <textarea className="input-box__textarea" placeholder="메시지를 입력하세요..." rows="1" ></textarea>
+
                                     <div className="input-box__footer">
                                         <div className="input-box__left">
+
                                             <button className="input-btn" id="plusBtn" onClick={togglePlusMenu}>
                                                 <svg className="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                                             </button>
 
+
+
+
+
+
+
                                             <div style={{ position: 'relative' }}>
-                                                <button className="attachment-btn"  >
+                                                <button
+                                                    className={`attachment-btn ${currentKnowledgeIds.length !== 0 ? "attachment-btn--visible" : ""}`}
+                                                    onClick={toggleAttachmentDropdown}
+                                                    id="attachmentListBtn"
+                                                >
                                                     <svg className="icon attachment-btn__icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
                                                     <span className="attachment-btn__text">첨부</span>
-                                                    <span className="attachment-btn__count" >0</span>
+                                                    <span className="attachment-btn__count" >{currentKnowledgeIds.length}</span>
                                                     <svg className="icon attachment-btn__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
                                                 </button>
-                                                <div className="attachment-dropdown" >
+
+                                                <div className="attachment-dropdown " id="attachmentList" >
                                                     <div className="attachment-dropdown__header">
                                                         <span className="attachment-dropdown__title">
                                                             <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
                                                             첨부 파일
                                                         </span>
-                                                        <span className="attachment-dropdown__clear" >모두 제거</span>
+                                                        <span className="attachment-dropdown__clear"
+                                                            onClick={() => { setCurrentKnowledgeIds([]); toggleAttachmentDropdown() }}
+                                                        >모두 제거</span>
                                                     </div>
-                                                    <div className="attachment-dropdown__list" ></div>
+
+                                                    <div className="attachment-dropdown__list" >
+                                                        <div className="attachment-dropdown__section-title">지식베이스</div>
+                                                        {currentKnowledgeIds.map((document) => {
+                                                            console.log(document);
+                                                            return (
+                                                                <div className="attachment-item" key={document.knowledge_id}>
+                                                                    <div className="attachment-item__icon attachment-item__icon--knowledge">
+                                                                        <svg className="icon" viewBox="0 0 24 24">
+                                                                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                                                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <div className="attachment-item__info">
+                                                                        <div className="attachment-item__name">{getDisplayName(document.name)}</div>
+                                                                        <div className="attachment-item__meta">
+                                                                            <span className="attachment-item__type attachment-item__type--knowledge">지식베이스</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button className="attachment-item__remove" onClick={() => setCurrentKnowledgeIds(prev => prev.filter(doc => doc.knowledge_id !== document.knowledge_id))}>
+                                                                        <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+
                                                     <div className="attachment-dropdown__footer">
-                                                        <button className="attachment-dropdown__add" >
+                                                        <button className="attachment-dropdown__add" onClick={toggleKnowledgeBaseModal} >
                                                             <svg className="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                                                             파일 추가
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
+
+
+
+
 
 
                                             <div style={{ position: 'relative' }}>
@@ -332,15 +572,20 @@ export default function UserPractice2026() {
                                                         <div className="settings-dropdown__toggle settings-dropdown__toggle--active" ></div>
                                                     </div>
                                                 </div>
-
-
                                             </div>
+
                                         </div>
+
+
+
+
                                         <div className="input-box__right">
 
                                             <div className="model-listbox" >
                                                 <button className="model-listbox__trigger" onClick={toggleModelListbox} id="modelListboxTrigger">
-                                                    <span className="model-listbox__label">LLM 모델</span>
+                                                    <span className="model-listbox__label">
+                                                        LLM 모델
+                                                    </span>
                                                     <span className="model-listbox__selected" >선택 없음</span>
                                                     <span className="model-listbox__count" >0개 선택</span>
                                                     <svg className="icon icon--sm model-listbox__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
@@ -352,51 +597,28 @@ export default function UserPractice2026() {
                                                         <span className="model-listbox__hint">최대 3개 선택 가능</span>
                                                     </div>
                                                     <div className="model-listbox__options">
-                                                        <label className="model-listbox__option" data-model="claude">
-                                                            <input type="checkbox" />
-                                                            <span className="model-listbox__checkbox"></span>
-                                                            <span className="model-listbox__dot model-listbox__dot--claude"></span>
-                                                            <span className="model-listbox__info">
-                                                                <span className="model-listbox__name">claude-3-haiku-20240307</span>
-                                                                <span className="model-listbox__provider">anthropic</span>
-                                                            </span>
-                                                        </label>
-                                                        <label className="model-listbox__option" data-model="gemini">
-                                                            <input type="checkbox" />
-                                                            <span className="model-listbox__checkbox"></span>
-                                                            <span className="model-listbox__dot model-listbox__dot--gemini"></span>
-                                                            <span className="model-listbox__info">
-                                                                <span className="model-listbox__name">gemini-2.5-flash</span>
-                                                                <span className="model-listbox__provider">google</span>
-                                                            </span>
-                                                        </label>
-                                                        <label className="model-listbox__option" data-model="gpt35">
-                                                            <input type="checkbox" />
-                                                            <span className="model-listbox__checkbox"></span>
-                                                            <span className="model-listbox__dot model-listbox__dot--gpt"></span>
-                                                            <span className="model-listbox__info">
-                                                                <span className="model-listbox__name">gpt-3.5-turbo</span>
-                                                                <span className="model-listbox__provider">openai</span>
-                                                            </span>
-                                                        </label>
-                                                        <label className="model-listbox__option" data-model="gpt4omini">
-                                                            <input type="checkbox" />
-                                                            <span className="model-listbox__checkbox"></span>
-                                                            <span className="model-listbox__dot model-listbox__dot--gpt"></span>
-                                                            <span className="model-listbox__info">
-                                                                <span className="model-listbox__name">gpt-4o-mini</span>
-                                                                <span className="model-listbox__provider">openai</span>
-                                                            </span>
-                                                        </label>
-                                                        <label className="model-listbox__option" data-model="gpt5nano">
-                                                            <input type="checkbox" />
-                                                            <span className="model-listbox__checkbox"></span>
-                                                            <span className="model-listbox__dot model-listbox__dot--gpt"></span>
-                                                            <span className="model-listbox__info">
-                                                                <span className="model-listbox__name">gpt-5-nano</span>
-                                                                <span className="model-listbox__provider">openai</span>
-                                                            </span>
-                                                        </label>
+                                                        {Assistant.map((model) => {
+                                                            const isAllowed = Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id);
+                                                            const providerDatColor = model.provider === 'anthropic' ? 'claude' : model.provider === 'google' ? 'gemini' : model.provider === 'openai' ? 'gpt' : '';
+                                                            return (
+                                                                <label className="model-listbox__option" data-model={model.model_name} key={model.id}
+                                                                    style={{ opacity: !isAllowed ? 0.5 : 1, cursor: !isAllowed ? 'not-allowed' : 'pointer' }}
+                                                                >
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedModels.includes(model.model_name)}
+                                                                        onChange={(e) => handleModelCheckboxChange(model.model_name, e.target.checked)}
+                                                                        disabled={!isAllowed}
+                                                                    />
+                                                                    <span className="model-listbox__checkbox"></span>
+                                                                    <span className={`model-listbox__dot model-listbox__dot--${providerDatColor}`}></span>
+                                                                    <span className="model-listbox__info">
+                                                                        <span className="model-listbox__name">{model.model_name}</span>
+                                                                        <span className="model-listbox__provider">{model.provider}</span>
+                                                                    </span>
+                                                                </label>
+                                                            )
+                                                        })}
                                                     </div>
                                                 </div>
 
@@ -469,7 +691,7 @@ export default function UserPractice2026() {
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
-                                stroke-width="2"
+                                strokeWidth="2"
                             >
                                 <circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>상세 설정</h3>
                         <button className="modal__close" onClick={toggleTuningModal} >
@@ -479,7 +701,7 @@ export default function UserPractice2026() {
                     <div className="modal__body" id="modalBody">
                         <div className="tuning-section">
                             <div className="tuning-section__title">
-                                <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                 스타일 프리셋
                             </div>
                             <div className="tuning-presets">
@@ -504,7 +726,7 @@ export default function UserPractice2026() {
 
                         <div className="tuning-section">
                             <div className="tuning-section__title">
-                                <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
+                                <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line></svg>
                                 파라미터 조정
                             </div>
 
@@ -513,7 +735,7 @@ export default function UserPractice2026() {
                                     <span className="tuning-slider__label">Temperature</span>
                                     <span className="tuning-slider__value" id="tempValue">0.7</span>
                                 </div>
-                                <input type="range" className="tuning-slider__input" id="tempSlider" min="0" max="2" step="0.1" value="0.7" oninput="updateSlider('temp', this.value)" />
+                                <input type="range" className="tuning-slider__input" id="tempSlider" min="0" max="2" step="0.1" />
                                 <div className="tuning-slider__desc">낮을수록 일관된 응답, 높을수록 창의적인 응답</div>
                             </div>
 
@@ -522,7 +744,7 @@ export default function UserPractice2026() {
                                     <span className="tuning-slider__label">Top P</span>
                                     <span className="tuning-slider__value" id="topPValue">0.9</span>
                                 </div>
-                                <input type="range" className="tuning-slider__input" id="topPSlider" min="0" max="1" step="0.05" value="0.9" oninput="updateSlider('topP', this.value)" />
+                                <input type="range" className="tuning-slider__input" id="topPSlider" min="0" max="1" step="0.05" />
                                 <div className="tuning-slider__desc">확률 기반 토큰 선택 범위 (0.9 권장)</div>
                             </div>
 
@@ -531,20 +753,20 @@ export default function UserPractice2026() {
                                     <span className="tuning-slider__label">Max Length</span>
                                     <span className="tuning-slider__value" id="maxLengthValue">2048</span>
                                 </div>
-                                <input type="range" className="tuning-slider__input" id="maxLengthSlider" min="256" max="4096" step="256" value="2048" oninput="updateSlider('maxLength', this.value)" />
+                                <input type="range" className="tuning-slider__input" id="maxLengthSlider" min="256" max="4096" step="256" />
                                 <div className="tuning-slider__desc">생성할 최대 토큰 수</div>
                             </div>
                         </div>
 
                         <div className="tuning-section">
                             <div className="tuning-section__title">
-                                <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                                <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                                 Few-shot 예시
                             </div>
                             <div className="tuning-fewshot">
                                 <div className="tuning-fewshot__header">
                                     <span className="tuning-fewshot__title">입출력 예시 (선택사항)</span>
-                                    <span className="tuning-fewshot__add" onclick="addFewShotExample()">+ 예시 추가</span>
+                                    <span className="tuning-fewshot__add" >+ 예시 추가</span>
                                 </div>
                                 <div id="fewShotContainer">
                                     <div className="tuning-fewshot__item">
@@ -557,405 +779,172 @@ export default function UserPractice2026() {
                             </div>
                         </div>
                     </div>
-                    <div className="modal__footer" id="modalFooter" style={{ display: 'flex' }}><button className="modal__btn " onclick="resetTuning()">기본값으로 초기화</button><button className="modal__btn modal__btn--primary" onclick="applyTuning()">적용</button></div>
+                    <div className="modal__footer" id="modalFooter" style={{ display: 'flex' }}><button className="modal__btn " >기본값으로 초기화</button><button className="modal__btn modal__btn--primary" >적용</button></div>
                 </div>
             </div >
 
 
 
-            <div class="modal-overlay" id="projectModal" onClick={toggleProjectModal}>
-                <div class="modal modal--popup" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-overlay" id="projectModal" onClick={toggleProjectModal}>
+                <div className="modal modal--popup" onClick={(e) => e.stopPropagation()}>
 
-                    <div class="modal__body" id="modalBody">
-                        <div class="popup-header">
-                            <div class="popup-header__icon popup-header__icon--purple">
-                                <svg class="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                    <div className="modal__body" id="modalBody">
+                        <div className="popup-header">
+                            <div className="popup-header__icon popup-header__icon--purple">
+                                <svg className="icon" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
                             </div>
-                            <div class="popup-header__text">
-                                <div class="popup-header__title">프로젝트 목록</div>
-                                <div class="popup-header__subtitle">총 12개의 프로젝트</div>
+                            <div className="popup-header__text">
+                                <div className="popup-header__title">프로젝트 목록</div>
+                                <div className="popup-header__subtitle">총 {projectList.length}개의 프로젝트</div>
                             </div>
-                            <button class="popup-close" onClick={toggleProjectModal}>
-                                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <button className="popup-close" onClick={toggleProjectModal}>
+                                <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
 
-                        <div class="popup-search-bar">
-                            <div class="popup-search">
-                                <svg class="icon icon--sm popup-search__icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="text" class="popup-search__input" placeholder="프로젝트 검색..." value="" oninput="filterProjects(this.value)" />
+                        <div className="popup-search-bar">
+                            <div className="popup-search">
+                                <svg className="icon icon--sm popup-search__icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" className="popup-search__input" placeholder="프로젝트 검색..." />
                             </div>
-                            <div class="popup-sort">
-                                <select class="popup-sort__select" onchange="sortProjects(this.value)">
-                                    <option value="recent" selected="">최근 수정순</option>
+                            <div className="popup-sort">
+                                <select className="popup-sort__select" >
+                                    <option value="recent">최근 수정순</option>
                                     <option value="name">이름순</option>
                                     <option value="chatCount">대화 수순</option>
                                 </select>
-                                <svg class="icon icon--sm popup-sort__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
+                                <svg className="icon icon--sm popup-sort__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
                             </div>
                         </div>
 
-                        <div class="popup-list" id="projectPopupList">
+                        <div className="popup-list" id="projectPopupList">
 
-                            <div class="popup-item" onclick="loadProject('AI 기초 실습 프로젝트')">
-                                <div class="popup-item__color" style={{ background: '#9333ea' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">AI 기초 실습 프로젝트</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 5개</span>
-                                        <span>•</span>
-                                        <span>2시간 전</span>
+                            {projectList.map((project, index) => {
+                                const itemColor = ['#9333ea', '#4285f4', '#d97757', '#d97757', '#10a37f', '#a50034', '#f59e0b'];
+                                return (
+                                    <div className="popup-item" key={project.project_id}>
+                                        <div className="popup-item__color" style={{ background: itemColor[index] }}></div>
+                                        <div className="popup-item__info">
+                                            <div className="popup-item__name">{project.name}</div>
+                                            <div className="popup-item__meta">
+                                                <span>대화 5개</span>
+                                                <span>•</span>
+                                                <span>2시간 전</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('프롬프트 엔지니어링')">
-                                <div class="popup-item__color" style={{ background: '#4285f4' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">프롬프트 엔지니어링</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 8개</span>
-                                        <span>•</span>
-                                        <span>1일 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('마케팅 문구 생성')">
-                                <div class="popup-item__color" style={{ background: '#d97757' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">마케팅 문구 생성</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 3개</span>
-                                        <span>•</span>
-                                        <span>3일 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('GPT vs Claude 비교분석')">
-                                <div class="popup-item__color" style={{ background: '#10a37f' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">GPT vs Claude 비교분석</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 12개</span>
-                                        <span>•</span>
-                                        <span>5일 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('코드 리팩토링 실습')">
-                                <div class="popup-item__color" style={{ background: '#a50034' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">코드 리팩토링 실습</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 7개</span>
-                                        <span>•</span>
-                                        <span>1주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('영어 번역 프로젝트')">
-                                <div class="popup-item__color" style={{ background: '#f59e0b' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">영어 번역 프로젝트</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 15개</span>
-                                        <span>•</span>
-                                        <span>1주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('데이터 분석 연습')">
-                                <div class="popup-item__color" style={{ background: '#06b6d4' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">데이터 분석 연습</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 9개</span>
-                                        <span>•</span>
-                                        <span>2주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('챗봇 시나리오 작성')">
-                                <div class="popup-item__color" style={{ background: '#8b5cf6' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">챗봇 시나리오 작성</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 4개</span>
-                                        <span>•</span>
-                                        <span>2주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('기술 문서 요약')">
-                                <div class="popup-item__color" style={{ background: '#ec4899' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">기술 문서 요약</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 6개</span>
-                                        <span>•</span>
-                                        <span>3주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item" onclick="loadProject('API 활용 실습')">
-                                <div class="popup-item__color" style={{ background: '#14b8a6' }}></div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">API 활용 실습</div>
-                                    <div class="popup-item__meta">
-                                        <span>대화 11개</span>
-                                        <span>•</span>
-                                        <span>3주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-
-
-                            <div class="popup-loadmore">
-                                <button class="popup-loadmore__btn" onclick="loadMoreProjects()">
-                                    더보기 (2개 더 있음)
-                                </button>
-                            </div>
-
+                                )
+                            })}
                         </div>
                     </div>
                 </div>
             </div>
 
 
-            <div class="modal-overlay" id="templateModal" onClick={toggleTemplateModal}>
-                <div class="modal" onClick={(e) => e.stopPropagation()}>
-                    <div class="modal__header">
-                        <h3 class="modal__title" id="modalTitle">템플릿 선택</h3>
-                        <button class="modal__close" onClick={toggleTemplateModal}>
-                            <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <div className="modal-overlay" id="templateModal" onClick={toggleTemplateModal}>
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal__header">
+                        <h3 className="modal__title" id="modalTitle">템플릿 선택</h3>
+                        <button className="modal__close" onClick={toggleTemplateModal}>
+                            <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
-                    <div class="modal__body" id="modalBody">
+                    <div className="modal__body" id="modalBody">
                         <div style={{ display: 'grid', gap: '8px' }}>
-                            <div class="dropdown__item">마케팅 문구 생성</div>
-                            <div class="dropdown__item">코드 리뷰 요청</div>
-                            <div class="dropdown__item">번역 요청</div>
-                            <div class="dropdown__item">요약 요청</div>
+                            <div className="dropdown__item">마케팅 문구 생성</div>
+                            <div className="dropdown__item">코드 리뷰 요청</div>
+                            <div className="dropdown__item">번역 요청</div>
+                            <div className="dropdown__item">요약 요청</div>
                         </div>
                     </div>
                 </div>
             </div>
 
 
-            <div class="modal-overlay" id="knowledgeBaseModal" onClick={toggleKnowledgeBaseModal}>
-                <div class="modal modal--popup" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-overlay" id="knowledgeBaseModal" onClick={toggleKnowledgeBaseModal}>
+                <div className="modal modal--popup" onClick={(e) => e.stopPropagation()}>
 
-                    <div class="modal__body" id="modalBody">
-                        <div class="popup-header">
-                            <div class="popup-header__icon popup-header__icon--green">
-                                <svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <div className="modal__body" id="knowledgeBaseModalBody">
+                        <div className="popup-header">
+                            <div className="popup-header__icon popup-header__icon--green">
+                                <svg className="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                             </div>
-                            <div class="popup-header__text">
-                                <div class="popup-header__title">지식베이스 연결</div>
-                                <div class="popup-header__subtitle">RAG 문서를 선택하여 대화에 연결</div>
+                            <div className="popup-header__text">
+                                <div className="popup-header__title">지식베이스 연결</div>
+                                <div className="popup-header__subtitle">RAG 문서를 선택하여 대화에 연결</div>
                             </div>
-                            <button class="popup-close" onClick={toggleKnowledgeBaseModal}>
-                                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            <button className="popup-close" onClick={toggleKnowledgeBaseModal}>
+                                <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                             </button>
                         </div>
 
+                        <div className="popup-selected-tags">
+
+                            {selectedDocument.map((document) => {
+                                return (
+                                    <span className="popup-selected-tag" key={document.knowledge_id}>
+                                        {getDisplayName(document.name)}
+                                        <button className="popup-selected-tag__remove" onClick={() => handleDocumentSelection(document)}>
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                        </button>
+                                    </span>
+                                )
+                            })}
+                        </div>
 
 
-                        <div class="popup-search-bar">
-                            <div class="popup-search">
-                                <svg class="icon icon--sm popup-search__icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="text" class="popup-search__input" placeholder="지식베이스 검색..." value="" oninput="filterKnowledgeBases(this.value)" />
+
+                        <div className="popup-search-bar">
+                            <div className="popup-search">
+                                <svg className="icon icon--sm popup-search__icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" className="popup-search__input" placeholder="지식베이스 검색..." />
                             </div>
-                            <div class="popup-sort">
-                                <select class="popup-sort__select" onchange="sortKnowledgeBases(this.value)">
-                                    <option value="recent" selected="">최근순</option>
+                            <div className="popup-sort">
+                                <select className="popup-sort__select">
+                                    <option value="recent" >최근순</option>
                                     <option value="name">이름순</option>
                                     <option value="chunkCount">청크 수순</option>
                                 </select>
-                                <svg class="icon icon--sm popup-sort__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
+                                <svg className="icon icon--sm popup-sort__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
                             </div>
                         </div>
 
-                        <div class="popup-list" id="kbPopupList">
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-1')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">회사 정책 문서</div>
-                                    <div class="popup-item__meta">
-                                        <span>1,248 청크</span>
-                                        <span>•</span>
-                                        <span>12.5 MB</span>
-                                        <span>•</span>
-                                        <span>오늘</span>
+                        <div className="popup-list" id="kbPopupList">
+                            {documents.map((document, index) => {
+                                return (
+                                    <div
+                                        className={`popup-item ${selectedDocument.some(doc => doc.knowledge_id === document.knowledge_id) ? 'popup-item--selected' : ''}`}
+                                        key={document.knowledge_id}
+                                        onClick={() => handleDocumentSelection(document)}
+                                    >
+                                        <div className="popup-item__checkbox">
+                                            <svg className="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        </div>
+                                        <div className="popup-item__info">
+                                            <div className="popup-item__name">{getDisplayName(document.name)}</div>
+                                            <div className="popup-item__meta">
+                                                <span>{document.chunk_count} 청크</span>
+                                                <span>•</span>
+                                                <span>{formatFileSize(document.file_size_bytes)}</span>
+                                                <span>•</span>
+                                                <span>{document.uploaded_at.split('T')[0].slice(5)} {document.uploaded_at.split('T')[1].split('.')[0]}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-2')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">제품 매뉴얼 v2.0</div>
-                                    <div class="popup-item__meta">
-                                        <span>856 청크</span>
-                                        <span>•</span>
-                                        <span>8.2 MB</span>
-                                        <span>•</span>
-                                        <span>어제</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-3')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">FAQ 데이터</div>
-                                    <div class="popup-item__meta">
-                                        <span>324 청크</span>
-                                        <span>•</span>
-                                        <span>2.1 MB</span>
-                                        <span>•</span>
-                                        <span>3일 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-4')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">기술 스펙 문서</div>
-                                    <div class="popup-item__meta">
-                                        <span>2,156 청크</span>
-                                        <span>•</span>
-                                        <span>18.7 MB</span>
-                                        <span>•</span>
-                                        <span>1주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-5')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">고객 응대 가이드</div>
-                                    <div class="popup-item__meta">
-                                        <span>512 청크</span>
-                                        <span>•</span>
-                                        <span>4.3 MB</span>
-                                        <span>•</span>
-                                        <span>1주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-6')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">마케팅 자료집</div>
-                                    <div class="popup-item__meta">
-                                        <span>1,024 청크</span>
-                                        <span>•</span>
-                                        <span>15.2 MB</span>
-                                        <span>•</span>
-                                        <span>2주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-7')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">교육 커리큘럼</div>
-                                    <div class="popup-item__meta">
-                                        <span>768 청크</span>
-                                        <span>•</span>
-                                        <span>6.8 MB</span>
-                                        <span>•</span>
-                                        <span>2주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-8')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">법률 검토 문서</div>
-                                    <div class="popup-item__meta">
-                                        <span>456 청크</span>
-                                        <span>•</span>
-                                        <span>3.5 MB</span>
-                                        <span>•</span>
-                                        <span>3주 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-9')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">연구 보고서 모음</div>
-                                    <div class="popup-item__meta">
-                                        <span>1,892 청크</span>
-                                        <span>•</span>
-                                        <span>22.1 MB</span>
-                                        <span>•</span>
-                                        <span>1달 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="popup-item " onclick="toggleKBSelection('kb-10')">
-                                <div class="popup-item__checkbox">
-                                    <svg class="icon icon--sm popup-item__checkbox-icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                </div>
-                                <div class="popup-item__info">
-                                    <div class="popup-item__name">내부 위키 백업</div>
-                                    <div class="popup-item__meta">
-                                        <span>3,421 청크</span>
-                                        <span>•</span>
-                                        <span>45.6 MB</span>
-                                        <span>•</span>
-                                        <span>1달 전</span>
-                                    </div>
-                                </div>
-                            </div>
-
-
+                                )
+                            })}
 
                         </div>
 
-                        <div class="popup-footer">
-                            <button class="popup-footer__btn" onclick="closeModal()">취소</button>
-                            <button class="popup-footer__btn popup-footer__btn--primary" onclick="confirmKBSelection()" disabled="">
-                                선택하세요
+                        <div className="popup-footer">
+                            <button className="popup-footer__btn" onClick={toggleKnowledgeBaseModal}>취소</button>
+
+                            <button className="popup-footer__btn popup-footer__btn--primary" disabled={selectedDocument.length === 0}
+                                onClick={handleConfirmKBSelection}
+                            >
+                                {selectedDocument.length}개 연결하기
                             </button>
+
                         </div>
                     </div>
                 </div>
@@ -966,3 +955,13 @@ export default function UserPractice2026() {
         </>
     )
 }
+const getDisplayName = (originName) => {
+    const parts = originName.split("_");
+    return parts.slice(2).join("_");
+}
+
+const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
