@@ -5,15 +5,7 @@ import Login from './LoginComponents/Login';
 import UserSignup from './LoginComponents/UserSignup';
 import OrganizationSignup from './LoginComponents/OrganizationSignup';
 
-import UserDashboard from './UserComponents/UserDashboard';
-import UserPractice from './UserComponents/UserPractice';
-import UserProject from './UserComponents/UserProject';
-import UserKnowledge from './UserComponents/UserKnowledge';
-import UserAgent from './UserComponents/UserAgent';
-import UserWorkflow from './UserComponents/UserWorkflow';
-import UserHistory from './UserComponents/UserHistory';
-import UserProfile from './UserComponents/UserProfile';
-import UserPracticeNew from './UserComponents/UserPracticeNew';
+import UserPractice2026 from './UserComponents/UserPractice2026';
 
 import PartnerDashboard from './PartnerComponents/PartnerDashboard';
 import PartnerProjectManagement from './PartnerComponents/PartnerProjectManagement';
@@ -29,31 +21,21 @@ import ManagerSettings from './ManagerComponents/ManagerSettings';
 
 import OrganizationDashboard from './OrganizationComponents/OrganizationDashboard';
 
-import SMS from './SMS';
+
 export default function App() {
   return (
     <>
       <Routes>
-
-        <Route path="/sms" element={<SMS />} />
 
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup/user" element={<UserSignup />} />
         <Route path="/signup/organization" element={<OrganizationSignup />} />
 
-        {/* 유저 컴포넌트 */}
-        <Route path="/user/dashboard" element={<UserDashboard />} />
-        <Route path="/user/practice" element={<UserPractice />} />
-        <Route path="/user/project" element={<UserProject />} />
-        <Route path="/user/knowledge" element={<UserKnowledge />} />
-        <Route path="/user/agent" element={<UserAgent />} />
-        <Route path="/user/workflow" element={<UserWorkflow />} />
-        <Route path="/user/history" element={<UserHistory />} />
-        <Route path="/user/profile" element={<UserProfile />} />
+
 
         {/* 유저 리뉴얼 컴포넌트 */}
-        <Route path="/user/practice_new" element={<UserPracticeNew />} />
+        <Route path="/user/practice2026" element={<UserPractice2026 />} />
 
 
         {/* 파트너 컴포넌트 */}

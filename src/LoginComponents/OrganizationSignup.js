@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import '../css/PartnerSignup.css';
+
 
 export default function InstructorSignup() {
     const navigate = useNavigate();
