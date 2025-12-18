@@ -6,6 +6,7 @@ import UserSignup from './LoginComponents/UserSignup';
 import OrganizationSignup from './LoginComponents/OrganizationSignup';
 
 import UserPractice2026 from './UserComponents/UserPractice2026';
+import Login2026 from './LoginComponents/Login2026';
 
 import PartnerDashboard from './PartnerComponents/PartnerDashboard';
 import PartnerProjectManagement from './PartnerComponents/PartnerProjectManagement';
@@ -27,8 +28,8 @@ export default function App() {
     <>
       <Routes>
 
-        <Route path="/" element={<Main />} />
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={<Login2026 />} />
+        <Route path="/login" element={<Login2026 />} />
         <Route path="/signup/user" element={<UserSignup />} />
         <Route path="/signup/organization" element={<OrganizationSignup />} />
 

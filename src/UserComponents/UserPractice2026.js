@@ -229,7 +229,7 @@ export default function UserPractice2026() {
                 if (!attachmentList.contains(event.target) && !attachmentListBtn?.contains(event.target)) {
                     attachmentList.classList.remove('attachment-dropdown--open');
                     attachmentListBtn?.classList.remove('attachment-btn--visible');
-                    
+
                 }
             }
         };

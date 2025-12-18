@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrowFit - AI 교육 플랫폼</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: #f5f5f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+
+        /* 메인 컨테이너 */
+        .login-wrapper {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1400px;
+            height: auto;
+            min-height: auto;
+            background: white;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            margin: 0 auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ========== 좌측 설명 영역 ========== */
+        .info-section {
+            background: linear-gradient(165deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .brand {
+            margin-bottom: 40px;
+        }
+
+        .brand-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.8px;
+        }
+
+        .hero-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .hero-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 38px;
+            font-weight: 800;
+            line-height: 1.2;
+            color: white;
+            margin-bottom: 18px;
+            letter-spacing: -1.2px;
+        }
+
+        .hero-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        /* 3x2 그리드 레이아웃 */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(59, 130, 246, 0.3));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+
+        .feature-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: white;
+            fill: none;
+        }
+
+        .feature-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+
+        .feature-description {
+            font-size: 13px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 300;
+        }
+
+        /* ========== 우측 로그인 영역 ========== */
+        .login-section {
+            background: white;
+            padding: 60px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-header {
+            margin-bottom: 35px;
+        }
+
+        .login-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 30px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+            letter-spacing: -0.8px;
+        }
+
+        .login-subtitle {
+            font-size: 15px;
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 11px 20px;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .tab.active {
+            background: white;
+            color: #1a1a2e;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .notice-box {
+            background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+            border-left: 3px solid #7c3aed;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+            transition: all 0.3s ease;
+        }
+
+        .notice-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #5b21b6;
+            margin-bottom: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .notice-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        .notice-text {
+            font-size: 12px;
+            color: #6d28d9;
+            line-height: 1.5;
+            transition: color 0.3s ease;
+        }
+
+        .form-field {
+            margin-bottom: 20px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .field-label .required {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+
+        .field-input {
+            width: 100%;
+            padding: 13px 15px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .field-input:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .field-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-wrapper input {
+            width: 17px;
+            height: 17px;
+            cursor: pointer;
+            accent-color: #7c3aed;
+        }
+
+        .checkbox-wrapper label {
+            font-size: 13px;
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .forgot-link {
+            font-size: 13px;
+            color: #7c3aed;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .forgot-link:hover {
+            color: #6d28d9;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 26px 0;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider-text {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .signup-box {
+            background: #f8fafc;
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .signup-text {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 14px;
+        }
+
+        .signup-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #7c3aed;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: gap 0.2s;
+        }
+
+        .signup-link:hover {
+            gap: 10px;
+        }
+
+        .signup-info {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .info-icon {
+            width: 15px;
+            height: 15px;
+            stroke: #7c3aed;
+        }
+
+        /* ========== 반응형 ========== */
+        @media (max-width: 1200px) {
+            .login-wrapper {
+                max-width: 1200px;
+            }
+
+            .hero-title {
+                font-size: 34px;
+            }
+
+            .features-grid {
+                gap: 14px;
+            }
+
+            .feature-item {
+                padding: 18px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                padding: 20px;
+            }
+            
+            .login-wrapper {
+                grid-template-columns: 1fr;
+                height: auto;
+                border-radius: 16px;
+            }
+
+            .info-section {
+                padding: 40px 35px;
+            }
+
+            .hero-content {
+                justify-content: flex-start;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .login-section {
+                padding: 40px 35px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            
+            .login-wrapper {
+                height: auto;
+                border-radius: 12px;
+            }
+
+            .info-section {
+                padding: 30px 25px;
+            }
+
+            .hero-title {
+                font-size: 28px;
+            }
+
+            .hero-description {
+                font-size: 14px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .login-section {
+                padding: 30px 25px;
+            }
+
+            .login-title {
+                font-size: 26px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <!-- 좌측 설명 영역 -->
+        <div class="info-section">
+            <div class="brand">
+                <span class="brand-name">GrowFit</span>
+            </div>
+
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    AI 교육의 새로운<br>
+                    표준을 만듭니다
+                </h1>
+
+                <p class="hero-description">
+                    여러 AI 모델을 한 곳에서 비교하고 학습하세요.<br>
+                    교육기관과 기업을 위한 통합 AI 실습 플랫폼입니다.
+                </p>
+
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M9 12h6m-6 4h6" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">다중 LLM 비교</h3>
+                        <p class="feature-description">GPT-4, Claude, Gemini 동시 비교 학습</p>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">AI 에이전트</h3>
+                        <p class="feature-description">프롬프트 기반 맞춤형 에이전트 생성</p>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">멀티모달 AI</h3>
+                        <p class="feature-description">이미지, 영상 생성 및 분석 지원</p>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">RAG 지식베이스</h3>
+                        <p class="feature-description">강의자료 기반 맞춤형 AI 답변</p>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">MCP 연동</h3>
+                        <p class="feature-description">외부 도구 및 데이터 연결 확장</p>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </div>
+                        <h3 class="feature-title">학습 관리</h3>
+                        <p class="feature-description">강사-학생 통합 관리 시스템</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 우측 로그인 영역 -->
+        <div class="login-section">
+            <div class="login-header">
+                <h2 class="login-title">로그인</h2>
+                <p class="login-subtitle">GrowFit 계정으로 시작하세요</p>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active">사용자</button>
+                <button class="tab">기업</button>
+            </div>
+
+            <div class="notice-box">
+                <div class="notice-title">
+                    <svg class="notice-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>사용자 로그인</span>
+                </div>
+                <p class="notice-text">
+                    강사와 학생 모두 가능합니다. 로그인 후 강사의 초대코드로 강의를 등록할 수 있습니다.
+                </p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-field">
+                    <label class="field-label">
+                        이메일 주소<span class="required">*</span>
+                    </label>
+                    <input 
+                        type="email" 
+                        class="field-input" 
+                        placeholder="example@growfit.io"
+                        required
+                    >
+                </div>
+
+                <div class="form-field">
+                    <label class="field-label">
+                        비밀번호<span class="required">*</span>
+                    </label>
+                    <input 
+                        type="password" 
+                        class="field-input" 
+                        placeholder="비밀번호를 입력하세요"
+                        required
+                    >
+                </div>
+
+                <div class="form-actions">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">로그인 상태 유지</label>
+                    </div>
+                    <a href="#" class="forgot-link">비밀번호 찾기</a>
+                </div>
+
+                <button type="submit" class="submit-button">
+                    로그인
+                </button>
+            </form>
+
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">또는</span>
+                <div class="divider-line"></div>
+            </div>
+
+            <div class="signup-box">
+                <p class="signup-text">아직 GrowFit 계정이 없으신가요?</p>
+                <a href="#" class="signup-link">
+                    회원가입하기
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+                <div class="signup-info">
+                    <svg class="info-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>강사의 초대코드로 즉시 이용 가능합니다</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 탭 전환
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 멘트 박스 업데이트
+                const noticeBox = document.querySelector('.notice-box');
+                const noticeTitle = document.querySelector('.notice-title span');
+                const noticeText = document.querySelector('.notice-text');
+                
+                if (this.textContent === '사용자') {
+                    // 사용자 탭
+                    noticeBox.style.background = 'linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%)';
+                    noticeBox.style.borderLeftColor = '#7c3aed';
+                    noticeTitle.style.color = '#5b21b6';
+                    noticeTitle.textContent = '사용자 로그인';
+                    noticeText.style.color = '#6d28d9';
+                    noticeText.textContent = '강사와 학생 모두 가능합니다. 로그인 후 강사의 초대코드로 강의를 등록할 수 있습니다.';
+                } else {
+                    // 기업 탭
+                    noticeBox.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+                    noticeBox.style.borderLeftColor = '#f59e0b';
+                    noticeTitle.style.color = '#92400e';
+                    noticeTitle.textContent = '기업 로그인';
+                    noticeText.style.color = '#78350f';
+                    noticeText.textContent = '회원가입 후 플랫폼 관리자의 승인을 받아야 교육과정을 개설할 수 있습니다.';
+                }
+            });
+        });
+
+        // 폼 제출
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            console.log('로그인 처리');
+        });
+    </script>
+</body>
+</html>
