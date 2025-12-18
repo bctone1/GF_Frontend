@@ -5,7 +5,7 @@ import axios from 'axios';
 
 export default function UserPractice2026() {
 
-    const [messages, setMessages] = useState([]);
+
 
     const adjustPlusMenuPosition = () => {
         const menu = document.getElementById('plusMenu');
@@ -248,8 +248,34 @@ export default function UserPractice2026() {
     const [Assistant, setAssistant] = useState([]);
     const [documents, setDocuments] = useState([]);
     const [projectList, setProjectList] = useState([]);
+    const [sessionResponses, setSessionResponses] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [selectedModels, setSelectedModels] = useState([]);
+    const [compareMessages, setCompareMessages] = useState({});
+    const [singleMessages, setSingleMessages] = useState([]);
+    const [currentProject, setCurrentProject] = useState('');
+
+    const messagesEndRef = useRef(null);
+
+    // 메시지 스크롤
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [singleMessages]);
+
+    // 단일 모드일 때 compareMessages와 SingleMessages 동기화
+    useEffect(() => {
+        if (selectedModels.length === 1) {
+            const model = selectedModels[0];
+            const messages = compareMessages[model] || [];
+            setSingleMessages(messages);
+        }
+    }, [compareMessages, selectedModels]);
+
+
+
+
 
     const [allowedModelIds, setAllowedModelIds] = useState(() => {
         const stored = sessionStorage.getItem("allowed_model_ids");
@@ -304,14 +330,93 @@ export default function UserPractice2026() {
 
     // 클래스 변경 함수 (강의 변경 시 허용된 모델 아이디 및 선택된 모델 업데이트)
     const getProjecList = (projectList) => {
-        console.log('header에서 받아온 프로젝트 목록 : ', projectList);
+        // console.log('header에서 받아온 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
     }
 
+
+
+    const getSessionResponses = (sessionData) => {
+        console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
+        // setMessages(sessionResponses);
+        // setSessionResponses(sessionResponses);
+
+        const newCompareMessages = {};
+        const promptGroups = {};
+
+        sessionData.responses.forEach((resp) => {
+            if (!promptGroups[resp.prompt_text]) {
+                promptGroups[resp.prompt_text] = [];
+            }
+            promptGroups[resp.prompt_text].push(resp);
+        });
+
+        const sortedPrompts = Object.keys(promptGroups).sort((a, b) => {
+            const timeA = promptGroups[a][0]?.created_at || '';
+            const timeB = promptGroups[b][0]?.created_at || '';
+            return new Date(timeA) - new Date(timeB);
+        });
+
+        // 각 질문-응답 쌍을 처리
+        sortedPrompts.forEach((promptText) => {
+            const responses = promptGroups[promptText];
+            const firstResponse = responses[0];
+            const userMessageTime = new Date(firstResponse.created_at).toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // 각 모델별로 메시지 추가
+            responses.forEach((resp) => {
+                const modelName = resp.model_name;
+
+                // 해당 모델의 메시지 배열이 없으면 초기화
+                if (!newCompareMessages[modelName]) {
+                    newCompareMessages[modelName] = [];
+                }
+
+                // 사용자 메시지 추가 (이미 추가되지 않은 경우)
+                const hasUserMessage = newCompareMessages[modelName].some(
+                    msg => msg.type === 'user' && msg.content === promptText
+                );
+                if (!hasUserMessage) {
+                    newCompareMessages[modelName].push({
+                        type: 'user',
+                        content: promptText,
+                        time: userMessageTime
+                    });
+                }
+
+                // 어시스턴트 메시지 추가
+                newCompareMessages[modelName].push({
+                    type: 'assistant',
+                    content: resp.response_text,
+                    time: new Date(resp.created_at).toLocaleTimeString('ko-KR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    modelName: resp.model_name,
+                    latency: resp.latency_ms,
+                    tokenUsage: resp.token_usage
+                });
+            });
+        });
+        setCompareMessages(newCompareMessages);
+        setCurrentProject(projectList.find(p => p.project_id === sessionData.project_id)?.name || '');
+
+        const usedModels = Object.keys(newCompareMessages);
+        console.log("usedModels : ", usedModels);
+        if (usedModels.length > 0) {
+            // 상위 3개만 선택
+            const top3Models = usedModels.slice(0, 3);
+            setSelectedModels(top3Models);
+        }
+    }
+
     const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
-        console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
-        console.log('선택된 강의 아이디 : ', classId);
-        console.log('선택된 프로젝트 목록 : ', projectList);
+        // console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
+        // console.log('선택된 강의 아이디 : ', classId);
+        // console.log('선택된 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
         // setCurrentMessages([]);
         // setCompareMessages({});
@@ -380,7 +485,7 @@ export default function UserPractice2026() {
 
     const [currentKnowledgeIds, setCurrentKnowledgeIds] = useState([]);
     const handleConfirmKBSelection = () => {
-        console.log('저장할 문서 ids : ', selectedDocument);
+        // console.log('저장할 문서 ids : ', selectedDocument);
         setCurrentKnowledgeIds(selectedDocument.map(doc => doc));
         setSelectedDocument([]);
         toggleKnowledgeBaseModal();
@@ -401,6 +506,7 @@ export default function UserPractice2026() {
                 <UserSidebar2026
                     onClassChange={handleClassChange}
                     getProjecList={getProjecList}
+                    getSessionResponses={getSessionResponses}
                 />
 
                 <main className="main">
@@ -436,25 +542,129 @@ export default function UserPractice2026() {
                     <div className="chat-content">
 
 
-                        <div className="chat-area" >
-                            <div className="messages" >
-                                {!messages.length ? (
-                                    <>
-                                        <div className="empty-state">
-                                            <svg className="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                                            <h3 className="empty-state__title">새로운 대화 시작</h3>
-                                            <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.<br />여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
+                        {selectedModels.length <= 1 ? (
+                            <>
+                                <div className="chat-area" >
+                                    <div className="messages" >
+                                        {singleMessages.length === 0 ? (
+                                            <>
+                                                <div className="empty-state">
+                                                    <svg className="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                                    <h3 className="empty-state__title">새로운 대화 시작</h3>
+                                                    <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.<br />여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="message message--user">
+                                                    <div className="message__avatar message__avatar--user">홍</div>
+                                                    <div className="message__content"><div className="message__bubble message__bubble--user">ㅎㅇㅎㅇ</div></div>
+                                                </div>
+                                                <div className="message">
+                                                    <div className="message__avatar message__avatar--gemini">G</div>
+                                                    <div className="message__content">
+                                                        <div className="message__bubble message__bubble--ai">안녕하세요! gemini-2.5-flash입니다. "ㅎㅇㅎㅇ"에 대해 답변드리겠습니다.<br /><br />Temperature: 0.7, Max Length: 2048로 설정되어 응답합니다.</div>
+                                                        <div className="message__actions">
+                                                            <button className="message__action" title="복사"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                                            <button className="message__action" title="좋아요"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg></button>
+                                                            <button className="message__action" title="싫어요"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg></button>
+                                                            <button className="message__action" title="재생성"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div class="chat-area chat-area--compare" id="chatAreaCompare" style={{ display: 'grid' }}>
+                                    <div class="compare-panel" data-model="gemini">
+                                        <div class="compare-panel__header">
+                                            <div class="compare-panel__model compare-panel__model--gemini">G</div>
+                                            <span class="compare-panel__name">gemini-2.5-flash</span>
                                         </div>
-                                    </>
-                                ) : (
-                                    <>
-
-                                    </>
-                                )}
+                                        <div class="compare-panel__body" id="compareMessages-gemini">
+                                            <div class="compare-panel__messages">
 
 
-                            </div>
-                        </div>
+                                                <div class="message message--user message--compact">
+                                                    <div class="message__avatar message__avatar--user message__avatar--sm">홍</div>
+                                                    <div class="message__content">
+                                                        <div class="message__bubble message__bubble--user">ㅎㅇㅎㅇ</div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="message message--compact" id="response-gemini-1766040947404">
+                                                    <div class="message__avatar message__avatar--gemini message__avatar--sm">G</div>
+                                                    <div class="message__content">
+                                                        <div class="message__bubble message__bubble--ai">
+                                                            안녕하세요! gemini-2.5-flash입니다.<br /><br />
+                                                            "ㅎㅇㅎㅇ"에 대해 분석해 드리겠습니다.<br /><br />
+                                                            Temperature 0.7 설정으로 응답을 생성했습니다.
+                                                        </div>
+                                                        <div class="message__meta">
+                                                            <span>⏱ 0.8s</span>
+                                                            <span>📝 236 tokens</span>
+                                                        </div>
+                                                        <div class="message__actions">
+                                                            <button class="message__action" title="복사"><svg class="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                                            <button class="message__action" title="좋아요"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg></button>
+                                                            <button class="message__action" title="싫어요"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg></button>
+                                                            <button class="message__action" title="재생성"><svg class="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="compare-panel" data-model="gpt35">
+                                        <div class="compare-panel__header">
+                                            <div class="compare-panel__model compare-panel__model--gpt">G</div>
+                                            <span class="compare-panel__name">gpt-3.5-turbo</span>
+                                        </div>
+                                        <div class="compare-panel__body" id="compareMessages-gpt35">
+                                            <div class="compare-panel__messages">
+
+
+                                                <div class="message message--user message--compact">
+                                                    <div class="message__avatar message__avatar--user message__avatar--sm">홍</div>
+                                                    <div class="message__content">
+                                                        <div class="message__bubble message__bubble--user">ㅎㅇㅎㅇ</div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="message message--compact" id="response-gpt35-1766040947405">
+                                                    <div class="message__avatar message__avatar--gpt message__avatar--sm">G</div>
+                                                    <div class="message__content">
+                                                        <div class="message__bubble message__bubble--ai">
+                                                            안녕하세요! gpt-3.5-turbo입니다.<br /><br />
+                                                            "ㅎㅇㅎㅇ"에 대해 분석해 드리겠습니다.<br /><br />
+                                                            Temperature 0.7 설정으로 응답을 생성했습니다.
+                                                        </div>
+                                                        <div class="message__meta">
+                                                            <span>⏱ 1.1s</span>
+                                                            <span>📝 233 tokens</span>
+                                                        </div>
+                                                        <div class="message__actions">
+                                                            <button class="message__action" title="복사"><svg class="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                                            <button class="message__action" title="좋아요"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg></button>
+                                                            <button class="message__action" title="싫어요"><svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg></button>
+                                                            <button class="message__action" title="재생성"><svg class="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </>
+                        )}
+
 
 
 

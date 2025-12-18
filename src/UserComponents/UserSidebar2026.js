@@ -3,7 +3,16 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { setSelectedClass, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
-export default function UserSidebar2026({ onClassChange, onClassesData, refreshTrigger, externalClassSelect, getProjecList }) {
+export default function UserSidebar2026({
+    onClassChange,
+    onClassesData,
+    refreshTrigger,
+    externalClassSelect,
+    getProjecList,
+    getSessionResponses,
+    handleProfileData,
+    handleAccountData
+}) {
 
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
@@ -13,6 +22,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
     const [contextMenuOpen, setContextMenuOpen] = useState(false);
     const [projectList, setProjectList] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
+    const [classSelectorOpen, setClassSelectorOpen] = useState(false);
 
     const fetchProjects = async (classId) => {
         if (!classId) {
@@ -28,7 +38,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             });
             const projects = response.data.items || [];
             const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
-            console.log('프로젝트 목록 : ', filteredProjects);
+            // console.log('프로젝트 목록 : ', filteredProjects);
             getProjecList(filteredProjects);
             setProjectList(filteredProjects);
         } catch (error) {
@@ -107,6 +117,9 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
 
     // 클래스 변경 로직을 재사용 가능한 함수로 분리
     const changeClass = useCallback((classId) => {
+        setClassSelectorOpen(false);
+        if (Number(classId) === Number(selectedClassId)) return;
+        setCurrentSession(0);
         setSelectedClassId(classId);
         if (classId) {
             const selectedClass = myClasses.find(c => String(c.class_id) === String(classId));
@@ -124,8 +137,22 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 onClassChange(null, [1], []);
             }
         }
-        setClassSelectorOpen(false);
     }, [myClasses, onClassChange]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (classSelectorOpen && !e.target.closest('.class-selector') && !e.target.closest('.class-dropdown')) {
+                setClassSelectorOpen(false);
+            }
+        };
+
+        if (classSelectorOpen) {
+            document.addEventListener('click', handleClickOutside);
+            return () => {
+                document.removeEventListener('click', handleClickOutside);
+            };
+        }
+    }, [classSelectorOpen]);
 
     // externalClassSelect가 변경되면 클래스 선택
     useEffect(() => {
@@ -158,23 +185,35 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
 
 
     // 리뉴얼
-    const [classSelectorOpen, setClassSelectorOpen] = useState(false);
+
 
     const [sessions, setSessions] = useState([]);
     const fetchSessions = async () => {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
-        console.log(response.data.items);
+        // console.log(response.data.items);
         setSessions(response.data.items);
     }
 
     const filteredSessions = sessions.filter(session => session.class_id === Number(selectedClassId));
 
-    const [currentSession, setCurrentSession] = useState(null);
-    const handleSessionClick = (sessionId) => {
-        setCurrentSession(sessionId);
-    }
+    const [currentSession, setCurrentSession] = useState(0);
+    const handleSessionClick = useCallback(async (sessionId) => {
+        // console.log('선택한 세션아이디 : ', sessionId);
+        try {
+            setCurrentSession(sessionId);
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${sessionId}`,
+                { headers: { Authorization: `Bearer ${accessToken}`, }, }
+            );
+            const sessionData = response.data;
+
+            // console.log(sessionData);
+            getSessionResponses(sessionData);
+        } catch (error) {
+            console.log(error);
+        }
+    }, [accessToken, projectList]);
 
 
 
@@ -193,6 +232,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             sessionStorage.setItem("user_email", response.data.email);
             // console.log(response.data);
             setMyaccount(response.data);
+            handleAccountData(response.data);
         }).catch(error => {
             console.log(error);
         });
@@ -206,6 +246,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
         }).then(response => {
             // console.log(response.data);
             setMyprofile(response.data);
+            handleProfileData(response.data);
         }).catch(error => {
             console.log(error);
         });

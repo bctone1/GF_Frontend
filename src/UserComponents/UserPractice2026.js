@@ -5,7 +5,7 @@ import axios from 'axios';
 
 export default function UserPractice2026() {
 
-    const [messages, setMessages] = useState([]);
+
 
     const adjustPlusMenuPosition = () => {
         const menu = document.getElementById('plusMenu');
@@ -248,8 +248,252 @@ export default function UserPractice2026() {
     const [Assistant, setAssistant] = useState([]);
     const [documents, setDocuments] = useState([]);
     const [projectList, setProjectList] = useState([]);
+    const [sessionResponses, setSessionResponses] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [selectedModels, setSelectedModels] = useState([]);
+    const [compareMessages, setCompareMessages] = useState({});
+    const [singleMessages, setSingleMessages] = useState([]);
+    const [currentProject, setCurrentProject] = useState('');
+    const [comparePanels, setComparePanels] = useState([]);
+    const [currentSession, setCurrentSession] = useState(0);
+    const [currentProjectId, setCurrentProjectId] = useState(0);
+
+    const [messageInput, setMessageInput] = useState('');
+    const messageInputRef = useRef(null);
+
+    const [attachedFiles, setAttachedFiles] = useState([]);
+
+    const messagesEndRef = useRef(null);
+    const compareMessagesRefs = useRef({});
+
+
+    const autoResize = (textarea) => {
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    };
+
+    const sendMessage = async () => {
+        const currentTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        const message = messageInput.trim();
+
+        // if (!message || isGenerating) return;
+        if (selectedModels.length === 0) { alert('모델을 선택해주세요'); return; }
+
+        setMessageInput('');
+        if (messageInputRef.current) { autoResize(messageInputRef.current); }
+        // setIsGenerating(true);
+        // setShowEmptyState(false);
+
+        // 각 패널에 사용자 메시지 추가
+        selectedModels.forEach(model => {
+            setCompareMessages(prev => ({
+                ...prev,
+                [model]: [
+                    ...(prev[model] || []),
+                    {
+                        type: 'user',
+                        content: message,
+                        time: currentTime
+                    }
+                ]
+            }));
+        });
+
+        try {
+            const responseData = await getCompareResponse(message);
+
+            // 응답 데이터 검증
+            if (!responseData) {
+                throw new Error('응답 데이터가 없습니다.');
+            }
+
+            if (!responseData.results || !Array.isArray(responseData.results) || responseData.results.length === 0) {
+                throw new Error('응답 결과가 없습니다.');
+            }
+
+            // 각 모델별로 응답 처리
+            const processedModels = new Set();
+            responseData.results.forEach((result) => {
+                if (!result || !result.model_name) {
+                    console.warn('유효하지 않은 응답 결과:', result);
+                    return;
+                }
+
+                const modelName = result.model_name;
+                processedModels.add(modelName);
+
+                setCompareMessages(prev => ({
+                    ...prev,
+                    [modelName]: [
+                        ...(prev[modelName] || []),
+                        {
+                            type: 'assistant',
+                            content: result.response_text || '응답이 비어있습니다.',
+                            time: result.created_at
+                                ? new Date(result.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+                                : currentTime,
+                            modelName: result.model_name,
+                            latency: result.latency_ms,
+                            tokenUsage: result.token_usage
+                        }
+                    ]
+                }));
+            });
+
+            // 선택된 모델 중 응답이 없는 모델에 대해 에러 메시지 표시
+            selectedModels.forEach(model => {
+                if (!processedModels.has(model)) {
+                    setCompareMessages(prev => ({
+                        ...prev,
+                        [model]: [
+                            ...(prev[model] || []),
+                            {
+                                type: 'assistant',
+                                content: '서버 오류가 발생했습니다. 관리자에게 문의해주세요.',
+                                time: currentTime,
+                                isError: true
+                            }
+                        ]
+                    }));
+                }
+            });
+
+        } catch (err) {
+            console.error('응답 생성 중 오류:', err);
+
+            // 모든 선택된 모델에 에러 메시지 표시
+            selectedModels.forEach(model => {
+                setCompareMessages(prev => ({
+                    ...prev,
+                    [model]: [
+                        ...(prev[model] || []),
+                        {
+                            type: 'assistant',
+                            content: '서버 오류가 발생했습니다. 관리자에게 문의해주세요.',
+                            time: currentTime,
+                            isError: true
+                        }
+                    ]
+                }));
+            });
+
+            // 사용자에게 토스트 메시지 표시 (선택사항)
+            if (err.response) {
+                // 서버 응답이 있는 경우
+                const status = err.response.status;
+                if (status === 401) {
+                    showToast2026('인증이 만료되었습니다. 다시 로그인해주세요.', 'error');
+                } else if (status === 403) {
+                    showToast2026('접근 권한이 없습니다.', 'error');
+                } else if (status >= 500) {
+                    showToast2026('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                }
+            } else if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+                showToast2026('요청 시간이 초과되었습니다. 다시 시도해주세요.', 'error');
+            } else if (err.message?.includes('Network Error') || !err.response) {
+                showToast2026('네트워크 연결을 확인해주세요.', 'error');
+            }
+        }
+
+        // setIsGenerating(false);
+    };
+
+
+    const getCompareResponse = async (question) => {
+        // console.log("요청한 모델 : ", selectedModels);
+        try {
+            const documentIds = attachedFiles
+                .filter(file => file.isDocument && file.knowledge_id)
+                .map(file => file.knowledge_id);
+
+            const URL = currentProjectId ?
+                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}&project_id=${currentProjectId}`
+                : `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`;
+            // console.log("CHAT URL : ", URL);
+            const res = await axios.post(
+                URL,
+                {
+                    prompt_text: question,
+                    model_names: selectedModels,
+                    document_ids: documentIds.length > 0 ? documentIds : [0]
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                    timeout: 60000, // 60초 타임아웃
+                }
+            );
+            // console.log(res.data);
+            if (res.data.session_id) {
+                setCurrentSession(res.data.session_id);
+                // fetchSessions();
+            }
+            return res.data;
+        } catch (err) {
+            console.error('API 호출 오류:', err);
+            // 에러를 throw하여 상위에서 처리하도록 함
+            throw err;
+        }
+    };
+
+
+
+
+
+
+
+
+    // 단일 모드일 때 compareMessages와 SingleMessages 동기화
+    useEffect(() => {
+        if (selectedModels.length === 1) {
+            const model = selectedModels[0];
+            const messages = compareMessages[model] || [];
+            setSingleMessages(messages);
+        }
+    }, [compareMessages, selectedModels]);
+
+    // 선택된 모델 수에 따라 패널 생성
+    useEffect(() => {
+        if (selectedModels.length >= 1) {
+            setComparePanels(selectedModels);
+        } else {
+            setComparePanels([]);
+        }
+    }, [selectedModels]);
+
+
+    // 단일일때 메시지 스크롤
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [singleMessages]);
+
+
+    // 다중일때 메시지 스크롤
+    useEffect(() => {
+        comparePanels.forEach(model => {
+            const ref = compareMessagesRefs.current[model];
+            if (ref) {
+                ref.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }, [compareMessages, comparePanels, selectedModels]);
+
+
+
+
 
     const [allowedModelIds, setAllowedModelIds] = useState(() => {
         const stored = sessionStorage.getItem("allowed_model_ids");
@@ -304,14 +548,93 @@ export default function UserPractice2026() {
 
     // 클래스 변경 함수 (강의 변경 시 허용된 모델 아이디 및 선택된 모델 업데이트)
     const getProjecList = (projectList) => {
-        console.log('header에서 받아온 프로젝트 목록 : ', projectList);
+        // console.log('header에서 받아온 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
     }
 
+
+
+    const getSessionResponses = (sessionData) => {
+        // console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
+        // setMessages(sessionResponses);
+        // setSessionResponses(sessionResponses);
+
+        const newCompareMessages = {};
+        const promptGroups = {};
+
+        sessionData.responses.forEach((resp) => {
+            if (!promptGroups[resp.prompt_text]) {
+                promptGroups[resp.prompt_text] = [];
+            }
+            promptGroups[resp.prompt_text].push(resp);
+        });
+
+        const sortedPrompts = Object.keys(promptGroups).sort((a, b) => {
+            const timeA = promptGroups[a][0]?.created_at || '';
+            const timeB = promptGroups[b][0]?.created_at || '';
+            return new Date(timeA) - new Date(timeB);
+        });
+
+        // 각 질문-응답 쌍을 처리
+        sortedPrompts.forEach((promptText) => {
+            const responses = promptGroups[promptText];
+            const firstResponse = responses[0];
+            const userMessageTime = new Date(firstResponse.created_at).toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // 각 모델별로 메시지 추가
+            responses.forEach((resp) => {
+                const modelName = resp.model_name;
+
+                // 해당 모델의 메시지 배열이 없으면 초기화
+                if (!newCompareMessages[modelName]) {
+                    newCompareMessages[modelName] = [];
+                }
+
+                // 사용자 메시지 추가 (이미 추가되지 않은 경우)
+                const hasUserMessage = newCompareMessages[modelName].some(
+                    msg => msg.type === 'user' && msg.content === promptText
+                );
+                if (!hasUserMessage) {
+                    newCompareMessages[modelName].push({
+                        type: 'user',
+                        content: promptText,
+                        time: userMessageTime
+                    });
+                }
+
+                // 어시스턴트 메시지 추가
+                newCompareMessages[modelName].push({
+                    type: 'assistant',
+                    content: resp.response_text,
+                    time: new Date(resp.created_at).toLocaleTimeString('ko-KR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    modelName: resp.model_name,
+                    latency: resp.latency_ms,
+                    tokenUsage: resp.token_usage
+                });
+            });
+        });
+        setCompareMessages(newCompareMessages);
+        setCurrentProject(projectList.find(p => p.project_id === sessionData.project_id)?.name || '');
+
+        const usedModels = Object.keys(newCompareMessages);
+        // console.log("usedModels : ", usedModels);
+        if (usedModels.length > 0) {
+            // 상위 3개만 선택
+            const top3Models = usedModels.slice(0, 3);
+            setSelectedModels(top3Models);
+        }
+    }
+
     const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
-        console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
-        console.log('선택된 강의 아이디 : ', classId);
-        console.log('선택된 프로젝트 목록 : ', projectList);
+        // console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
+        // console.log('선택된 강의 아이디 : ', classId);
+        // console.log('선택된 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
         // setCurrentMessages([]);
         // setCompareMessages({});
@@ -380,12 +703,23 @@ export default function UserPractice2026() {
 
     const [currentKnowledgeIds, setCurrentKnowledgeIds] = useState([]);
     const handleConfirmKBSelection = () => {
-        console.log('저장할 문서 ids : ', selectedDocument);
+        // console.log('저장할 문서 ids : ', selectedDocument);
         setCurrentKnowledgeIds(selectedDocument.map(doc => doc));
         setSelectedDocument([]);
         toggleKnowledgeBaseModal();
         showToast2026(`${selectedDocument.length}개의 문서가 첨부되었습니다.`, 'success');
 
+    }
+
+    const [myprofile, setMyprofile] = useState(null);
+    const handleProfileData = (profileData) => {
+        // console.log("sidebar에서 받아온 데이터: ", profileData);
+        setMyprofile(profileData);
+    }
+    const [myaccount, setMyaccount] = useState(null);
+    const handleAccountData = (accountData) => {
+        // console.log("sidebar에서 받아온 데이터: ", accountData);
+        setMyaccount(accountData);
     }
 
 
@@ -401,6 +735,9 @@ export default function UserPractice2026() {
                 <UserSidebar2026
                     onClassChange={handleClassChange}
                     getProjecList={getProjecList}
+                    getSessionResponses={getSessionResponses}
+                    handleProfileData={handleProfileData}
+                    handleAccountData={handleAccountData}
                 />
 
                 <main className="main">
@@ -436,25 +773,133 @@ export default function UserPractice2026() {
                     <div className="chat-content">
 
 
-                        <div className="chat-area" >
-                            <div className="messages" >
-                                {!messages.length ? (
-                                    <>
-                                        <div className="empty-state">
-                                            <svg className="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                                            <h3 className="empty-state__title">새로운 대화 시작</h3>
-                                            <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.<br />여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
+                        {selectedModels.length <= 1 ? (
+                            <>
+                                <div className="chat-area" >
+                                    <div className="messages" >
+                                        {singleMessages.length === 0 ? (
+                                            <>
+                                                <div className="empty-state">
+                                                    <svg className="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                                    <h3 className="empty-state__title">새로운 대화 시작</h3>
+                                                    <p className="empty-state__desc">AI 모델을 선택하고 메시지를 입력하세요.<br />여러 모델을 선택하면 비교 모드가 활성화됩니다.</p>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {singleMessages.map((message, index) => (
+                                                    <div key={index}>
+                                                        {message.type === 'user' ? (
+                                                            <div className="message message--user">
+                                                                <div className="message__avatar message__avatar--user">{myprofile?.full_name.charAt(0)}</div>
+                                                                <div className="message__content"><div className="message__bubble message__bubble--user">{message.content}</div></div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="message">
+                                                                <div className="message__avatar message__avatar--gemini">G</div>
+                                                                <div className="message__content">
+                                                                    <div className="message__bubble message__bubble--ai">{message.content}</div>
+                                                                    <div className="message__actions">
+                                                                        <button className="message__action" title="복사"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                                                        <button className="message__action" title="좋아요"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg></button>
+                                                                        <button className="message__action" title="싫어요"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg></button>
+                                                                        <button className="message__action" title="재생성"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
 
-                                    </>
-                                )}
+                                            </>
+                                        )}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="chat-area chat-area--compare" id="chatAreaCompare" style={{ display: 'grid' }}>
 
+                                    {comparePanels.map((modelName, index) => {
+                                        const messages = compareMessages[modelName] || [];
+                                        const hasMessages = messages.length > 0;
+                                        const RenamedModelName = (modelName) => {
+                                            switch (modelName) {
+                                                case 'gemini-2.5-flash':
+                                                    return 'gemini';
+                                                case 'gpt-3.5-turbo':
+                                                case 'gpt-4o-mini':
+                                                case 'gpt-5-mini':
+                                                    return 'gpt';
+                                                case 'claude-3-haiku-20240307':
+                                                    return 'claude';
+                                                default:
+                                                    return 'unknown';
+                                            }
+                                        }
+                                        return (
+                                            <div
+                                                key={modelName}
+                                                className="compare-panel"
+                                                data-model={modelName}
+                                            >
+                                                <div className="compare-panel__header">
+                                                    <div className={`compare-panel__model compare-panel__model--${RenamedModelName(modelName)}`}>{RenamedModelName(modelName).charAt(0)}</div>
+                                                    <span className="compare-panel__name">{modelName}</span>
+                                                </div>
+                                                <div className="compare-panel__body" id="compareMessages-gemini">
+                                                    <div className="compare-panel__messages">
 
-                            </div>
-                        </div>
+                                                        {!hasMessages ? (
+                                                            <div className="empty-state" style={{ height: '100%' }}>
+                                                                <p style={{ fontSize: '13px', color: 'var(--text-tertiary)' }}>메시지를 입력하면<br />{modelName}의 응답이 표시됩니다</p>
+                                                            </div>
+                                                        ) : (
+                                                            <>
+                                                                {messages.map((msg, index) => {
+                                                                    // console.log(msg);
+                                                                    return (
+                                                                        <div key={index} className={`message ${msg.type === 'user' ? 'message--user' : ''} message--compact`}>
+                                                                            <div className={`message__avatar message__avatar--${msg.type === 'user' ? 'user' : `${RenamedModelName(msg.modelName)}`} message__avatar--sm`}>
+                                                                                {msg.type === 'user' ? `${myprofile?.full_name.charAt(0)}` : `${msg.modelName.charAt(0)}`}
+                                                                            </div>
+
+                                                                            <div className="message__content">
+                                                                                <div className={`message__bubble message__bubble--${msg.type === 'user' ? 'user' : `ai`}`}>{msg.content}</div>
+                                                                                {msg.type === 'assistant' && (
+                                                                                    <>
+                                                                                        <div className="message__meta">
+                                                                                            <span>⏱ {msg.latency}s</span>
+                                                                                            {msg.tokenUsage ? (
+                                                                                                <span>📝 {msg.tokenUsage.prompt_tokens} tokens</span>
+                                                                                            ) : null}
+                                                                                        </div>
+                                                                                        <div className="message__actions">
+                                                                                            <button className="message__action" title="복사"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+                                                                                            <button className="message__action" title="좋아요"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg></button>
+                                                                                            <button className="message__action" title="싫어요"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg></button>
+                                                                                            <button className="message__action" title="재생성"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg></button>
+                                                                                        </div>
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                })}
+
+                                                                <div ref={el => compareMessagesRefs.current[modelName] = el} />
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div >
+                                        )
+                                    })}
+                                </div>
+                            </>
+                        )}
+
 
 
 
@@ -471,7 +916,21 @@ export default function UserPractice2026() {
                                     </button>
                                 </div>
                                 <div className="input-box">
-                                    <textarea className="input-box__textarea" placeholder="메시지를 입력하세요..." rows="1" ></textarea>
+
+                                    <textarea
+                                        className="input-box__textarea"
+                                        ref={messageInputRef}
+                                        value={messageInput}
+                                        onChange={(e) => {
+                                            setMessageInput(e.target.value);
+                                            autoResize(e.target);
+                                        }}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder="메시지를 입력하세요..."
+                                        rows="1"
+
+                                    />
+
 
                                     <div className="input-box__footer">
                                         <div className="input-box__left">
@@ -512,7 +971,7 @@ export default function UserPractice2026() {
                                                     <div className="attachment-dropdown__list" >
                                                         <div className="attachment-dropdown__section-title">지식베이스</div>
                                                         {currentKnowledgeIds.map((document) => {
-                                                            console.log(document);
+                                                            // console.log(document);
                                                             return (
                                                                 <div className="attachment-item" key={document.knowledge_id}>
                                                                     <div className="attachment-item__icon attachment-item__icon--knowledge">
@@ -645,8 +1104,8 @@ export default function UserPractice2026() {
                             </div>
                         </div>
                     </div>
-                </main>
-            </div>
+                </main >
+            </div >
 
 
             <div className="plus-menu" id="plusMenu" style={{ left: '293px', bottom: '72px' }}>
