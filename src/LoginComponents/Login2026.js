@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { showToast2026 } from '../utill/utill';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -126,11 +127,11 @@ export default function Login() {
     const roleDescriptions = {
         student: {
             title: '사용자 로그인',
-            description: '자유롭게 회원가입이 가능합니다. 로그인 후 강사의 초대코드를 입력하면 실습 플랫폼을 사용할 수 있습니다.',
+            description: '강사와 학생 모두 가능합니다. 로그인 후 강사의 초대코드로 강의를 등록할 수 있습니다.',
             showSignup: true,
             alertType: 'info',
-            alertTitle: '사용자 계정이 없으신가요?',
-            alertContent: '자유롭게 회원가입하세요! 로그인 후 강사의 초대코드를 입력하면 클래스에 참여할 수 있습니다.',
+            alertTitle: '아직 GrowFit 계정이 없으신가요?',
+            alertContent: '강사의 초대코드로 즉시 이용 가능합니다',
             signupLink: '/signup/user',
             signupText: '사용자 회원가입',
         },
@@ -255,7 +256,8 @@ export default function Login() {
                         <button
                             type="button"
                             className={`tab ${selectedRole === 'organization' ? 'active' : ''}`}
-                            onClick={() => handleRoleSelect('organization')}
+                            // onClick={() => handleRoleSelect('organization')}
+                            onClick={() => showToast2026("기업계정은 준비중입니다.")}
                         >
                             기업
                         </button>
@@ -369,7 +371,8 @@ export default function Login() {
                                 className="forgot-link"
                                 onClick={(e) => {
                                     e.preventDefault();
-                                    alert("관리자에게 문의해주세요");
+                                    // alert("관리자에게 문의해주세요");
+                                    showToast2026("비밀번호 찾기는 준비중입니다.")
                                 }}
                             >
                                 비밀번호 찾기
