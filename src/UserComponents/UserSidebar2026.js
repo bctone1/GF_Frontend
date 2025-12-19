@@ -3,7 +3,19 @@ import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { setSelectedClass, getSelectedClassId, showToast2026 } from '../utill/utill';
 
-export default function UserSidebar2026({ onClassChange, onClassesData, refreshTrigger, externalClassSelect, getProjecList, getSessionResponses, handleProfileData, handleAccountData, startNewChat }) {
+export default function UserSidebar2026({
+    onClassChange,
+    onClassesData,
+    refreshTrigger,
+    externalClassSelect,
+    getProjecList,
+    getSessionResponses,
+    handleProfileData,
+    handleAccountData,
+    startNewChat,
+    getSessionList,
+    fetchProjectsRef
+}) {
 
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
@@ -29,7 +41,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             });
             const projects = response.data.items || [];
             const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
-            getProjecList(filteredProjects);
+            if (getProjecList) { getProjecList(filteredProjects); }
             setProjectList(filteredProjects);
             return filteredProjects;
         } catch (error) {
@@ -37,9 +49,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             setProjectList([]);
             return [];
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accessToken]);
 
+    }, [accessToken, getProjecList]);
 
 
     const fetchMyClasses = useCallback(() => {
@@ -81,7 +92,6 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 onClassesData([], false);
             }
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accessToken]);
 
     // URL경로가 바뀔때마다 실행
@@ -96,6 +106,9 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
         setSessions(response.data.items);
+        if (getSessionList) {
+            getSessionList(response.data.items);
+        }
     }, [accessToken]);
 
     const getMyAccount = useCallback(() => {
@@ -114,7 +127,6 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
         }).catch(error => {
             console.error('계정 조회 실패:', error);
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accessToken]);
 
     const getMyProfile = useCallback(() => {
@@ -130,7 +142,6 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
         }).catch(error => {
             console.error('프로필 조회 실패:', error);
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accessToken]);
     const handleLogout = () => {
         sessionStorage.clear();
@@ -146,18 +157,23 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
         if (savedClassId) {
             fetchProjects(savedClassId);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, []);
 
-    // refreshTrigger가 변경되면 클래스 목록 다시 가져오기 (0보다 클 때만)
+    useEffect(() => {
+        if (fetchProjectsRef) {
+            const currentClassId = savedClassId || getSelectedClassId();
+            fetchProjectsRef.current = () => fetchProjects(currentClassId);
+        }
+
+    }, [savedClassId, fetchProjects]);
+
     useEffect(() => {
         if (refreshTrigger > 0) {
             fetchMyClasses();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
-    // 클래스 변경 로직을 재사용 가능한 함수로 분리
     const changeClass = useCallback(async (classId) => {
         setClassSelectorOpen(false);
         if (Number(classId) === Number(selectedClassId)) return;
@@ -180,7 +196,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 onClassChange(null, [1], []);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [myClasses, selectedClassId]);
 
     const closeChatContextMenu = useCallback(() => {
@@ -211,7 +227,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 changeClass(externalClassSelect);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [externalClassSelect, myClasses]);
 
     // 외부 클릭 시 컨텍스트 메뉴 닫기
@@ -250,7 +266,9 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 { headers: { Authorization: `Bearer ${accessToken}`, }, }
             );
             const sessionData = response.data;
-            getSessionResponses(sessionData);
+            if (getSessionResponses) {
+                getSessionResponses(sessionData);
+            }
         } catch (error) {
             console.error('세션 조회 실패:', error);
         }

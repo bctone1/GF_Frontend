@@ -286,7 +286,7 @@ export default function UserPractice2026() {
         const message = messageInput.trim();
 
         // if (!message || isGenerating) return;
-        if (selectedModels.length === 0) { alert('모델을 선택해주세요'); return; }
+        if (selectedModels.length === 0) { showToast2026('모델을 선택해주세요', 'error'); return; }
 
         setMessageInput('');
         if (messageInputRef.current) { autoResize(messageInputRef.current); }
@@ -424,7 +424,7 @@ export default function UserPractice2026() {
                 {
                     prompt_text: question,
                     model_names: selectedModels,
-                    document_ids: documentIds.length > 0 ? documentIds : [0]
+                    // document_ids: documentIds.length > 0 ? documentIds : [0]
                 },
                 {
                     headers: {
@@ -456,7 +456,7 @@ export default function UserPractice2026() {
 
     // 단일 모드일 때 compareMessages와 SingleMessages 동기화
     useEffect(() => {
-        console.log("compareMessages : ", compareMessages);
+        // console.log("compareMessages : ", compareMessages);
         if (selectedModels.length === 1) {
             const model = selectedModels[0];
             const messages = compareMessages[model] || [];
@@ -466,7 +466,7 @@ export default function UserPractice2026() {
 
     // 선택된 모델 수에 따라 패널 생성
     useEffect(() => {
-        console.log("selectedModels : ", selectedModels);
+        // console.log("selectedModels : ", selectedModels);
         if (selectedModels.length >= 1) {
             setComparePanels(selectedModels);
         } else {
@@ -477,7 +477,7 @@ export default function UserPractice2026() {
 
     // 단일일때 메시지 스크롤
     useEffect(() => {
-        console.log("singleMessages : ", singleMessages);
+        // console.log("singleMessages : ", singleMessages);
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
@@ -486,7 +486,7 @@ export default function UserPractice2026() {
 
     // 다중일때 메시지 스크롤
     useEffect(() => {
-        console.log("comparePanels : ", comparePanels);
+        // console.log("comparePanels : ", comparePanels);
         comparePanels.forEach(model => {
             const ref = compareMessagesRefs.current[model];
             if (ref) {
@@ -551,7 +551,7 @@ export default function UserPractice2026() {
 
     // 클래스 변경 함수 (강의 변경 시 허용된 모델 아이디 및 선택된 모델 업데이트)
     const getProjecList = (projectList) => {
-        console.log('header에서 받아온 프로젝트 목록 : ', projectList);
+        // console.log('header에서 받아온 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
     }
 
@@ -559,6 +559,7 @@ export default function UserPractice2026() {
 
     const getSessionResponses = (sessionData) => {
         console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
+        setCurrentSession(sessionData.session_id);
         // setMessages(sessionResponses);
         // setSessionResponses(sessionResponses);
 
@@ -633,11 +634,12 @@ export default function UserPractice2026() {
             setSelectedModels(top3Models);
         }
     }
+    // const handleSessionChange = ()=>{}
 
     const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
-        console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
-        console.log('선택된 강의 아이디 : ', classId);
-        console.log('선택된 프로젝트 목록 : ', projectList);
+        // console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
+        // console.log('선택된 강의 아이디 : ', classId);
+        // console.log('선택된 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
         setSingleMessages([]);
         setCompareMessages({});
@@ -716,12 +718,12 @@ export default function UserPractice2026() {
 
     const [myprofile, setMyprofile] = useState(null);
     const handleProfileData = (profileData) => {
-        console.log("sidebar에서 받아온 데이터: ", profileData);
+        // console.log("sidebar에서 받아온 데이터: ", profileData);
         setMyprofile(profileData);
     }
     const [myaccount, setMyaccount] = useState(null);
     const handleAccountData = (accountData) => {
-        console.log("sidebar에서 받아온 데이터: ", accountData);
+        // console.log("sidebar에서 받아온 데이터: ", accountData);
         setMyaccount(accountData);
     }
 
@@ -742,7 +744,6 @@ export default function UserPractice2026() {
         <>
 
             <div className="app">
-
                 <UserSidebar2026
                     onClassChange={handleClassChange}
                     getProjecList={getProjecList}
