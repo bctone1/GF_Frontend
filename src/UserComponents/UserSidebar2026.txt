@@ -1,9 +1,18 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { setSelectedClass, getSelectedClassId } from '../utill/utill';
+import { setSelectedClass, getSelectedClassId, getSelectedClassTitle } from '../utill/utill';
 
-export default function UserSidebar2026({ onClassChange, onClassesData, refreshTrigger, externalClassSelect, getProjecList, getSessionResponses, handleProfileData, handleAccountData }) {
+export default function UserSidebar2026({
+    onClassChange,
+    onClassesData,
+    refreshTrigger,
+    externalClassSelect,
+    getProjecList,
+    getSessionResponses,
+    handleProfileData,
+    handleAccountData
+}) {
 
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
@@ -15,10 +24,10 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [classSelectorOpen, setClassSelectorOpen] = useState(false);
 
-    const fetchProjects = useCallback(async (classId) => {
+    const fetchProjects = async (classId) => {
         if (!classId) {
             setProjectList([]);
-            return [];
+            return;
         }
         try {
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/projects?class_id=${classId}`, {
@@ -29,20 +38,18 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             });
             const projects = response.data.items || [];
             const filteredProjects = projects.filter(project => String(project.class_id) === String(classId));
+            // console.log('프로젝트 목록 : ', filteredProjects);
             getProjecList(filteredProjects);
             setProjectList(filteredProjects);
-            return filteredProjects;
         } catch (error) {
             console.error('프로젝트 조회 실패:', error);
             setProjectList([]);
-            return [];
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accessToken]);
+    }
 
 
 
-    const fetchMyClasses = useCallback(() => {
+    const fetchMyClasses = () => {
         if (!accessToken) {
             if (onClassesData) {
                 onClassesData([], false);
@@ -61,14 +68,14 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             if (onClassesData) {
                 onClassesData(classes, false);
             }
-            const currentSavedClassId = getSelectedClassId();
-            if (currentSavedClassId) {
-                const isValid = classes.some(c => String(c.class_id) === String(currentSavedClassId));
+            // const savedClassId = getSelectedClassId();
+            if (savedClassId) {
+                const isValid = classes.some(c => String(c.class_id) === String(savedClassId));
                 if (isValid) {
-                    setSelectedClassId(currentSavedClassId);
-                    const selectedClass = classes.find(c => String(c.class_id) === String(currentSavedClassId));
+                    setSelectedClassId(savedClassId);
+                    const selectedClass = classes.find(c => String(c.class_id) === String(savedClassId));
                     if (selectedClass) {
-                        setSelectedClass(currentSavedClassId, selectedClass.class_title);
+                        setSelectedClass(savedClassId, selectedClass.class_title);
                     }
                 } else {
                     setSelectedClass(null, null);
@@ -76,73 +83,29 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 }
             }
         }).catch(error => {
-            console.error('클래스 조회 실패:', error);
+            console.log(error);
             if (onClassesData) {
                 onClassesData([], false);
             }
         });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accessToken]);
+    }
 
     // URL경로가 바뀔때마다 실행
     useEffect(() => {
+        // console.log(location.pathname);
+        // const savedClassId = getSelectedClassId();
         if (savedClassId) {
             setSelectedClassId(savedClassId);
         }
-    }, [location.pathname, savedClassId]);
-
-    const fetchSessions = useCallback(async () => {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
-            { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
-        );
-        setSessions(response.data.items);
-    }, [accessToken]);
-
-    const getMyAccount = useCallback(() => {
-        axios.get(`${process.env.REACT_APP_API_URL}/user/my`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        }).then(response => {
-            sessionStorage.setItem("partner_id", response.data.partner_id);
-            sessionStorage.setItem("user_id", response.data.user_id);
-            sessionStorage.setItem("user_email", response.data.email);
-            setMyaccount(response.data);
-            handleAccountData(response.data);
-        }).catch(error => {
-            console.error('계정 조회 실패:', error);
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accessToken]);
-
-    const getMyProfile = useCallback(() => {
-        axios.get(`${process.env.REACT_APP_API_URL}/user/my/profile`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        }).then(response => {
-            setMyprofile(response.data);
-            handleProfileData(response.data);
-        }).catch(error => {
-            console.error('프로필 조회 실패:', error);
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [accessToken]);
-    const handleLogout = () => {
-        sessionStorage.clear();
-        window.location.href = "/login";
-    }
-
+    }, [location.pathname]);
 
     useEffect(() => {
         fetchMyClasses();
         fetchSessions();
         getMyAccount();
         getMyProfile();
-        if (savedClassId) {
-            fetchProjects(savedClassId);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        fetchProjects(savedClassId);
+
     }, []);
 
     // refreshTrigger가 변경되면 클래스 목록 다시 가져오기 (0보다 클 때만)
@@ -150,11 +113,10 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
         if (refreshTrigger > 0) {
             fetchMyClasses();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [refreshTrigger]);
 
     // 클래스 변경 로직을 재사용 가능한 함수로 분리
-    const changeClass = useCallback(async (classId) => {
+    const changeClass = useCallback((classId) => {
         setClassSelectorOpen(false);
         if (Number(classId) === Number(selectedClassId)) return;
         setCurrentSession(0);
@@ -165,10 +127,9 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             const allowed_model_ids = selectedClass ? selectedClass.allowed_model_ids : [1];
             sessionStorage.setItem("allowed_model_ids", allowed_model_ids);
             setSelectedClass(classId, classTitle);
-            // fetchProjects를 먼저 실행하고 완료된 후에 onClassChange 호출
-            const updatedProjects = await fetchProjects(classId);
+            fetchProjects(classId);
             if (onClassChange) {
-                onClassChange(classId, allowed_model_ids, updatedProjects || []);
+                onClassChange(classId, allowed_model_ids, projectList);
             }
         } else {
             setSelectedClass(null, null);
@@ -176,13 +137,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 onClassChange(null, [1], []);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [myClasses, selectedClassId]);
-
-    const closeChatContextMenu = useCallback(() => {
-        setContextMenuOpen(false);
-        setContextMenuSessionId(null);
-    }, []);
+    }, [myClasses, onClassChange]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -207,8 +162,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 changeClass(externalClassSelect);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [externalClassSelect, myClasses]);
+    }, [externalClassSelect, myClasses, changeClass]);
 
     // 외부 클릭 시 컨텍스트 메뉴 닫기
     useEffect(() => {
@@ -224,7 +178,7 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 document.removeEventListener('click', handleClickOutside);
             };
         }
-    }, [contextMenuOpen, closeChatContextMenu]);
+    }, [contextMenuOpen]);
 
 
 
@@ -234,23 +188,32 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
 
 
     const [sessions, setSessions] = useState([]);
-
+    const fetchSessions = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
+            { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
+        );
+        // console.log(response.data.items);
+        setSessions(response.data.items);
+    }
 
     const filteredSessions = sessions.filter(session => session.class_id === Number(selectedClassId));
 
     const [currentSession, setCurrentSession] = useState(0);
     const handleSessionClick = useCallback(async (sessionId) => {
+        // console.log('선택한 세션아이디 : ', sessionId);
         try {
             setCurrentSession(sessionId);
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${sessionId}`,
                 { headers: { Authorization: `Bearer ${accessToken}`, }, }
             );
             const sessionData = response.data;
+
+            // console.log(sessionData);
             getSessionResponses(sessionData);
         } catch (error) {
-            console.error('세션 조회 실패:', error);
+            console.log(error);
         }
-    }, [accessToken]);
+    }, [accessToken, projectList]);
 
 
 
@@ -258,41 +221,83 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
     const [myprofile, setMyprofile] = useState(null);
     const [myaccount, setMyaccount] = useState(null);
 
+    const getMyAccount = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/my`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            sessionStorage.setItem("partner_id", response.data.partner_id);
+            sessionStorage.setItem("user_id", response.data.user_id);
+            sessionStorage.setItem("user_email", response.data.email);
+            // console.log(response.data);
+            setMyaccount(response.data);
+            handleAccountData(response.data);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
 
+    const getMyProfile = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/user/my/profile`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            // console.log(response.data);
+            setMyprofile(response.data);
+            handleProfileData(response.data);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+    const handleLogout = () => {
+        sessionStorage.clear();
+        window.location.href = "/login";
+    }
 
     // 컨텍스트 메뉴 열기
-    const showChatContextMenu = useCallback((event, sessionId) => {
-        event.stopPropagation();
+    const showChatContextMenu = (event, sessionId) => {
+        event.stopPropagation(); // chat-item 클릭 이벤트 방지
         setContextMenuPosition({ left: event.clientX, top: event.clientY });
         setContextMenuSessionId(sessionId);
-        setContextMenuOpen(true);
-    }, []);
+        setContextMenuOpen(!contextMenuOpen);
+    }
 
     // 컨텍스트 메뉴 닫기
-
+    const closeChatContextMenu = () => {
+        setContextMenuOpen(!contextMenuOpen);
+        setContextMenuSessionId(null);
+    }
 
     // 메뉴 항목 핸들러
-    const handleRenameChat = useCallback(() => {
+    const handleRenameChat = () => {
         closeChatContextMenu();
         alert('구현예정입니다.');
-    }, [closeChatContextMenu]);
+    }
 
-    const handleDuplicateChat = useCallback(() => {
+    const handleDuplicateChat = () => {
         closeChatContextMenu();
         alert('구현예정입니다.');
-    }, [closeChatContextMenu]);
+    }
 
-    const handleDeleteChat = useCallback(() => {
+    const handleDeleteChat = () => {
         closeChatContextMenu();
         alert('구현예정입니다.');
-    }, [closeChatContextMenu]);
+    }
 
     const [searchModalStatus, setSearchModalStatus] = useState(false);
     const [newProjectModalStatus, setNewProjectModalStatus] = useState(false);
     const [settingsModalStatus, setSettingsModalStatus] = useState(false);
     const [profileModalStatus, setProfileModalStatus] = useState(false);
+
+    // 컨텍스트 메뉴 상태
+
     const [contextMenuPosition, setContextMenuPosition] = useState({ left: 0, top: 0 });
     const [contextMenuSessionId, setContextMenuSessionId] = useState(null);
+
+
+
 
     return (
         <>
@@ -661,6 +666,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                                     )}
                                 </div>
                             </div>
+
+
                             <button
                                 className="chat-item__menu"
                                 onClick={(e) => showChatContextMenu(e, session.session_id)}
@@ -729,5 +736,5 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                 </div>
             </div>
         </>
-    );
+    )
 }

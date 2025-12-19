@@ -456,6 +456,7 @@ export default function UserPractice2026() {
 
     // 단일 모드일 때 compareMessages와 SingleMessages 동기화
     useEffect(() => {
+        console.log("compareMessages : ", compareMessages);
         if (selectedModels.length === 1) {
             const model = selectedModels[0];
             const messages = compareMessages[model] || [];
@@ -465,6 +466,7 @@ export default function UserPractice2026() {
 
     // 선택된 모델 수에 따라 패널 생성
     useEffect(() => {
+        console.log("selectedModels : ", selectedModels);
         if (selectedModels.length >= 1) {
             setComparePanels(selectedModels);
         } else {
@@ -475,6 +477,7 @@ export default function UserPractice2026() {
 
     // 단일일때 메시지 스크롤
     useEffect(() => {
+        console.log("singleMessages : ", singleMessages);
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
@@ -483,6 +486,7 @@ export default function UserPractice2026() {
 
     // 다중일때 메시지 스크롤
     useEffect(() => {
+        console.log("comparePanels : ", comparePanels);
         comparePanels.forEach(model => {
             const ref = compareMessagesRefs.current[model];
             if (ref) {
@@ -542,20 +546,19 @@ export default function UserPractice2026() {
     useEffect(() => {
         fetchAssistant();
         fetchDocuments();
-
     }, []);
 
 
     // 클래스 변경 함수 (강의 변경 시 허용된 모델 아이디 및 선택된 모델 업데이트)
     const getProjecList = (projectList) => {
-        // console.log('header에서 받아온 프로젝트 목록 : ', projectList);
+        console.log('header에서 받아온 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
     }
 
 
 
     const getSessionResponses = (sessionData) => {
-        // console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
+        console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
         // setMessages(sessionResponses);
         // setSessionResponses(sessionResponses);
 
@@ -632,9 +635,9 @@ export default function UserPractice2026() {
     }
 
     const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
-        // console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
-        // console.log('선택된 강의 아이디 : ', classId);
-        // console.log('선택된 프로젝트 목록 : ', projectList);
+        console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
+        console.log('선택된 강의 아이디 : ', classId);
+        console.log('선택된 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
         // setCurrentMessages([]);
         // setCompareMessages({});
@@ -713,12 +716,12 @@ export default function UserPractice2026() {
 
     const [myprofile, setMyprofile] = useState(null);
     const handleProfileData = (profileData) => {
-        // console.log("sidebar에서 받아온 데이터: ", profileData);
+        console.log("sidebar에서 받아온 데이터: ", profileData);
         setMyprofile(profileData);
     }
     const [myaccount, setMyaccount] = useState(null);
     const handleAccountData = (accountData) => {
-        // console.log("sidebar에서 받아온 데이터: ", accountData);
+        console.log("sidebar에서 받아온 데이터: ", accountData);
         setMyaccount(accountData);
     }
 
@@ -928,7 +931,6 @@ export default function UserPractice2026() {
                                         onKeyDown={handleKeyDown}
                                         placeholder="메시지를 입력하세요..."
                                         rows="1"
-
                                     />
 
 
