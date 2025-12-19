@@ -1,9 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { setSelectedClass, getSelectedClassId } from '../utill/utill';
+import { setSelectedClass, getSelectedClassId, showToast2026 } from '../utill/utill';
 
-export default function UserSidebar2026({ onClassChange, onClassesData, refreshTrigger, externalClassSelect, getProjecList, getSessionResponses, handleProfileData, handleAccountData }) {
+export default function UserSidebar2026({ onClassChange, onClassesData, refreshTrigger, externalClassSelect, getProjecList, getSessionResponses, handleProfileData, handleAccountData, startNewChat }) {
 
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
@@ -108,7 +108,9 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             sessionStorage.setItem("user_id", response.data.user_id);
             sessionStorage.setItem("user_email", response.data.email);
             setMyaccount(response.data);
-            handleAccountData(response.data);
+            if (handleAccountData) {
+                handleAccountData(response.data);
+            }
         }).catch(error => {
             console.error('계정 조회 실패:', error);
         });
@@ -122,7 +124,9 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
             },
         }).then(response => {
             setMyprofile(response.data);
-            handleProfileData(response.data);
+            if (handleProfileData) {
+                handleProfileData(response.data);
+            }
         }).catch(error => {
             console.error('프로필 조회 실패:', error);
         });
@@ -515,19 +519,20 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                         </div>
                     </div>
 
-                    <button className="sidebar__new-chat">
+                    <button className="sidebar__new-chat" onClick={startNewChat}>
                         <svg className="icon" viewBox="0 0 24 24">
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />
                         </svg>
-                        <span>새 대화</span>
+                        <span>새 채팅</span>
                     </button>
                 </div>
 
                 <nav className="sidebar__nav">
 
                     <Link
-                        to="/user/dashboard"
+                        onClick={() => showToast2026("준비중입니다.")}
+                        // to="/user/dashboard"
                         className={`sidebar__nav-item ${currentMenu === 'dashboard' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
@@ -538,8 +543,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                     </Link>
 
                     <Link
-                        to="/user/practice2026"
-                        className={`sidebar__nav-item ${currentMenu === 'practice2026' ? 'sidebar__nav-item--active' : ''}`}
+                        to="/user/practice"
+                        className={`sidebar__nav-item ${currentMenu === 'practice' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -558,7 +563,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                     </Link>
 
                     <Link
-                        to="/user/knowledge"
+                        onClick={() => showToast2026("준비중입니다.")}
+                        // to="/user/knowledge"
                         className={`sidebar__nav-item ${currentMenu === 'knowledge' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
@@ -569,7 +575,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                     </Link>
 
                     <Link
-                        to="/user/agent"
+                        onClick={() => showToast2026("준비중입니다.")}
+                        // to="/user/agent"
                         className={`sidebar__nav-item ${currentMenu === 'agent' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
@@ -583,7 +590,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                     </Link>
 
                     <Link
-                        to="/user/workflow"
+                        onClick={() => showToast2026("준비중입니다.")}
+                        // to="/user/workflow"
                         className={`sidebar__nav-item ${currentMenu === 'workflow' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
@@ -597,7 +605,8 @@ export default function UserSidebar2026({ onClassChange, onClassesData, refreshT
                     </Link>
 
                     <Link
-                        to="/user/history"
+                        onClick={() => showToast2026("준비중입니다.")}
+                        // to="/user/history"
                         className={`sidebar__nav-item ${currentMenu === 'history' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">

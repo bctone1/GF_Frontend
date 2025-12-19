@@ -105,7 +105,7 @@ export default function Login() {
             sessionStorage.setItem("email", formData.email);
 
             if (selectedRole === 'student') {
-                navigate('/user/practice2026');
+                navigate('/user/practice');
             } else if (selectedRole === 'organization') {
                 navigate('/organization/dashboard');
             }

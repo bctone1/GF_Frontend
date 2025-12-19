@@ -639,10 +639,10 @@ export default function UserPractice2026() {
         console.log('선택된 강의 아이디 : ', classId);
         console.log('선택된 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
-        // setCurrentMessages([]);
-        // setCompareMessages({});
+        setSingleMessages([]);
+        setCompareMessages({});
         // setShowEmptyState(true);
-        // setCurrentSession(0);
+        setCurrentSession(0);
         setSavedClassId(classId);
 
         let modelIds = [1]; // 기본값
@@ -725,6 +725,14 @@ export default function UserPractice2026() {
         setMyaccount(accountData);
     }
 
+    const startNewChat = () => {
+        setSingleMessages([]);
+        setCompareMessages({});
+        // setShowEmptyState(true);
+        setCurrentSession(0);
+        showToast2026('새 채팅이 시작되었습니다', 'success');
+    };
+
 
 
 
@@ -741,12 +749,13 @@ export default function UserPractice2026() {
                     getSessionResponses={getSessionResponses}
                     handleProfileData={handleProfileData}
                     handleAccountData={handleAccountData}
+                    startNewChat={startNewChat}
                 />
 
                 <main className="main">
                     <header className="chat-header">
                         <div className="chat-header__left">
-                            <span className="chat-header__title">새로운 대화</span>
+                            <span className="chat-header__title">새로운 채팅</span>
                             <svg className="icon icon--sm chat-header__edit" viewBox="0 0 24 24" ><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                         </div>
                         <div className="chat-header__right">
