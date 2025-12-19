@@ -110,15 +110,16 @@ export default function Login() {
                 navigate('/organization/dashboard');
             }
         } catch (error) {
-            const errorMessage = getErrorMessage(error);
-            setError(errorMessage);
+            console.log(error);
+            // const errorMessage = getErrorMessage(error);
+            setError(error);
 
-            // 401 에러인 경우 비밀번호 필드에 포커스
-            if (error.response?.status === 401) {
-                setTimeout(() => {
-                    document.getElementById('password')?.focus();
-                }, 100);
-            }
+            // // 401 에러인 경우 비밀번호 필드에 포커스
+            // if (error.response?.status === 401) {
+            //     setTimeout(() => {
+            //         document.getElementById('password')?.focus();
+            //     }, 100);
+            // }
         } finally {
             setIsLoading(false);
         }
