@@ -265,6 +265,7 @@ export default function UserPractice2026() {
 
     const messagesEndRef = useRef(null);
     const compareMessagesRefs = useRef({});
+    const [isGenerating, setIsGenerating] = useState(false);
 
 
     const autoResize = (textarea) => {
@@ -282,15 +283,16 @@ export default function UserPractice2026() {
     };
 
     const sendMessage = async () => {
+
         const currentTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
         const message = messageInput.trim();
 
-        // if (!message || isGenerating) return;
+        if (!message || isGenerating) return;
         if (selectedModels.length === 0) { showToast2026('모델을 선택해주세요', 'error'); return; }
 
         setMessageInput('');
         if (messageInputRef.current) { autoResize(messageInputRef.current); }
-        // setIsGenerating(true);
+        setIsGenerating(true);
         // setShowEmptyState(false);
 
         // 각 패널에 사용자 메시지 추가
@@ -404,28 +406,45 @@ export default function UserPractice2026() {
             }
         }
 
-        // setIsGenerating(false);
+        setIsGenerating(false);
     };
 
+    const fetchSessionRef = useRef(null);
+    const fetchSessionsTrigger = () => {
+        if (fetchSessionRef.current) {
+            fetchSessionRef.current();
+        }
+    }
 
     const getCompareResponse = async (question) => {
-        // console.log("요청한 모델 : ", selectedModels);
         try {
             const documentIds = attachedFiles
                 .filter(file => file.isDocument && file.knowledge_id)
                 .map(file => file.knowledge_id);
 
-            const URL = currentProjectId ?
-                `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}&project_id=${currentProjectId}`
-                : `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`;
-            // console.log("CHAT URL : ", URL);
-            const res = await axios.post(
-                URL,
-                {
+            // const URL = currentProjectId ?
+            //     `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}&project_id=${currentProjectId}`
+            //     : `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`;
+            let URL = '';
+            let Param = {};
+
+            if (!currentSession) {
+                URL = `${process.env.REACT_APP_API_URL}/user/practice/sessions/run?class_id=${savedClassId}`;
+                Param = {
                     prompt_text: question,
                     model_names: selectedModels,
-                    // document_ids: documentIds.length > 0 ? documentIds : [0]
-                },
+                    knowledge_ids: documentIds.length > 0 ? documentIds : [0]
+                };
+            } else {
+                URL = `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat`;
+                Param = {
+                    prompt_text: question,
+                    model_names: selectedModels,
+                };
+            }
+            const res = await axios.post(
+                URL,
+                Param,
                 {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
@@ -434,10 +453,11 @@ export default function UserPractice2026() {
                     timeout: 60000, // 60초 타임아웃
                 }
             );
-            // console.log(res.data);
+            console.log(res.data);
+
             if (res.data.session_id) {
                 setCurrentSession(res.data.session_id);
-                // fetchSessions();
+                fetchSessionsTrigger();
             }
             return res.data;
         } catch (err) {
@@ -751,6 +771,9 @@ export default function UserPractice2026() {
                     handleProfileData={handleProfileData}
                     handleAccountData={handleAccountData}
                     startNewChat={startNewChat}
+                    currentSession={currentSession}
+                    setCurrentSession={setCurrentSession}
+                    fetchSessionRef={fetchSessionRef}
                 />
 
                 <main className="main">
@@ -1107,7 +1130,9 @@ export default function UserPractice2026() {
                                             <button className="input-btn" title="음성 입력" >
                                                 <svg className="icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
                                             </button>
-                                            <button className="input-btn input-btn--primary" title="전송">
+                                            <button className="input-btn input-btn--primary" title="전송"
+                                                onClick={() => sendMessage()}
+                                            >
                                                 <svg className="icon" viewBox="0 0 24 24" style={{ color: 'white' }}><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                                             </button>
                                         </div>

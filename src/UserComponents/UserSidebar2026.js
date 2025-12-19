@@ -14,7 +14,10 @@ export default function UserSidebar2026({
     handleAccountData,
     startNewChat,
     getSessionList,
-    fetchProjectsRef
+    fetchProjectsRef,
+    currentSession,
+    setCurrentSession,
+    fetchSessionRef
 }) {
 
     const location = useLocation();
@@ -165,7 +168,9 @@ export default function UserSidebar2026({
             const currentClassId = savedClassId || getSelectedClassId();
             fetchProjectsRef.current = () => fetchProjects(currentClassId);
         }
-
+        if (fetchSessionRef) {
+            fetchSessions();
+        }
     }, [savedClassId, fetchProjects]);
 
     useEffect(() => {
@@ -251,14 +256,8 @@ export default function UserSidebar2026({
 
 
     // 리뉴얼
-
-
     const [sessions, setSessions] = useState([]);
-
-
     const filteredSessions = sessions.filter(session => session.class_id === Number(selectedClassId));
-
-    const [currentSession, setCurrentSession] = useState(0);
     const handleSessionClick = useCallback(async (sessionId) => {
         try {
             setCurrentSession(sessionId);
