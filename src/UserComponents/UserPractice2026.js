@@ -228,7 +228,7 @@ export default function UserPractice2026() {
             if (attachmentList && attachmentList.classList.contains('attachment-dropdown--open')) {
                 if (!attachmentList.contains(event.target) && !attachmentListBtn?.contains(event.target)) {
                     attachmentList.classList.remove('attachment-dropdown--open');
-                    attachmentListBtn?.classList.remove('attachment-btn--visible');
+                    // attachmentListBtn?.classList.remove('attachment-btn--visible');
 
                 }
             }
@@ -657,13 +657,9 @@ export default function UserPractice2026() {
     // const handleSessionChange = ()=>{}
 
     const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
-        // console.log('허용된 모델 아이디 : ', allowedModelIdsArray);
-        // console.log('선택된 강의 아이디 : ', classId);
-        // console.log('선택된 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
         setSingleMessages([]);
         setCompareMessages({});
-        // setShowEmptyState(true);
         setCurrentSession(0);
         setSavedClassId(classId);
 
@@ -714,7 +710,6 @@ export default function UserPractice2026() {
 
 
     const [selectedDocument, setSelectedDocument] = useState([]);
-
     const handleDocumentSelection = (document) => {
         setSelectedDocument(prev =>
             prev.some(doc => doc.knowledge_id === document.knowledge_id)
@@ -750,12 +745,23 @@ export default function UserPractice2026() {
     const startNewChat = () => {
         setSingleMessages([]);
         setCompareMessages({});
-        // setShowEmptyState(true);
         setCurrentSession(0);
+        setSelectedModels([]);
         showToast2026('새 채팅이 시작되었습니다', 'success');
     };
 
-
+    const selectProjectFromPlusMenu = async (project) => {
+        const res = await axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
+            {
+                project_id: project.project_id
+            },
+            { headers: { Authorization: `Bearer ${accessToken}`, }, }
+        );
+        console.log(res.data);
+        setCurrentProject(project.name);
+        fetchSessionsTrigger();
+        toggleProjectModal();
+    }
 
 
 
@@ -786,11 +792,29 @@ export default function UserPractice2026() {
 
                             <div className="mode-indicator mode-indicator--single" >
                                 <span className="mode-indicator__dot"></span>
-                                <span className="mode-indicator__text" >모델 선택 필요</span>
+                                <span className="mode-indicator__text" >
+                                    {selectedModels.length === 0
+                                        ? '선택 없음'
+                                        : selectedModels.length === 1
+                                            ? selectedModels[0]
+                                            : `${selectedModels[0]} 외 ${selectedModels.length - 1}개`
+                                    }
+                                </span>
                             </div>
-                            <div className="chat-header__participants" >
-                                <div className="participant-avatar participant-avatar--gemini" title="Gemini">G</div>
+
+                            <div
+                                className="chat-header__participants"
+                                id="activeModelsDisplay"
+                            >
+                                <div className="participant-avatar participant-avatar--gemini" title="gemini">G</div>
+                                <div className="participant-avatar participant-avatar--claude" title="claude">C</div>
                             </div>
+
+
+
+
+
+
                             <button className="chat-header__btn" title="참여자 초대" >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
                             </button>
@@ -1021,7 +1045,15 @@ export default function UserPractice2026() {
                                                                             <span className="attachment-item__type attachment-item__type--knowledge">지식베이스</span>
                                                                         </div>
                                                                     </div>
-                                                                    <button className="attachment-item__remove" onClick={() => setCurrentKnowledgeIds(prev => prev.filter(doc => doc.knowledge_id !== document.knowledge_id))}>
+                                                                    <button
+                                                                        className="attachment-item__remove"
+                                                                        onClick={() => {
+                                                                            setCurrentKnowledgeIds(prev => prev.filter(doc => doc.knowledge_id !== document.knowledge_id));
+                                                                            if (currentKnowledgeIds.length === 1) {
+                                                                                toggleAttachmentDropdown();
+                                                                            }
+                                                                        }}
+                                                                    >
                                                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                                             <line x1="18" y1="6" x2="6" y2="18"></line>
                                                                             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1046,7 +1078,7 @@ export default function UserPractice2026() {
 
 
 
-                                            <div style={{ position: 'relative' }}>
+                                            {/* <div style={{ position: 'relative' }}>
                                                 <button className="input-btn" title="빠른 설정" onClick={toggleInputSettings} id="inputSettingsBtn">
                                                     <svg className="icon" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
                                                     <span className="input-btn__badge" >3</span>
@@ -1066,7 +1098,7 @@ export default function UserPractice2026() {
                                                         <div className="settings-dropdown__toggle settings-dropdown__toggle--active" ></div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div> */}
 
                                         </div>
 
@@ -1127,9 +1159,9 @@ export default function UserPractice2026() {
 
 
                                             </div>
-                                            <button className="input-btn" title="음성 입력" >
+                                            {/* <button className="input-btn" title="음성 입력" >
                                                 <svg className="icon" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>
-                                            </button>
+                                            </button> */}
                                             <button className="input-btn input-btn--primary" title="전송"
                                                 onClick={() => sendMessage()}
                                             >
@@ -1149,11 +1181,18 @@ export default function UserPractice2026() {
                 <div className="plus-menu__section">
                     <div className="plus-menu__section-title">파일 &amp; 문서</div>
 
-                    <div className="plus-menu__item" >
+                    <div
+                        className="plus-menu__item"
+                        onClick={() => showToast2026("준비중입니다.")}
+                    >
                         <div className="plus-menu__icon"><svg className="icon" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg></div>
                         <div className="plus-menu__text"><div className="plus-menu__title">파일 첨부</div><div className="plus-menu__desc">이미지, 문서 등을 업로드</div></div>
                     </div>
-                    <div className="plus-menu__item" onClick={toggleTemplateModal}>
+                    <div
+                        className="plus-menu__item"
+                        // onClick={toggleTemplateModal}
+                        onClick={() => showToast2026("준비중입니다.")}
+                    >
                         <div className="plus-menu__icon"><svg className="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
                         <div className="plus-menu__text"><div className="plus-menu__title">템플릿 사용</div><div className="plus-menu__desc">저장된 프롬프트 템플릿</div></div>
                     </div>
@@ -1326,7 +1365,10 @@ export default function UserPractice2026() {
                             {projectList.map((project, index) => {
                                 const itemColor = ['#9333ea', '#4285f4', '#d97757', '#d97757', '#10a37f', '#a50034', '#f59e0b'];
                                 return (
-                                    <div className="popup-item" key={project.project_id}>
+                                    <div
+                                        className="popup-item" key={project.project_id}
+                                        onClick={() => selectProjectFromPlusMenu(project)}
+                                    >
                                         <div className="popup-item__color" style={{ background: itemColor[index] }}></div>
                                         <div className="popup-item__info">
                                             <div className="popup-item__name">{project.name}</div>
@@ -1441,7 +1483,7 @@ export default function UserPractice2026() {
                         </div>
 
                         <div className="popup-footer">
-                            <button className="popup-footer__btn" onClick={toggleKnowledgeBaseModal}>취소</button>
+                            <button className="popup-footer__btn" onClick={() => { toggleKnowledgeBaseModal(); setSelectedDocument([]); }}>취소</button>
 
                             <button className="popup-footer__btn popup-footer__btn--primary" disabled={selectedDocument.length === 0}
                                 onClick={handleConfirmKBSelection}

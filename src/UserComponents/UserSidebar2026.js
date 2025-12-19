@@ -182,7 +182,10 @@ export default function UserSidebar2026({
     const changeClass = useCallback(async (classId) => {
         setClassSelectorOpen(false);
         if (Number(classId) === Number(selectedClassId)) return;
-        setCurrentSession(0);
+        if (setCurrentSession) {
+            setCurrentSession(0);
+        }
+
         setSelectedClassId(classId);
         if (classId) {
             const selectedClass = myClasses.find(c => String(c.class_id) === String(classId));
@@ -260,7 +263,9 @@ export default function UserSidebar2026({
     const filteredSessions = sessions.filter(session => session.class_id === Number(selectedClassId));
     const handleSessionClick = useCallback(async (sessionId) => {
         try {
-            setCurrentSession(sessionId);
+            if (setCurrentSession) {
+                setCurrentSession(sessionId);
+            }
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${sessionId}`,
                 { headers: { Authorization: `Bearer ${accessToken}`, }, }
             );

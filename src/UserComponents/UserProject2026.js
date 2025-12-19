@@ -1,11 +1,12 @@
 import UserSidebar2026 from './UserSidebar2026';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { getSelectedClassId } from '../utill/utill';
+import { getSelectedClassId, showToast2026 } from '../utill/utill';
 
 
 export default function UserProject2026() {
     const accessToken = sessionStorage.getItem("access_token");
+    const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
 
     const [projectList, setProjectList] = useState([]);
     const [sessionList, setSessionList] = useState([]);
@@ -14,7 +15,6 @@ export default function UserProject2026() {
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('recent');
     const [prjStatus, setPrjStatus] = useState('all');
-    const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const fetchProjectsRef = useRef(null);
 
     const getProjecList = (projectList) => {
@@ -25,9 +25,12 @@ export default function UserProject2026() {
             fetchProjectsRef.current();
         }
     }
-
     const getSessionList = (List) => {
         setSessionList(List);
+    }
+
+    const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
+        setSavedClassId(classId);
     }
 
     // 필터링 및 정렬된 프로젝트 리스트
@@ -115,6 +118,7 @@ export default function UserProject2026() {
     }
 
     const handleCreateProject = async (e) => {
+        console.log(savedClassId);
         e.preventDefault();
         try {
             const response = await axios.post(`${process.env.REACT_APP_API_URL}/projects`, {
@@ -188,6 +192,7 @@ export default function UserProject2026() {
                     getProjecList={getProjecList}
                     getSessionList={getSessionList}
                     fetchProjectsRef={fetchProjectsRef}
+                    onClassChange={handleClassChange}
                 />
 
                 <main className="main">
@@ -219,7 +224,11 @@ export default function UserProject2026() {
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
-                                <button className="btn btn--primary" onClick={() => setNewProjectModalStatus(true)}>
+                                <button
+                                    className="btn btn--primary"
+                                    onClick={() => { if (savedClassId) { setNewProjectModalStatus(true) } else { showToast2026("강의 선택해주세요.") } }}
+                                // onClick={() => alert(`savedClassId : ${savedClassId}`)}
+                                >
                                     <svg className="icon icon--sm" viewBox="0 0 24 24">
                                         <line x1="12" y1="5" x2="12" y2="19" />
                                         <line x1="5" y1="12" x2="19" y2="12" />
@@ -429,19 +438,29 @@ export default function UserProject2026() {
                                     <p className="project-header__desc" id="projectDesc">{selectedProject.description}</p>
                                 </div>
                                 <div className="project-header__actions">
-                                    <button className="btn btn--primary">
+                                    <button className="btn btn--primary"
+                                        onClick={() => showToast2026("준비중입니다.")}
+                                    >
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                                         </svg>
                                         새 대화
                                     </button>
-                                    <button className="project-header__action" title="수정">
+
+
+                                    <button className="project-header__action" title="수정"
+                                        onClick={() => showToast2026("준비중입니다.")}
+                                    >
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                         </svg>
                                     </button>
-                                    <button className="project-header__action project-header__action--active" id="projectPin" title="고정">
+
+
+                                    <button className="project-header__action project-header__action--active" id="projectPin" title="고정"
+                                        onClick={() => showToast2026("준비중입니다.")}
+                                    >
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                             <path d="M12 17v5"></path>
                                             <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4.76z"></path>
@@ -455,7 +474,9 @@ export default function UserProject2026() {
                         <div className="conversation-list" id="conversationList">
                             {selectedSessionList.length > 0 ? (
                                 selectedSessionList.map((session) => (
-                                    <div className="conversation-card " key={session.session_id}>
+                                    <div className="conversation-card " key={session.session_id}
+                                        onClick={() => showToast2026(`"${session.title}" 대화로 이동합니다.`)}
+                                    >
                                         <div className="conversation-card__content">
                                             <div className="conversation-card__header">
                                                 <span className="conversation-card__title">{session.title}</span>
