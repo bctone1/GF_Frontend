@@ -110,16 +110,15 @@ export default function Login() {
                 navigate('/organization/dashboard');
             }
         } catch (error) {
-            console.log(error);
-            // const errorMessage = getErrorMessage(error);
-            setError(error);
+            const errorMessage = getErrorMessage(error);
+            setError(errorMessage);
 
-            // // 401 에러인 경우 비밀번호 필드에 포커스
-            // if (error.response?.status === 401) {
-            //     setTimeout(() => {
-            //         document.getElementById('password')?.focus();
-            //     }, 100);
-            // }
+            // 401 에러인 경우 비밀번호 필드에 포커스
+            if (error.response?.status === 401) {
+                setTimeout(() => {
+                    document.getElementById('password')?.focus();
+                }, 100);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -157,7 +156,7 @@ export default function Login() {
         <div className="Login_body">
             <div className="login-wrapper">
                 {/* 좌측 설명 영역 */}
-                {/* <div className="info-section">
+                <div className="info-section">
                     <div className="brand">
                         <span className="brand-name">GrowFit</span>
                     </div>
@@ -236,7 +235,7 @@ export default function Login() {
                             </div>
                         </div>
                     </div>
-                </div> */}
+                </div>
 
                 {/* 우측 로그인 영역 */}
                 <div className="login-section">
