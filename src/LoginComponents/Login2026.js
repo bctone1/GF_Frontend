@@ -156,7 +156,7 @@ export default function Login() {
         <div className="Login_body">
             <div className="login-wrapper">
                 {/* 좌측 설명 영역 */}
-                <div className="info-section">
+                {/* <div className="info-section">
                     <div className="brand">
                         <span className="brand-name">GrowFit</span>
                     </div>
@@ -235,7 +235,7 @@ export default function Login() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> */}
 
                 {/* 우측 로그인 영역 */}
                 <div className="login-section">
