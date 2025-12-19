@@ -108,11 +108,12 @@ export default function UserSidebar2026({
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
+        console.log(response.data.items);
         setSessions(response.data.items);
         if (getSessionList) {
             getSessionList(response.data.items);
         }
-    }, [accessToken]);
+    }, [accessToken, getSessionList]);
 
     const getMyAccount = useCallback(() => {
         axios.get(`${process.env.REACT_APP_API_URL}/user/my`, {
@@ -168,10 +169,13 @@ export default function UserSidebar2026({
             const currentClassId = savedClassId || getSelectedClassId();
             fetchProjectsRef.current = () => fetchProjects(currentClassId);
         }
-        if (fetchSessionRef) {
-            fetchSessions();
-        }
     }, [savedClassId, fetchProjects]);
+
+    useEffect(() => {
+        if (fetchSessionRef) {
+            fetchSessionRef.current = fetchSessions;
+        }
+    }, [fetchSessions]);
 
     useEffect(() => {
         if (refreshTrigger > 0) {
