@@ -5,8 +5,7 @@ import axios from 'axios';
 
 export default function UserPractice2026() {
 
-
-
+    // 토글 관련 시작 ------------------------------------------------------------
     const adjustPlusMenuPosition = () => {
         const menu = document.getElementById('plusMenu');
         const btn = document.getElementById('plusBtn');
@@ -17,31 +16,20 @@ export default function UserPractice2026() {
             menu.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
         }
     };
-    useEffect(() => {
-        const handleResize = () => { adjustPlusMenuPosition(); };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
 
-    // 모든 토글을 닫는 헬퍼 함수
     const closeAllToggles = (exceptType = null) => {
-
         if (exceptType !== 'attachmentList') {
             const attachmentList = document.getElementById('attachmentList');
             if (attachmentList) {
                 attachmentList.classList.remove('attachment-dropdown--open');
             }
         }
-
-        // plus-menu 닫기
         if (exceptType !== 'plusMenu') {
             const plusMenu = document.getElementById('plusMenu');
             if (plusMenu) {
                 plusMenu.classList.remove('plus-menu--open');
             }
         }
-
-        // inputSettings 닫기
         if (exceptType !== 'inputSettings') {
             const inputSettingsDropdown = document.getElementById('inputSettingsDropdown');
             const inputSettingsBtn = document.getElementById('inputSettingsBtn');
@@ -52,8 +40,6 @@ export default function UserPractice2026() {
                 inputSettingsBtn.classList.remove('dropdown--open');
             }
         }
-
-        // modelListbox 닫기
         if (exceptType !== 'modelListbox') {
             const modelListboxDropdown = document.getElementById('modelListboxDropdown');
             const modelListboxTrigger = document.getElementById('modelListboxTrigger');
@@ -70,13 +56,9 @@ export default function UserPractice2026() {
         const menu = document.getElementById('plusMenu');
         const btn = document.getElementById('plusBtn');
         if (!menu || !btn) return;
-
         const isOpen = menu.classList.contains('plus-menu--open');
-
         if (!isOpen) {
-            // 다른 토글들 닫기
             closeAllToggles('plusMenu');
-
             const rect = btn.getBoundingClientRect();
             menu.style.left = rect.left + 'px';
             menu.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
@@ -96,14 +78,11 @@ export default function UserPractice2026() {
         const btn = document.getElementById('attachmentListBtn');
         if (!dropdown || !btn) return;
         const isOpen = dropdown.classList.contains('attachment-dropdown--open');
-
         if (!isOpen) {
             closeAllToggles('attachmentList');
             dropdown.classList.add('attachment-dropdown--open');
-            // btn.classList.add('attachment-btn--visible');
         } else {
             dropdown.classList.remove('attachment-dropdown--open');
-            // btn.classList.remove('attachment-btn--visible');
         }
     }
 
@@ -112,9 +91,7 @@ export default function UserPractice2026() {
         const btn = document.getElementById('inputSettingsBtn');
         if (!dropdownMenu || !btn) return;
         const isOpen = dropdownMenu.classList.contains('dropdown--open');
-
         if (!isOpen) {
-            // 다른 토글들 닫기
             closeAllToggles('inputSettings');
             dropdownMenu.classList.add('dropdown--open');
             btn.classList.add('dropdown--open');
@@ -128,11 +105,8 @@ export default function UserPractice2026() {
         const dropdownMenu = document.getElementById('modelListboxDropdown');
         const btn = document.getElementById('modelListboxTrigger');
         if (!dropdownMenu || !btn) return;
-
         const isOpen = dropdownMenu.classList.contains('open');
-
         if (!isOpen) {
-            // 다른 토글들 닫기
             closeAllToggles('modelListbox');
             dropdownMenu.classList.add('open');
             btn.classList.add('open');
@@ -187,7 +161,14 @@ export default function UserPractice2026() {
             setSelectedDocument([]);
         }
     }
-    // 외부 클릭 감지로 토글 닫기
+
+    useEffect(() => {
+        const handleResize = () => { adjustPlusMenuPosition(); };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             const plusMenu = document.getElementById('plusMenu');
@@ -202,23 +183,17 @@ export default function UserPractice2026() {
             const attachmentList = document.getElementById('attachmentList');
             const attachmentListBtn = document.getElementById('attachmentListBtn');
 
-
-            // plus-menu 외부 클릭 체크
             if (plusMenu && plusMenu.classList.contains('plus-menu--open')) {
                 if (!plusMenu.contains(event.target) && !plusBtn?.contains(event.target)) {
                     plusMenu.classList.remove('plus-menu--open');
                 }
             }
-
-            // inputSettings 외부 클릭 체크
             if (inputSettingsDropdown && inputSettingsDropdown.classList.contains('dropdown--open')) {
                 if (!inputSettingsDropdown.contains(event.target) && !inputSettingsBtn?.contains(event.target)) {
                     inputSettingsDropdown.classList.remove('dropdown--open');
                     inputSettingsBtn?.classList.remove('dropdown--open');
                 }
             }
-
-            // modelListbox 외부 클릭 체크
             if (modelListboxDropdown && modelListboxDropdown.classList.contains('open')) {
                 if (!modelListboxDropdown.contains(event.target) && !modelListboxTrigger?.contains(event.target)) {
                     modelListboxDropdown.classList.remove('open');
@@ -228,27 +203,27 @@ export default function UserPractice2026() {
             if (attachmentList && attachmentList.classList.contains('attachment-dropdown--open')) {
                 if (!attachmentList.contains(event.target) && !attachmentListBtn?.contains(event.target)) {
                     attachmentList.classList.remove('attachment-dropdown--open');
-                    // attachmentListBtn?.classList.remove('attachment-btn--visible');
-
                 }
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
 
+    // 토글 관련 종료 ------------------------------------------------------------
 
 
 
-    // 사용할 데이터 요청
+
+
     const accessToken = sessionStorage.getItem("access_token");
+    const [myprofile, setMyprofile] = useState(null);
+    const [myaccount, setMyaccount] = useState(null);
     const [Assistant, setAssistant] = useState([]);
     const [documents, setDocuments] = useState([]);
     const [projectList, setProjectList] = useState([]);
-    const [sessionResponses, setSessionResponses] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [selectedModels, setSelectedModels] = useState([]);
     const [compareMessages, setCompareMessages] = useState({});
@@ -256,17 +231,16 @@ export default function UserPractice2026() {
     const [currentProject, setCurrentProject] = useState('');
     const [comparePanels, setComparePanels] = useState([]);
     const [currentSession, setCurrentSession] = useState(0);
-    const [currentProjectId, setCurrentProjectId] = useState(0);
-
     const [messageInput, setMessageInput] = useState('');
-    const messageInputRef = useRef(null);
-
     const [attachedFiles, setAttachedFiles] = useState([]);
-
-    const messagesEndRef = useRef(null);
-    const compareMessagesRefs = useRef({});
     const [isGenerating, setIsGenerating] = useState(false);
+    const [selectedDocument, setSelectedDocument] = useState([]);
+    const [currentKnowledgeIds, setCurrentKnowledgeIds] = useState([]);
 
+    const compareMessagesRefs = useRef({});
+    const messagesEndRef = useRef(null);
+    const messageInputRef = useRef(null);
+    const fetchSessionRef = useRef(null);
 
     const autoResize = (textarea) => {
         if (textarea) {
@@ -274,28 +248,20 @@ export default function UserPractice2026() {
             textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
         }
     };
-
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
     };
-
     const sendMessage = async () => {
-
         const currentTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
         const message = messageInput.trim();
-
         if (!message || isGenerating) return;
         if (selectedModels.length === 0) { showToast2026('모델을 선택해주세요', 'error'); return; }
-
         setMessageInput('');
         if (messageInputRef.current) { autoResize(messageInputRef.current); }
         setIsGenerating(true);
-        // setShowEmptyState(false);
-
-        // 각 패널에 사용자 메시지 추가
         selectedModels.forEach(model => {
             setCompareMessages(prev => ({
                 ...prev,
@@ -309,30 +275,22 @@ export default function UserPractice2026() {
                 ]
             }));
         });
-
         try {
             const responseData = await getCompareResponse(message);
-
-            // 응답 데이터 검증
             if (!responseData) {
                 throw new Error('응답 데이터가 없습니다.');
             }
-
             if (!responseData.results || !Array.isArray(responseData.results) || responseData.results.length === 0) {
                 throw new Error('응답 결과가 없습니다.');
             }
-
-            // 각 모델별로 응답 처리
             const processedModels = new Set();
             responseData.results.forEach((result) => {
                 if (!result || !result.model_name) {
                     console.warn('유효하지 않은 응답 결과:', result);
                     return;
                 }
-
                 const modelName = result.model_name;
                 processedModels.add(modelName);
-
                 setCompareMessages(prev => ({
                     ...prev,
                     [modelName]: [
@@ -350,8 +308,6 @@ export default function UserPractice2026() {
                     ]
                 }));
             });
-
-            // 선택된 모델 중 응답이 없는 모델에 대해 에러 메시지 표시
             selectedModels.forEach(model => {
                 if (!processedModels.has(model)) {
                     setCompareMessages(prev => ({
@@ -368,11 +324,8 @@ export default function UserPractice2026() {
                     }));
                 }
             });
-
         } catch (err) {
             console.error('응답 생성 중 오류:', err);
-
-            // 모든 선택된 모델에 에러 메시지 표시
             selectedModels.forEach(model => {
                 setCompareMessages(prev => ({
                     ...prev,
@@ -387,10 +340,7 @@ export default function UserPractice2026() {
                     ]
                 }));
             });
-
-            // 사용자에게 토스트 메시지 표시 (선택사항)
             if (err.response) {
-                // 서버 응답이 있는 경우
                 const status = err.response.status;
                 if (status === 401) {
                     showToast2026('인증이 만료되었습니다. 다시 로그인해주세요.', 'error');
@@ -405,29 +355,21 @@ export default function UserPractice2026() {
                 showToast2026('네트워크 연결을 확인해주세요.', 'error');
             }
         }
-
         setIsGenerating(false);
     };
 
-    const fetchSessionRef = useRef(null);
     const fetchSessionsTrigger = () => {
         if (fetchSessionRef.current) {
             fetchSessionRef.current();
         }
     }
-
     const getCompareResponse = async (question) => {
         try {
             const documentIds = attachedFiles
                 .filter(file => file.isDocument && file.knowledge_id)
                 .map(file => file.knowledge_id);
-
-            // const URL = currentProjectId ?
-            //     `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}&project_id=${currentProjectId}`
-            //     : `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat?class_id=${savedClassId}`;
             let URL = '';
             let Param = {};
-
             if (!currentSession) {
                 URL = `${process.env.REACT_APP_API_URL}/user/practice/sessions/run?class_id=${savedClassId}`;
                 Param = {
@@ -453,8 +395,6 @@ export default function UserPractice2026() {
                     timeout: 60000, // 60초 타임아웃
                 }
             );
-            console.log(res.data);
-
             if (res.data.session_id) {
                 setCurrentSession(res.data.session_id);
                 fetchSessionsTrigger();
@@ -462,73 +402,18 @@ export default function UserPractice2026() {
             return res.data;
         } catch (err) {
             console.error('API 호출 오류:', err);
-            // 에러를 throw하여 상위에서 처리하도록 함
             throw err;
         }
     };
-
-
-
-
-
-
-
-
-    // 단일 모드일 때 compareMessages와 SingleMessages 동기화
-    useEffect(() => {
-        // console.log("compareMessages : ", compareMessages);
-        if (selectedModels.length === 1) {
-            const model = selectedModels[0];
-            const messages = compareMessages[model] || [];
-            setSingleMessages(messages);
-        }
-    }, [compareMessages, selectedModels]);
-
-    // 선택된 모델 수에 따라 패널 생성
-    useEffect(() => {
-        // console.log("selectedModels : ", selectedModels);
-        if (selectedModels.length >= 1) {
-            setComparePanels(selectedModels);
-        } else {
-            setComparePanels([]);
-        }
-    }, [selectedModels]);
-
-
-    // 단일일때 메시지 스크롤
-    useEffect(() => {
-        // console.log("singleMessages : ", singleMessages);
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [singleMessages]);
-
-
-    // 다중일때 메시지 스크롤
-    useEffect(() => {
-        // console.log("comparePanels : ", comparePanels);
-        comparePanels.forEach(model => {
-            const ref = compareMessagesRefs.current[model];
-            if (ref) {
-                ref.scrollIntoView({ behavior: 'smooth' });
-            }
-        });
-    }, [compareMessages, comparePanels, selectedModels]);
-
-
-
-
 
     const [allowedModelIds, setAllowedModelIds] = useState(() => {
         const stored = sessionStorage.getItem("allowed_model_ids");
         if (!stored) return [0];
         try {
             const parsed = JSON.parse(stored);
-            // 배열인지 확인
             if (Array.isArray(parsed)) {
                 return parsed;
             }
-            // 배열이 아니면 배열로 변환
             if (typeof parsed === 'number') {
                 return [parsed];
             }
@@ -539,7 +424,7 @@ export default function UserPractice2026() {
                 const num = parseInt(parsed, 10);
                 return isNaN(num) ? [1] : [num];
             }
-            return [1]; // 기본값
+            return [1];
         } catch {
             if (typeof stored === 'string' && stored.includes(',')) {
                 return stored.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
@@ -549,11 +434,8 @@ export default function UserPractice2026() {
         }
     });
 
-
-
     const fetchAssistant = async () => {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/models`);
-        // console.log(response.data.items);
         setAssistant(response.data.items);
     }
     const fetchDocuments = async () => {
@@ -563,25 +445,12 @@ export default function UserPractice2026() {
         setDocuments(response.data.items);
     }
 
-    useEffect(() => {
-        fetchAssistant();
-        fetchDocuments();
-    }, []);
-
-
-    // 클래스 변경 함수 (강의 변경 시 허용된 모델 아이디 및 선택된 모델 업데이트)
     const getProjecList = (projectList) => {
-        // console.log('header에서 받아온 프로젝트 목록 : ', projectList);
         setProjectList(projectList);
     }
 
-
-
     const getSessionResponses = (sessionData) => {
-        // console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
         setCurrentSession(sessionData.session_id);
-        // setMessages(sessionResponses);
-        // setSessionResponses(sessionResponses);
 
         const newCompareMessages = {};
         const promptGroups = {};
@@ -599,7 +468,6 @@ export default function UserPractice2026() {
             return new Date(timeA) - new Date(timeB);
         });
 
-        // 각 질문-응답 쌍을 처리
         sortedPrompts.forEach((promptText) => {
             const responses = promptGroups[promptText];
             const firstResponse = responses[0];
@@ -608,16 +476,11 @@ export default function UserPractice2026() {
                 minute: '2-digit'
             });
 
-            // 각 모델별로 메시지 추가
             responses.forEach((resp) => {
                 const modelName = resp.model_name;
-
-                // 해당 모델의 메시지 배열이 없으면 초기화
                 if (!newCompareMessages[modelName]) {
                     newCompareMessages[modelName] = [];
                 }
-
-                // 사용자 메시지 추가 (이미 추가되지 않은 경우)
                 const hasUserMessage = newCompareMessages[modelName].some(
                     msg => msg.type === 'user' && msg.content === promptText
                 );
@@ -628,8 +491,6 @@ export default function UserPractice2026() {
                         time: userMessageTime
                     });
                 }
-
-                // 어시스턴트 메시지 추가
                 newCompareMessages[modelName].push({
                     type: 'assistant',
                     content: resp.response_text,
@@ -647,14 +508,11 @@ export default function UserPractice2026() {
         setCurrentProject(projectList.find(p => p.project_id === sessionData.project_id)?.name || '');
 
         const usedModels = Object.keys(newCompareMessages);
-        // console.log("usedModels : ", usedModels);
         if (usedModels.length > 0) {
-            // 상위 3개만 선택
             const top3Models = usedModels.slice(0, 3);
             setSelectedModels(top3Models);
         }
     }
-    // const handleSessionChange = ()=>{}
 
     const handleClassChange = (classId, allowedModelIdsArray, projectList) => {
         setProjectList(projectList);
@@ -667,7 +525,6 @@ export default function UserPractice2026() {
         if (Array.isArray(allowedModelIdsArray)) {
             modelIds = allowedModelIdsArray;
         } else if (allowedModelIdsArray != null) {
-            // 배열이 아닌 경우 배열로 변환
             if (typeof allowedModelIdsArray === 'number') {
                 modelIds = [allowedModelIdsArray];
             } else if (typeof allowedModelIdsArray === 'string') {
@@ -687,7 +544,6 @@ export default function UserPractice2026() {
         }
     };
 
-
     const handleModelCheckboxChange = (modelValue, checked) => {
         if (checked) {
             if (selectedModels.length >= 3) {
@@ -705,11 +561,6 @@ export default function UserPractice2026() {
         }
     };
 
-
-
-
-
-    const [selectedDocument, setSelectedDocument] = useState([]);
     const handleDocumentSelection = (document) => {
         setSelectedDocument(prev =>
             prev.some(doc => doc.knowledge_id === document.knowledge_id)
@@ -717,28 +568,19 @@ export default function UserPractice2026() {
                 : [...prev, document] // 추가
         );
     };
-    // const handleRemoveCurrentKBIds= (document)=>{
-    //     setCurrentKnowledgeIds(prev => prev.filter(doc => doc.knowledge_id !== document.knowledge_id));
-    // }
 
-    const [currentKnowledgeIds, setCurrentKnowledgeIds] = useState([]);
     const handleConfirmKBSelection = () => {
-        // console.log('저장할 문서 ids : ', selectedDocument);
         setCurrentKnowledgeIds(selectedDocument.map(doc => doc));
         setSelectedDocument([]);
         toggleKnowledgeBaseModal();
         showToast2026(`${selectedDocument.length}개의 문서가 첨부되었습니다.`, 'success');
-
     }
 
-    const [myprofile, setMyprofile] = useState(null);
     const handleProfileData = (profileData) => {
-        // console.log("sidebar에서 받아온 데이터: ", profileData);
         setMyprofile(profileData);
     }
-    const [myaccount, setMyaccount] = useState(null);
+
     const handleAccountData = (accountData) => {
-        // console.log("sidebar에서 받아온 데이터: ", accountData);
         setMyaccount(accountData);
     }
 
@@ -757,11 +599,63 @@ export default function UserPractice2026() {
             },
             { headers: { Authorization: `Bearer ${accessToken}`, }, }
         );
-        console.log(res.data);
         setCurrentProject(project.name);
         fetchSessionsTrigger();
         toggleProjectModal();
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    useEffect(() => {
+        if (selectedModels.length === 1) {
+            const model = selectedModels[0];
+            const messages = compareMessages[model] || [];
+            setSingleMessages(messages);
+        }
+    }, [compareMessages, selectedModels]);
+
+    useEffect(() => {
+        if (selectedModels.length >= 1) {
+            setComparePanels(selectedModels);
+        } else {
+            setComparePanels([]);
+        }
+    }, [selectedModels]);
+
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [singleMessages]);
+
+    useEffect(() => {
+        comparePanels.forEach(model => {
+            const ref = compareMessagesRefs.current[model];
+            if (ref) {
+                ref.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }, [compareMessages, comparePanels, selectedModels]);
+
+    useEffect(() => {
+        fetchAssistant();
+        fetchDocuments();
+    }, []);
+
+
+
+
+
 
 
 
@@ -1075,10 +969,7 @@ export default function UserPractice2026() {
 
 
 
-
-
-
-                                            {/* <div style={{ position: 'relative' }}>
+                                            <div style={{ position: 'relative' }}>
                                                 <button className="input-btn" title="빠른 설정" onClick={toggleInputSettings} id="inputSettingsBtn">
                                                     <svg className="icon" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
                                                     <span className="input-btn__badge" >3</span>
@@ -1098,7 +989,7 @@ export default function UserPractice2026() {
                                                         <div className="settings-dropdown__toggle settings-dropdown__toggle--active" ></div>
                                                     </div>
                                                 </div>
-                                            </div> */}
+                                            </div>
 
                                         </div>
 
