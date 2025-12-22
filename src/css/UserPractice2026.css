@@ -918,6 +918,7 @@ body {
     border-radius: var(--radius-lg);
     font-size: 14px;
     line-height: 1.6;
+    white-space: pre-wrap;
 }
 
 .message__bubble--ai {

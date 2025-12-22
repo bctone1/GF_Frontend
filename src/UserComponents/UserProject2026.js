@@ -2,9 +2,11 @@ import UserSidebar2026 from './UserSidebar2026';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { getSelectedClassId, showToast2026 } from '../utill/utill';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function UserProject2026() {
+    const navigate = useNavigate();
     const accessToken = sessionStorage.getItem("access_token");
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
 
@@ -18,6 +20,7 @@ export default function UserProject2026() {
     const fetchProjectsRef = useRef(null);
 
     const getProjecList = (projectList) => {
+        console.log(projectList);
         setProjectList(projectList);
     }
     const fetchProjectsTrigger = () => {
@@ -70,14 +73,33 @@ export default function UserProject2026() {
     }, [projectList, searchQuery, sortBy, prjStatus]);
 
 
+    const [editProjectModalStatus, setEditProjectModalStatus] = useState(false);
 
 
     const [detailModal, setDetailModal] = useState(false);
-    const [selectedProject, setSelectedProject] = useState([]);
+    const [selectedProject, setSelectedProject] = useState({
+        class_id: 0,
+        name: "",
+        description: "",
+        project_type: "",
+        status: "",
+        progress_percent: 0,
+        practice_hours: 0,
+        conversation_count: 0,
+        last_activity_at: "",
+    });
+    const [editProjectInfo, setEditProjectInfo] = useState({
+        name: "",
+        description: "",
+    });
+
+
     const [selectedSessionList, setSelectedSessionList] = useState([]);
 
     const handleProjectClick = async (project) => {
         setSelectedProject(project);
+        setEditProjectInfo(project);
+
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/projects/${project.project_id}/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, }, }
         );
@@ -111,7 +133,6 @@ export default function UserProject2026() {
                 primary_model_label: group.modelNames.join(', ') // 표시용
             };
         });
-        console.log("processedSessions : ", processedSessions);
 
         setSelectedSessionList(processedSessions);
         setDetailModal(true);
@@ -131,10 +152,10 @@ export default function UserProject2026() {
                     "Content-Type": "application/json",
                 }
             });
-            // 폼 초기화
-            e.target.reset();
             setNewProjectModalStatus(false);
             fetchProjectsTrigger();
+            showToast2026(`"${e.target.newProjectName.value}" 프로젝트가 생성되었습니다.`, 'success');
+            e.target.reset();
         } catch (error) {
             console.error('프로젝트 생성 실패:', error);
             // 에러 발생 시에도 사용자에게 알림을 줄 수 있습니다
@@ -181,14 +202,82 @@ export default function UserProject2026() {
         }
     }, [detailModal, contextMenuOpen, closeChatContextMenu]);
 
-
-
-    const SessionClickRef = useRef(null);
-    const SessionClickTrigger = () => {
-        if (SessionClickRef.current) {
-            SessionClickRef.current();
+    const fetchSessionRef = useRef(null);
+    const fetchSessionsTrigger = () => {
+        if (fetchSessionRef.current) {
+            fetchSessionRef.current();
         }
     }
+
+    const handleDeleteChat = useCallback(() => {
+        axios.delete(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${contextMenuSessionId}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            setSelectedSessionList(prev => prev.filter(session => session.session_id !== contextMenuSessionId));
+            fetchSessionsTrigger();
+            closeChatContextMenu();
+            showToast2026('세션이 삭제되었습니다.');
+        }).catch(error => {
+            console.error('세션 삭제 실패:', error);
+        });
+    }, [closeChatContextMenu, contextMenuSessionId, accessToken]);
+
+
+    const handlePatchProjectStatus = useCallback((project, status) => {
+        console.log(project);
+        axios.patch(`${process.env.REACT_APP_API_URL}/projects/${project.project_id}`, {
+            "class_id": project.class_id,
+            "name": project.name,
+            "description": project.description,
+            "project_type": project.project_type,
+            "status": status,
+            "progress_percent": project.progress_percent,
+            "practice_hours": project.practice_hours,
+            "conversation_count": project.conversation_count,
+            "last_activity_at": project.last_activity_at,
+        }, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            if (project.status === 'active') {
+                showToast2026(`"${project.name}" 프로젝트가 비활성화되었습니다.`);
+            } else {
+                showToast2026(`"${project.name}" 프로젝트가 활성화되었습니다.`, 'success');
+            }
+            fetchProjectsTrigger();
+        }).catch(error => {
+            console.error('프로젝트 수정 실패:', error);
+        });
+    })
+
+    const handleEditProject = useCallback(() => {
+        console.log(editProjectInfo);
+        axios.patch(`${process.env.REACT_APP_API_URL}/projects/${selectedProject.project_id}`, {
+            "class_id": editProjectInfo.class_id,
+            "name": editProjectInfo.name,
+            "description": editProjectInfo.description,
+            "project_type": editProjectInfo.project_type,
+            "status": editProjectInfo.status,
+            "progress_percent": editProjectInfo.progress_percent,
+            "practice_hours": editProjectInfo.practice_hours,
+            "conversation_count": editProjectInfo.conversation_count,
+            "last_activity_at": editProjectInfo.last_activity_at,
+        }, {
+            headers: { Authorization: `Bearer ${accessToken}`, },
+        }).then(response => {
+            showToast2026('프로젝트가 수정되었습니다.', 'success');
+            fetchProjectsTrigger();
+            setEditProjectModalStatus(false);
+            setSelectedProject(editProjectInfo);
+        }).catch(error => {
+            console.error('프로젝트 수정 실패:', error);
+        });
+    });
+
+
 
 
 
@@ -200,7 +289,7 @@ export default function UserProject2026() {
                     getSessionList={getSessionList}
                     fetchProjectsRef={fetchProjectsRef}
                     onClassChange={handleClassChange}
-                    handleSessionClickRef={SessionClickRef}
+                    fetchSessionRef={fetchSessionRef}
                 />
 
                 <main className="main">
@@ -317,7 +406,10 @@ export default function UserProject2026() {
                                         <div className="project-card__toggle" >
                                             <button
                                                 className={`project-card__toggle-btn ${project.status === 'active' ? 'active' : ''}`}
-                                                onClick={(e) => e.stopPropagation()}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handlePatchProjectStatus(project, project.status === 'active' ? 'inactive' : 'active');
+                                                }}
                                             ></button>
                                         </div>
                                     </div>
@@ -419,10 +511,12 @@ export default function UserProject2026() {
 
 
             {/* 프로젝트 디테일 모달 */}
-            <div className={`modal-overlay ${detailModal ? 'modal-overlay--open' : ''}`} onClick={() => {
-                setDetailModal(false);
-                closeChatContextMenu();
-            }}>
+            <div className={`modal-overlay ${detailModal ? 'modal-overlay--open' : ''}`}
+                onClick={() => {
+                    setDetailModal(false);
+                    closeChatContextMenu();
+                }}
+            >
                 <div className="modal modal--detail" onClick={(e) => {
                     e.stopPropagation();
                     // 모달 내부 클릭 시 컨텍스트 메뉴 닫기 (메뉴 버튼이나 컨텍스트 메뉴 자체를 클릭한 경우 제외)
@@ -457,7 +551,7 @@ export default function UserProject2026() {
 
 
                                     <button className="project-header__action" title="수정"
-                                        onClick={() => showToast2026("준비중입니다.")}
+                                        onClick={() => setEditProjectModalStatus(true)}
                                     >
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -484,10 +578,11 @@ export default function UserProject2026() {
                                 selectedSessionList.map((session) => (
                                     <div className="conversation-card " key={session.session_id}
                                         onClick={() => {
-                                            SessionClickTrigger();
-                                            if (SessionClickRef.current) {
-                                                SessionClickRef.current(session.session_id);
-                                            }
+                                            // SessionClickTrigger();
+                                            // if (SessionClickRef.current) {
+                                            //     SessionClickRef.current(session.session_id);
+                                            // }
+                                            navigate(`/user/practice?sessionId=${session.session_id}`);
                                         }}
                                     >
                                         <div className="conversation-card__content">
@@ -527,6 +622,13 @@ export default function UserProject2026() {
                     </div>
                 </div>
 
+
+
+
+
+
+
+
                 {/* 대화 컨텍스트 메뉴 */}
                 <div
                     className={`context-menu ${contextMenuOpen ? 'context-menu--open' : ''}`}
@@ -540,17 +642,64 @@ export default function UserProject2026() {
                         <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                         이름 변경
                     </div>
-                    <div className="context-menu__item" >
+                    {/* <div className="context-menu__item" >
                         <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M12 17v5"></path><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4.76z"></path></svg>
                         고정 해제
-                    </div>
+                    </div> */}
+
                     <div className="context-menu__divider"></div>
-                    <div className="context-menu__item context-menu__item--danger" >
+
+                    <div className="context-menu__item context-menu__item--danger"
+                        onClick={handleDeleteChat}
+                    >
                         <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         삭제
                     </div>
                 </div>
+            </div>
 
+            <div className={`modal-overlay ${editProjectModalStatus ? 'modal-overlay--open' : ''}`} onClick={() => setEditProjectModalStatus(false)}>
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal__header">
+                        <h3 className="modal__title" id="modalTitle">프로젝트 수정</h3>
+                        <button className="modal__close" onClick={() => setEditProjectModalStatus(false)}>
+                            <svg className="icon" viewBox="0 0 24 24">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div className="modal__body" id="modalBody">
+                        <div style={{ display: 'grid', gap: '16px' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>
+                                    프로젝트 이름 <span style={{ color: 'var(--error)' }}>*</span>
+                                </label>
+                                <input
+                                    type="text" id="editProjectName"
+                                    value={editProjectInfo.name}
+                                    maxLength="50" style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '14px' }}
+                                    onChange={(e) => setEditProjectInfo({ ...editProjectInfo, name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '8px' }}>프로젝트 설명</label>
+                                <textarea
+                                    id="editProjectDesc"
+                                    maxLength="200"
+                                    rows="3"
+                                    style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '14px', resize: 'none' }}
+                                    value={editProjectInfo.description}
+                                    onChange={(e) => setEditProjectInfo({ ...editProjectInfo, description: e.target.value })}
+                                />
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                                <button className="modal__btn" onClick={() => { setEditProjectModalStatus(false); setEditProjectInfo(selectedProject); }}>취소</button>
+                                <button className="modal__btn modal__btn--primary" onClick={handleEditProject}>저장</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
 

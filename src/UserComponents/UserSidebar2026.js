@@ -19,7 +19,6 @@ export default function UserSidebar2026({
     currentSession,
     setCurrentSession,
     fetchSessionRef,
-    handleSessionClickRef,
 }) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -72,6 +71,7 @@ export default function UserSidebar2026({
     }, [closeChatContextMenu, clickContextSessionId, accessToken]);
 
     const handleSessionClick = useCallback(async (sessionId) => {
+        // alert(sessionId);
         if (currentMenu !== 'practice') {
             navigate(`/user/practice?sessionId=${sessionId}`);
         }
@@ -281,12 +281,6 @@ export default function UserSidebar2026({
             fetchSessionRef.current = fetchSessions;
         }
     }, [fetchSessions, fetchSessionRef]);
-
-    useEffect(() => {
-        if (handleSessionClickRef) {
-            handleSessionClickRef.current = handleSessionClick;
-        }
-    }, [handleSessionClickRef, handleSessionClick]);
 
     useEffect(() => {
         if (refreshTrigger > 0) {
@@ -625,7 +619,7 @@ export default function UserSidebar2026({
                         <span>내 에이전트</span>
                     </Link>
 
-                    <Link
+                    {/* <Link
                         onClick={() => showToast2026("준비중입니다.")}
                         // to="/user/workflow"
                         className={`sidebar__nav-item ${currentMenu === 'workflow' ? 'sidebar__nav-item--active' : ''}`}
@@ -638,7 +632,7 @@ export default function UserSidebar2026({
                             <line x1="4" y1="4" x2="9" y2="9" />
                         </svg></span>
                         <span>워크플로우</span>
-                    </Link>
+                    </Link> */}
 
                     <Link
                         onClick={() => showToast2026("준비중입니다.")}

@@ -365,9 +365,9 @@ export default function UserPractice2026() {
     }
     const getCompareResponse = async (question) => {
         try {
-            const documentIds = attachedFiles
-                .filter(file => file.isDocument && file.knowledge_id)
-                .map(file => file.knowledge_id);
+            const documentIds = currentKnowledgeIds.filter(doc => doc.knowledge_id).map(file => file.knowledge_id);
+            console.log(documentIds);
+
             let URL = '';
             let Param = {};
             if (!currentSession) {
@@ -969,7 +969,7 @@ export default function UserPractice2026() {
 
 
 
-                                            <div style={{ position: 'relative' }}>
+                                            {/* <div style={{ position: 'relative' }}>
                                                 <button className="input-btn" title="빠른 설정" onClick={toggleInputSettings} id="inputSettingsBtn">
                                                     <svg className="icon" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
                                                     <span className="input-btn__badge" >3</span>
@@ -989,7 +989,7 @@ export default function UserPractice2026() {
                                                         <div className="settings-dropdown__toggle settings-dropdown__toggle--active" ></div>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </div> */}
 
                                         </div>
 
