@@ -31,23 +31,72 @@ export default function UserSidebar2026({
     const [projectList, setProjectList] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [classSelectorOpen, setClassSelectorOpen] = useState(false);
-
     const [searchParams, setSearchParams] = useSearchParams();
+    const [searchModalStatus, setSearchModalStatus] = useState(false);
+    const [newProjectModalStatus, setNewProjectModalStatus] = useState(false);
+    const [settingsModalStatus, setSettingsModalStatus] = useState(false);
+    const [profileModalStatus, setProfileModalStatus] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ left: 0, top: 0 });
+    const [sessions, setSessions] = useState([]);
+    const filteredSessions = sessions.filter(session => session.class_id === Number(selectedClassId));
+    const [myprofile, setMyprofile] = useState(null);
+    const [myaccount, setMyaccount] = useState(null);
+    const [clickContextSessionId, setClickContextSessionId] = useState(null);
 
-    useEffect(() => {
-        const sessionIdFromUrl = searchParams.get('sessionId');
-        if (sessionIdFromUrl) {
-            const sessionId = parseInt(sessionIdFromUrl, 10);
-            console.log(sessionId);
-            if (sessionId && !isNaN(sessionId)) {
-                const timer = setTimeout(() => {
-                    handleSessionClick(sessionId);
-                    setSearchParams({});
-                }, 100);
-                return () => clearTimeout(timer);
+    const closeChatContextMenu = useCallback(() => {
+        setContextMenuOpen(false);
+    }, []);
+
+    const showChatContextMenu = useCallback((event, sessionId) => {
+        setClickContextSessionId(sessionId);
+        event.stopPropagation();
+        setContextMenuPosition({ left: event.clientX, top: event.clientY });
+        setContextMenuOpen(true);
+    }, []);
+
+    const handleDeleteChat = useCallback(() => {
+        axios.delete(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${clickContextSessionId}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            if (currentSession === clickContextSessionId) {
+                startNewChat();
             }
+            fetchSessions();
+            closeChatContextMenu();
+            showToast2026('세션이 삭제되었습니다.');
+        }).catch(error => {
+            console.error('세션 삭제 실패:', error);
+        });
+    }, [closeChatContextMenu, clickContextSessionId, accessToken]);
+
+    const handleSessionClick = useCallback(async (sessionId) => {
+        if (currentMenu !== 'practice') {
+            navigate(`/user/practice?sessionId=${sessionId}`);
         }
-    }, [searchParams]);
+        try {
+            if (setCurrentSession) {
+                setCurrentSession(sessionId);
+            }
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${sessionId}`,
+                { headers: { Authorization: `Bearer ${accessToken}`, }, }
+            );
+            const sessionData = response.data;
+            if (getSessionResponses) {
+                getSessionResponses(sessionData);
+            }
+        } catch (error) {
+            console.error('세션 조회 실패:', error);
+        }
+    }, [accessToken, currentMenu, navigate, setCurrentSession, getSessionResponses]);
+
+    const handleRenameChat = useCallback(() => {
+        closeChatContextMenu();
+        showToast2026('구현예정입니다.');
+    }, [closeChatContextMenu]);
+
+
 
 
     const fetchProjects = useCallback(async (classId) => {
@@ -72,7 +121,6 @@ export default function UserSidebar2026({
             setProjectList([]);
             return [];
         }
-
     }, [accessToken, getProjecList]);
 
 
@@ -115,14 +163,7 @@ export default function UserSidebar2026({
                 onClassesData([], false);
             }
         });
-    }, [accessToken]);
-
-    // URL경로가 바뀔때마다 실행
-    useEffect(() => {
-        if (savedClassId) {
-            setSelectedClassId(savedClassId);
-        }
-    }, [location.pathname, savedClassId]);
+    }, [accessToken, onClassesData]);
 
     const fetchSessions = useCallback(async () => {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
@@ -151,7 +192,7 @@ export default function UserSidebar2026({
         }).catch(error => {
             console.error('계정 조회 실패:', error);
         });
-    }, [accessToken]);
+    }, [accessToken, handleAccountData]);
 
     const getMyProfile = useCallback(() => {
         axios.get(`${process.env.REACT_APP_API_URL}/user/my/profile`, {
@@ -166,56 +207,17 @@ export default function UserSidebar2026({
         }).catch(error => {
             console.error('프로필 조회 실패:', error);
         });
-    }, [accessToken]);
+    }, [accessToken, handleProfileData]);
+
     const handleLogout = () => {
         sessionStorage.clear();
         window.location.href = "/login";
     }
 
-
-    useEffect(() => {
-        fetchMyClasses();
-        fetchSessions();
-        getMyAccount();
-        getMyProfile();
-        if (savedClassId) {
-            fetchProjects(savedClassId);
-        }
-
-    }, []);
-
-    useEffect(() => {
-        if (fetchProjectsRef) {
-            const currentClassId = savedClassId || getSelectedClassId();
-            fetchProjectsRef.current = () => fetchProjects(currentClassId);
-        }
-    }, [savedClassId, fetchProjects]);
-
-    useEffect(() => {
-        if (fetchSessionRef) {
-            fetchSessionRef.current = fetchSessions;
-        }
-    }, [fetchSessions]);
-
-    useEffect(() => {
-        if (handleSessionClickRef) {
-            handleSessionClickRef.current = handleSessionClick;
-        }
-    }, [handleSessionClickRef]);
-
-    useEffect(() => {
-        if (refreshTrigger > 0) {
-            fetchMyClasses();
-        }
-    }, [refreshTrigger]);
-
     const changeClass = useCallback(async (classId) => {
         setClassSelectorOpen(false);
         if (Number(classId) === Number(selectedClassId)) return;
-        if (setCurrentSession) {
-            setCurrentSession(0);
-        }
-
+        if (setCurrentSession) { setCurrentSession(0); }
         setSelectedClassId(classId);
         if (classId) {
             const selectedClass = myClasses.find(c => String(c.class_id) === String(classId));
@@ -223,7 +225,6 @@ export default function UserSidebar2026({
             const allowed_model_ids = selectedClass ? selectedClass.allowed_model_ids : [1];
             sessionStorage.setItem("allowed_model_ids", allowed_model_ids);
             setSelectedClass(classId, classTitle);
-            // fetchProjects를 먼저 실행하고 완료된 후에 onClassChange 호출
             const updatedProjects = await fetchProjects(classId);
             if (onClassChange) {
                 onClassChange(classId, allowed_model_ids, updatedProjects || []);
@@ -234,13 +235,64 @@ export default function UserSidebar2026({
                 onClassChange(null, [1], []);
             }
         }
+    }, [myClasses, selectedClassId, fetchProjects, onClassChange, setCurrentSession]);
 
-    }, [myClasses, selectedClassId]);
+    useEffect(() => {
+        const sessionIdFromUrl = searchParams.get('sessionId');
+        if (sessionIdFromUrl) {
+            const sessionId = parseInt(sessionIdFromUrl, 10);
+            console.log(sessionId);
+            if (sessionId && !isNaN(sessionId)) {
+                const timer = setTimeout(() => {
+                    handleSessionClick(sessionId);
+                    setSearchParams({});
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [searchParams, handleSessionClick, setSearchParams]);
 
-    const closeChatContextMenu = useCallback(() => {
-        setContextMenuOpen(false);
-        setContextMenuSessionId(null);
+    useEffect(() => {
+        if (savedClassId) {
+            setSelectedClassId(savedClassId);
+        }
+    }, [location.pathname, savedClassId]);
+
+
+    useEffect(() => {
+        fetchMyClasses();
+        fetchSessions();
+        getMyAccount();
+        getMyProfile();
+        if (savedClassId) {
+            fetchProjects(savedClassId);
+        }
     }, []);
+
+    useEffect(() => {
+        if (fetchProjectsRef) {
+            const currentClassId = savedClassId || getSelectedClassId();
+            fetchProjectsRef.current = () => fetchProjects(currentClassId);
+        }
+    }, [savedClassId, fetchProjects, fetchProjectsRef]);
+
+    useEffect(() => {
+        if (fetchSessionRef) {
+            fetchSessionRef.current = fetchSessions;
+        }
+    }, [fetchSessions, fetchSessionRef]);
+
+    useEffect(() => {
+        if (handleSessionClickRef) {
+            handleSessionClickRef.current = handleSessionClick;
+        }
+    }, [handleSessionClickRef, handleSessionClick]);
+
+    useEffect(() => {
+        if (refreshTrigger > 0) {
+            fetchMyClasses();
+        }
+    }, [refreshTrigger, fetchMyClasses]);
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -266,7 +318,7 @@ export default function UserSidebar2026({
             }
         }
 
-    }, [externalClassSelect, myClasses]);
+    }, [externalClassSelect, myClasses, changeClass]);
 
     // 외부 클릭 시 컨텍스트 메뉴 닫기
     useEffect(() => {
@@ -286,75 +338,6 @@ export default function UserSidebar2026({
 
 
 
-
-
-    // 리뉴얼
-    const [sessions, setSessions] = useState([]);
-    const filteredSessions = sessions.filter(session => session.class_id === Number(selectedClassId));
-    const handleSessionClick = useCallback(async (sessionId) => {
-        console.log(sessionId);
-        if (currentMenu !== 'practice') {
-            navigate(`/user/practice?sessionId=${sessionId}`);
-        }
-
-        try {
-            if (setCurrentSession) {
-                setCurrentSession(sessionId);
-            }
-            const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${sessionId}`,
-                { headers: { Authorization: `Bearer ${accessToken}`, }, }
-            );
-            const sessionData = response.data;
-            if (getSessionResponses) {
-                getSessionResponses(sessionData);
-            }
-        } catch (error) {
-            console.error('세션 조회 실패:', error);
-        }
-    }, [accessToken]);
-
-
-
-
-    const [myprofile, setMyprofile] = useState(null);
-    const [myaccount, setMyaccount] = useState(null);
-
-
-
-    // 컨텍스트 메뉴 열기
-    const showChatContextMenu = useCallback((event, sessionId) => {
-        event.stopPropagation();
-        setContextMenuPosition({ left: event.clientX, top: event.clientY });
-        setContextMenuSessionId(sessionId);
-        setContextMenuOpen(true);
-    }, []);
-
-    // 컨텍스트 메뉴 닫기
-
-
-    // 메뉴 항목 핸들러
-    const handleRenameChat = useCallback(() => {
-        closeChatContextMenu();
-        alert('구현예정입니다.');
-    }, [closeChatContextMenu]);
-
-    const handleDuplicateChat = useCallback(() => {
-        closeChatContextMenu();
-        alert('구현예정입니다.');
-    }, [closeChatContextMenu]);
-
-    const handleDeleteChat = useCallback(() => {
-        closeChatContextMenu();
-        alert('구현예정입니다.');
-    }, [closeChatContextMenu]);
-
-    const [searchModalStatus, setSearchModalStatus] = useState(false);
-    const [newProjectModalStatus, setNewProjectModalStatus] = useState(false);
-    const [settingsModalStatus, setSettingsModalStatus] = useState(false);
-    const [profileModalStatus, setProfileModalStatus] = useState(false);
-    const [contextMenuPosition, setContextMenuPosition] = useState({ left: 0, top: 0 });
-    const [contextMenuSessionId, setContextMenuSessionId] = useState(null);
-
     return (
         <>
             <div className={`modal-overlay ${searchModalStatus ? 'modal-overlay--open' : ''}`} onClick={() => setSearchModalStatus(false)}>
@@ -372,8 +355,7 @@ export default function UserSidebar2026({
                         <div style={{ marginBottom: '16px' }}>
                             <div style={{ position: 'relative' }}>
                                 <svg className="icon icon--sm"
-                                    style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg
-                                >
+                                    style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                 <input type="text" placeholder="대화 내용 검색..." style={{ width: '100%', padding: '10px 12px 10px 40px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '14px' }} />
                             </div>
                         </div>
@@ -528,21 +510,20 @@ export default function UserSidebar2026({
                                     const daysLeft = Math.floor((endDate - now) / (1000 * 60 * 60 * 24) + 1);
                                     const isDisabled = daysUntilStart > 0 || daysLeft < 0;
 
-                                    if (!isDisabled) {
-                                        return (
-                                            <div
-                                                className={`class-dropdown__item ${selectedClassId === myClass.class_id ? 'class-dropdown__item--active' : ''}`}
-                                                onClick={() => changeClass(myClass.class_id)}
-                                                key={myClass.class_id}
-                                            >
-                                                <div className="class-dropdown__item-info">
-                                                    <div className="class-dropdown__item-name">{myClass.class_title}</div>
-                                                    <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
-                                                </div>
-                                                <span className="class-dropdown__item-badge class-dropdown__item-badge--active">D-{daysLeft}</span>
+                                    if (isDisabled) return null;
+                                    return (
+                                        <div
+                                            className={`class-dropdown__item ${selectedClassId === myClass.class_id ? 'class-dropdown__item--active' : ''}`}
+                                            onClick={() => changeClass(myClass.class_id)}
+                                            key={myClass.class_id}
+                                        >
+                                            <div className="class-dropdown__item-info">
+                                                <div className="class-dropdown__item-name">{myClass.class_title}</div>
+                                                <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
                                             </div>
-                                        )
-                                    }
+                                            <span className="class-dropdown__item-badge class-dropdown__item-badge--active">D-{daysLeft}</span>
+                                        </div>
+                                    )
                                 })}
                             </div>
 
@@ -560,17 +541,16 @@ export default function UserSidebar2026({
                                     const isDisabled = daysUntilStart > 0 || daysLeft < 0;
                                     const isEnded = daysLeft < 0;
 
-                                    if (isDisabled) {
-                                        return (
-                                            <div className="class-dropdown__item class-dropdown__item--disabled" key={myClass.class_id}>
-                                                <div className="class-dropdown__item-info">
-                                                    <div className="class-dropdown__item-name">{myClass.class_title}</div>
-                                                    <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
-                                                </div>
-                                                <span className={`class-dropdown__item-badge class-dropdown__item-badge--${isEnded ? 'ended' : 'not-started'}`}>{isEnded ? '종료' : '예정'}</span>
+                                    if (isDisabled) return null;
+                                    return (
+                                        <div className="class-dropdown__item class-dropdown__item--disabled" key={myClass.class_id}>
+                                            <div className="class-dropdown__item-info">
+                                                <div className="class-dropdown__item-name">{myClass.class_title}</div>
+                                                <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
                                             </div>
-                                        )
-                                    }
+                                            <span className={`class-dropdown__item-badge class-dropdown__item-badge--${isEnded ? 'ended' : 'not-started'}`}>{isEnded ? '종료' : '예정'}</span>
+                                        </div>
+                                    )
                                 })}
                             </div>
                         </div>
@@ -586,8 +566,7 @@ export default function UserSidebar2026({
                 </div>
 
                 <nav className="sidebar__nav">
-
-                    <Link
+                    {/* <Link
                         onClick={() => showToast2026("준비중입니다.")}
                         // to="/user/dashboard"
                         className={`sidebar__nav-item ${currentMenu === 'dashboard' ? 'sidebar__nav-item--active' : ''}`}
@@ -597,7 +576,7 @@ export default function UserSidebar2026({
                             <polyline points="9 22 9 12 15 12 15 22" />
                         </svg></span>
                         <span>대시보드</span>
-                    </Link>
+                    </Link> */}
 
                     <Link
                         to="/user/practice"
@@ -779,13 +758,13 @@ export default function UserSidebar2026({
                     </svg>
                     이름 변경
                 </div>
-                <div className="context-menu__item" onClick={handleDuplicateChat}>
+                {/* <div className="context-menu__item" onClick={handleDuplicateChat}>
                     <svg className="icon icon--sm" viewBox="0 0 24 24">
                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
                     </svg>
                     복제
-                </div>
+                </div> */}
                 <div className="context-menu__item context-menu__item--danger" onClick={handleDeleteChat}>
                     <svg className="icon icon--sm" viewBox="0 0 24 24">
                         <path d="M3 6h18" />
