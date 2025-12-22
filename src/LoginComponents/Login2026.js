@@ -194,15 +194,7 @@ export default function Login() {
                                 <p className="feature-description">프롬프트 기반 맞춤형 에이전트 생성</p>
                             </div>
 
-                            <div className="feature-item">
-                                <div className="feature-icon">
-                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                    </svg>
-                                </div>
-                                <h3 className="feature-title">멀티모달 AI</h3>
-                                <p className="feature-description">이미지, 영상 생성 및 분석 지원</p>
-                            </div>
+
 
                             <div className="feature-item">
                                 <div className="feature-icon">
@@ -212,6 +204,16 @@ export default function Login() {
                                 </div>
                                 <h3 className="feature-title">RAG 지식베이스</h3>
                                 <p className="feature-description">강의자료 기반 맞춤형 AI 답변</p>
+                            </div>
+
+                            <div className="feature-item">
+                                <div className="feature-icon">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                                <h3 className="feature-title">멀티모달 AI</h3>
+                                <p className="feature-description">이미지, 영상 생성 및 분석 지원</p>
                             </div>
 
                             <div className="feature-item">

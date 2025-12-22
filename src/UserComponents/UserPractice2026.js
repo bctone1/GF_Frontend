@@ -578,7 +578,7 @@ export default function UserPractice2026() {
 
 
     const getSessionResponses = (sessionData) => {
-        console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
+        // console.log('header에서 받아온 세션 응답 목록 : ', sessionData);
         setCurrentSession(sessionData.session_id);
         // setMessages(sessionResponses);
         // setSessionResponses(sessionResponses);

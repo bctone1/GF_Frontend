@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { setSelectedClass, getSelectedClassId, showToast2026 } from '../utill/utill';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function UserSidebar2026({
     onClassChange,
@@ -17,9 +18,10 @@ export default function UserSidebar2026({
     fetchProjectsRef,
     currentSession,
     setCurrentSession,
-    fetchSessionRef
+    fetchSessionRef,
+    handleSessionClickRef,
 }) {
-
+    const navigate = useNavigate();
     const location = useLocation();
     const currentMenu = location.pathname.split('/')[2];
     const [myClasses, setMyClasses] = useState([]);
@@ -29,6 +31,24 @@ export default function UserSidebar2026({
     const [projectList, setProjectList] = useState([]);
     const [savedClassId, setSavedClassId] = useState(getSelectedClassId());
     const [classSelectorOpen, setClassSelectorOpen] = useState(false);
+
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    useEffect(() => {
+        const sessionIdFromUrl = searchParams.get('sessionId');
+        if (sessionIdFromUrl) {
+            const sessionId = parseInt(sessionIdFromUrl, 10);
+            console.log(sessionId);
+            if (sessionId && !isNaN(sessionId)) {
+                const timer = setTimeout(() => {
+                    handleSessionClick(sessionId);
+                    setSearchParams({});
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [searchParams]);
+
 
     const fetchProjects = useCallback(async (classId) => {
         if (!classId) {
@@ -108,7 +128,7 @@ export default function UserSidebar2026({
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/user/practice/sessions`,
             { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json", } }
         );
-        console.log(response.data.items);
+        // console.log(response.data.items);
         setSessions(response.data.items);
         if (getSessionList) {
             getSessionList(response.data.items);
@@ -176,6 +196,12 @@ export default function UserSidebar2026({
             fetchSessionRef.current = fetchSessions;
         }
     }, [fetchSessions]);
+
+    useEffect(() => {
+        if (handleSessionClickRef) {
+            handleSessionClickRef.current = handleSessionClick;
+        }
+    }, [handleSessionClickRef]);
 
     useEffect(() => {
         if (refreshTrigger > 0) {
@@ -266,6 +292,11 @@ export default function UserSidebar2026({
     const [sessions, setSessions] = useState([]);
     const filteredSessions = sessions.filter(session => session.class_id === Number(selectedClassId));
     const handleSessionClick = useCallback(async (sessionId) => {
+        console.log(sessionId);
+        if (currentMenu !== 'practice') {
+            navigate(`/user/practice?sessionId=${sessionId}`);
+        }
+
         try {
             if (setCurrentSession) {
                 setCurrentSession(sessionId);

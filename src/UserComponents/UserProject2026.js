@@ -183,6 +183,13 @@ export default function UserProject2026() {
 
 
 
+    const SessionClickRef = useRef(null);
+    const SessionClickTrigger = () => {
+        if (SessionClickRef.current) {
+            SessionClickRef.current();
+        }
+    }
+
 
 
     return (
@@ -193,6 +200,7 @@ export default function UserProject2026() {
                     getSessionList={getSessionList}
                     fetchProjectsRef={fetchProjectsRef}
                     onClassChange={handleClassChange}
+                    handleSessionClickRef={SessionClickRef}
                 />
 
                 <main className="main">
@@ -475,7 +483,12 @@ export default function UserProject2026() {
                             {selectedSessionList.length > 0 ? (
                                 selectedSessionList.map((session) => (
                                     <div className="conversation-card " key={session.session_id}
-                                        onClick={() => showToast2026(`"${session.title}" 대화로 이동합니다.`)}
+                                        onClick={() => {
+                                            SessionClickTrigger();
+                                            if (SessionClickRef.current) {
+                                                SessionClickRef.current(session.session_id);
+                                            }
+                                        }}
                                     >
                                         <div className="conversation-card__content">
                                             <div className="conversation-card__header">
