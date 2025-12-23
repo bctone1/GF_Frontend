@@ -50,6 +50,16 @@ export default function UserPractice2026() {
                 modelListboxTrigger.classList.remove('open');
             }
         }
+        if (exceptType !== 'moreDropdown') {
+            const moreDropdownList = document.getElementById('moreDropdownList');
+            const moreDropdownBtn = document.getElementById('moreDropdownBtn');
+            if (moreDropdownList) {
+                moreDropdownList.classList.remove('dropdown--open');
+            }
+            if (moreDropdownBtn) {
+                moreDropdownBtn.classList.remove('dropdown--open');
+            }
+        }
     };
 
     const togglePlusMenu = () => {
@@ -162,6 +172,21 @@ export default function UserPractice2026() {
         }
     }
 
+    const toggleMoreDropdown = () => {
+        const dropdown = document.getElementById('moreDropdownList');
+        const btn = document.getElementById('moreDropdownBtn');
+        if (!dropdown || !btn) return;
+        const isOpen = dropdown.classList.contains('dropdown--open');
+        if (!isOpen) {
+            closeAllToggles('moreDropdown');
+            dropdown.classList.add('dropdown--open');
+            btn.classList.add('dropdown--open');
+        } else {
+            dropdown.classList.remove('dropdown--open');
+            btn.classList.remove('dropdown--open');
+        }
+    }
+
     useEffect(() => {
         const handleResize = () => { adjustPlusMenuPosition(); };
         window.addEventListener('resize', handleResize);
@@ -183,6 +208,10 @@ export default function UserPractice2026() {
             const attachmentList = document.getElementById('attachmentList');
             const attachmentListBtn = document.getElementById('attachmentListBtn');
 
+            const moreDropdownList = document.getElementById('moreDropdownList');
+            const moreDropdownBtn = document.getElementById('moreDropdownBtn');
+
+
             if (plusMenu && plusMenu.classList.contains('plus-menu--open')) {
                 if (!plusMenu.contains(event.target) && !plusBtn?.contains(event.target)) {
                     plusMenu.classList.remove('plus-menu--open');
@@ -203,6 +232,12 @@ export default function UserPractice2026() {
             if (attachmentList && attachmentList.classList.contains('attachment-dropdown--open')) {
                 if (!attachmentList.contains(event.target) && !attachmentListBtn?.contains(event.target)) {
                     attachmentList.classList.remove('attachment-dropdown--open');
+                }
+            }
+            if (moreDropdownList && moreDropdownList.classList.contains('dropdown--open')) {
+                if (!moreDropdownList.contains(event.target) && !moreDropdownBtn?.contains(event.target)) {
+                    moreDropdownList.classList.remove('dropdown--open');
+                    moreDropdownBtn?.classList.remove('dropdown--open');
                 }
             }
         };
@@ -236,6 +271,9 @@ export default function UserPractice2026() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [selectedDocument, setSelectedDocument] = useState([]);
     const [currentKnowledgeIds, setCurrentKnowledgeIds] = useState([]);
+    const [showModelModal, setShowModelModal] = useState(false);
+    const [showMoreDropdown, setShowMoreDropdown] = useState(false);
+    const [sessionMetaData, setSessionMetaData] = useState({});
 
     const compareMessagesRefs = useRef({});
     const messagesEndRef = useRef(null);
@@ -449,7 +487,16 @@ export default function UserPractice2026() {
         setProjectList(projectList);
     }
 
+
     const getSessionResponses = (sessionData) => {
+        console.log(sessionData.settings);
+
+
+
+        setCurrentKnowledgeIds(documents.filter(doc => sessionData.knowledge_ids.includes(doc.knowledge_id)));
+
+
+        setSessionMetaData(sessionData);
         setCurrentSession(sessionData.session_id);
 
         const newCompareMessages = {};
@@ -569,7 +616,32 @@ export default function UserPractice2026() {
         );
     };
 
+
+
+    const patchSessionKnowledgeIds = (Param) => {
+        // console.log(currentSession);
+        // console.log(sessionMetaData);
+        // console.log(Param.knowledge_ids);
+        axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
+            {
+                "class_id": sessionMetaData.class_id,
+                "project_id": sessionMetaData.project_id,
+                "knowledge_ids": Param.knowledge_ids,
+                "agent_id": sessionMetaData.agent_id,
+                "title": sessionMetaData.title,
+                "notes": `${Param.knowledge_ids} 문서가 첨부되었습니다.`
+            },
+            { headers: { Authorization: `Bearer ${accessToken}`, }, }
+        ).catch(error => {
+            console.error('세션 설정 업데이트 실패:', error);
+        });
+    }
+
     const handleConfirmKBSelection = () => {
+        if (currentSession !== 0) {
+            patchSessionKnowledgeIds({ knowledge_ids: selectedDocument.map(doc => doc.knowledge_id) });
+        }
+
         setCurrentKnowledgeIds(selectedDocument.map(doc => doc));
         setSelectedDocument([]);
         toggleKnowledgeBaseModal();
@@ -593,25 +665,35 @@ export default function UserPractice2026() {
     };
 
     const selectProjectFromPlusMenu = async (project) => {
-        const res = await axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
+        axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
             {
                 project_id: project.project_id
             },
             { headers: { Authorization: `Bearer ${accessToken}`, }, }
-        );
+        ).then(response => {
+            showToast2026(`'${project.name}' 프로젝트가 선택되었습니다.`, 'success');
+        }).catch(error => {
+            console.error('세션 프로젝트 업데이트 실패:', error);
+        });
         setCurrentProject(project.name);
         fetchSessionsTrigger();
         toggleProjectModal();
     }
 
-
-
-
-
-
-
-
-
+    const RenamedModelName = (modelName) => {
+        switch (modelName) {
+            case 'gemini-2.5-flash':
+                return 'gemini';
+            case 'gpt-3.5-turbo':
+            case 'gpt-4o-mini':
+            case 'gpt-5-mini':
+                return 'gpt';
+            case 'claude-3-haiku-20240307':
+                return 'claude';
+            default:
+                return 'unknown';
+        }
+    }
 
 
 
@@ -696,31 +778,88 @@ export default function UserPractice2026() {
                                 </span>
                             </div>
 
-                            <div
-                                className="chat-header__participants"
-                                id="activeModelsDisplay"
+                            {selectedModels.length > 0 && (
+                                <div
+                                    className="chat-header__participants"
+                                    id="activeModelsDisplay"
+                                    onClick={() => setShowModelModal(true)}
+                                >
+                                    {selectedModels.map((modelName) => {
+                                        const providerType = RenamedModelName(modelName);
+                                        const displayChar = providerType === 'gemini' ? 'G' : providerType === 'claude' ? 'C' : providerType === 'gpt' ? 'G' : '?';
+                                        return (
+                                            <div
+                                                key={modelName}
+                                                className={`participant-avatar participant-avatar--${providerType}`}
+                                                title={modelName}
+                                            >
+                                                {displayChar}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+
+
+
+
+
+                            <button className="chat-header__btn" title="참여자 초대"
+                                onClick={() => showToast2026('참여자 초대 기능은 현재 지원되지 않습니다.', 'info')}
                             >
-                                <div className="participant-avatar participant-avatar--gemini" title="gemini">G</div>
-                                <div className="participant-avatar participant-avatar--claude" title="claude">C</div>
-                            </div>
-
-
-
-
-
-
-                            <button className="chat-header__btn" title="참여자 초대" >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
                             </button>
-                            <button className="chat-header__btn" title="더보기" >
+
+                            <button
+                                className="chat-header__btn" title="더보기"
+                                onClick={toggleMoreDropdown}
+                                id="moreDropdownBtn"
+                            >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>
                             </button>
-                            <div className="dropdown" style={{ right: '0', top: 'auto' }}>
-                                <div className="dropdown__item" ><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" y1="2" x2="12" y2="15" /></svg>공유하기</div>
-                                <div className="dropdown__item" ><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>내보내기</div>
+
+
+                            <div className={`dropdown`}
+                                style={{ right: '20px', top: '56px' }}
+                                id="moreDropdownList"
+                            >
+                                <div className="dropdown__item"
+                                    onClick={() => showToast2026('공유하기 기능은 현재 지원되지 않습니다.', 'info')}
+                                >
+                                    <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                        <polyline points="16 6 12 2 8 6" />
+                                        <line x1="12" y1="2" x2="12" y2="15" />
+                                    </svg>
+                                    공유하기
+                                </div>
+
+                                <div className="dropdown__item"
+                                    onClick={() => showToast2026('내보내기 기능은 현재 지원되지 않습니다.', 'info')}
+                                >
+                                    <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                    내보내기
+                                </div>
+
                                 <div className="dropdown__divider"></div>
-                                <div className="dropdown__item dropdown__item--danger" ><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>대화 삭제</div>
+
+                                <div className="dropdown__item dropdown__item--danger"
+                                    onClick={() => showToast2026('대화 삭제 기능은 현재 지원되지 않습니다.', 'info')}
+                                >
+                                    <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                        <path d="M3 6h18" />
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
+                                    대화 삭제
+                                </div>
                             </div>
+
+
                         </div>
                     </header>
 
@@ -778,20 +917,6 @@ export default function UserPractice2026() {
                                     {comparePanels.map((modelName, index) => {
                                         const messages = compareMessages[modelName] || [];
                                         const hasMessages = messages.length > 0;
-                                        const RenamedModelName = (modelName) => {
-                                            switch (modelName) {
-                                                case 'gemini-2.5-flash':
-                                                    return 'gemini';
-                                                case 'gpt-3.5-turbo':
-                                                case 'gpt-4o-mini':
-                                                case 'gpt-5-mini':
-                                                    return 'gpt';
-                                                case 'claude-3-haiku-20240307':
-                                                    return 'claude';
-                                                default:
-                                                    return 'unknown';
-                                            }
-                                        }
                                         return (
                                             <div
                                                 key={modelName}
@@ -917,14 +1042,19 @@ export default function UserPractice2026() {
                                                             첨부 파일
                                                         </span>
                                                         <span className="attachment-dropdown__clear"
-                                                            onClick={() => { setCurrentKnowledgeIds([]); toggleAttachmentDropdown() }}
+                                                            onClick={() => {
+                                                                setCurrentKnowledgeIds([]);
+                                                                toggleAttachmentDropdown();
+                                                                if (currentSession !== 0) {
+                                                                    patchSessionKnowledgeIds({ knowledge_ids: [] });
+                                                                }
+                                                            }}
                                                         >모두 제거</span>
                                                     </div>
 
                                                     <div className="attachment-dropdown__list" >
                                                         <div className="attachment-dropdown__section-title">지식베이스</div>
                                                         {currentKnowledgeIds.map((document) => {
-                                                            // console.log(document);
                                                             return (
                                                                 <div className="attachment-item" key={document.knowledge_id}>
                                                                     <div className="attachment-item__icon attachment-item__icon--knowledge">
@@ -942,9 +1072,18 @@ export default function UserPractice2026() {
                                                                     <button
                                                                         className="attachment-item__remove"
                                                                         onClick={() => {
+                                                                            const filteredIds = currentKnowledgeIds
+                                                                                .filter(doc => doc.knowledge_id !== document.knowledge_id)
+                                                                                .map(doc => doc.knowledge_id);
+
                                                                             setCurrentKnowledgeIds(prev => prev.filter(doc => doc.knowledge_id !== document.knowledge_id));
+
                                                                             if (currentKnowledgeIds.length === 1) {
                                                                                 toggleAttachmentDropdown();
+                                                                            }
+
+                                                                            if (currentSession !== 0) {
+                                                                                patchSessionKnowledgeIds({ knowledge_ids: filteredIds });
                                                                             }
                                                                         }}
                                                                     >
@@ -1118,6 +1257,7 @@ export default function UserPractice2026() {
             <div className="modal-overlay" id="tuningModal" onClick={toggleTuningModal}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>
                     <div className="modal__header">
+
                         <h3 className="modal__title" id="modalTitle">
                             <svg
                                 className="icon"
@@ -1127,17 +1267,27 @@ export default function UserPractice2026() {
                                 stroke="currentColor"
                                 strokeWidth="2"
                             >
-                                <circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>상세 설정</h3>
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                            상세 설정
+                        </h3>
+
+
                         <button className="modal__close" onClick={toggleTuningModal} >
                             <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
+
+
                     <div className="modal__body" id="modalBody">
                         <div className="tuning-section">
                             <div className="tuning-section__title">
                                 <svg className="tuning-section__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                 스타일 프리셋
                             </div>
+
+
                             <div className="tuning-presets">
                                 <div className="tuning-preset " >
                                     <div className="tuning-preset__name">정확한</div>
@@ -1156,6 +1306,7 @@ export default function UserPractice2026() {
                                     <div className="tuning-preset__value">커스텀</div>
                                 </div>
                             </div>
+
                         </div>
 
                         <div className="tuning-section">
@@ -1218,6 +1369,49 @@ export default function UserPractice2026() {
             </div >
 
 
+            <div className={`modal-overlay ${showModelModal ? 'modal-overlay--open' : ''}`} id="modalOverlay" onClick={() => setShowModelModal(false)}>
+                <div className="modal" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal__header">
+                        <h3 className="modal__title" id="modalTitle">선택된 모델</h3>
+                        <button className="modal__close" onClick={() => setShowModelModal(false)}>
+                            <svg className="icon" viewBox="0 0 24 24">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div className="modal__body" id="modalBody">
+                        <div style={{ display: 'grid', gap: '12px' }}>
+
+                            {selectedModels.map((modelName) => {
+                                const providerType = RenamedModelName(modelName);
+                                const displayChar = providerType === 'gemini' ? 'G' : providerType === 'claude' ? 'C' : providerType === 'gpt' ? 'G' : '?';
+                                return (
+                                    <div
+                                        key={modelName}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: `var(--${providerType}-bg)`, borderRadius: '8px' }}
+                                    >
+                                        <div
+                                            style={{ width: '40px', height: '40px', background: `var(--${providerType}-color)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '600' }}
+                                        >
+                                            {displayChar}
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: '500' }}>{modelName}</div>
+                                            <div style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>{providerType}</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                    <div className="modal__footer" id="modalFooter" style={{ display: 'flex' }}><button className="modal__btn modal__btn--primary" onClick={() => setShowModelModal(false)}>확인</button></div>
+                </div>
+            </div>
+
+
+
+
 
             <div className="modal-overlay" id="projectModal" onClick={toggleProjectModal}>
                 <div className="modal modal--popup" onClick={(e) => e.stopPropagation()}>
@@ -1254,6 +1448,7 @@ export default function UserPractice2026() {
                         <div className="popup-list" id="projectPopupList">
 
                             {projectList.map((project, index) => {
+                                // console.log(project);
                                 const itemColor = ['#9333ea', '#4285f4', '#d97757', '#d97757', '#10a37f', '#a50034', '#f59e0b'];
                                 return (
                                     <div
@@ -1264,9 +1459,13 @@ export default function UserPractice2026() {
                                         <div className="popup-item__info">
                                             <div className="popup-item__name">{project.name}</div>
                                             <div className="popup-item__meta">
-                                                <span>대화 5개</span>
+                                                <span>대화 {project.conversation_count}개</span>
                                                 <span>•</span>
-                                                <span>2시간 전</span>
+                                                <span>
+                                                    {project.updated_at
+                                                        ? project.updated_at.replace('T', ' ').slice(5, 16)
+                                                        : ''}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1321,7 +1520,10 @@ export default function UserPractice2026() {
                                 return (
                                     <span className="popup-selected-tag" key={document.knowledge_id}>
                                         {getDisplayName(document.name)}
-                                        <button className="popup-selected-tag__remove" onClick={() => handleDocumentSelection(document)}>
+                                        <button
+                                            className="popup-selected-tag__remove"
+                                            onClick={() => handleDocumentSelection(document)}
+                                        >
                                             <svg className="icon icon--sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                                         </button>
                                     </span>
@@ -1374,7 +1576,15 @@ export default function UserPractice2026() {
                         </div>
 
                         <div className="popup-footer">
-                            <button className="popup-footer__btn" onClick={() => { toggleKnowledgeBaseModal(); setSelectedDocument([]); }}>취소</button>
+                            <button
+                                className="popup-footer__btn"
+                                onClick={() => {
+                                    toggleKnowledgeBaseModal();
+                                    setSelectedDocument([]);
+                                }}
+                            >
+                                취소
+                            </button>
 
                             <button className="popup-footer__btn popup-footer__btn--primary" disabled={selectedDocument.length === 0}
                                 onClick={handleConfirmKBSelection}
@@ -1393,6 +1603,8 @@ export default function UserPractice2026() {
     )
 }
 const getDisplayName = (originName) => {
+    // console.log(originName);
+    // return "테스트";
     const parts = originName.split("_");
     return parts.slice(2).join("_");
 }

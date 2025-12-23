@@ -19,6 +19,7 @@ export default function UserSidebar2026({
     currentSession,
     setCurrentSession,
     fetchSessionRef,
+    
 }) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -71,6 +72,8 @@ export default function UserSidebar2026({
     }, [closeChatContextMenu, clickContextSessionId, accessToken]);
 
     const handleSessionClick = useCallback(async (sessionId) => {
+        // 세팅 데이터 저장
+        // getSessionSet(sessionId)
         // alert(sessionId);
         if (currentMenu !== 'practice') {
             navigate(`/user/practice?sessionId=${sessionId}`);
@@ -515,7 +518,7 @@ export default function UserSidebar2026({
                                                 <div className="class-dropdown__item-name">{myClass.class_title}</div>
                                                 <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
                                             </div>
-                                            <span className="class-dropdown__item-badge class-dropdown__item-badge--active">D-{daysLeft}</span>
+                                            <span className="class-dropdown__item-badge class-dropdown__item-badge--active">{daysLeft === 0 ? '오늘' : `D-` + daysLeft}</span>
                                         </div>
                                     )
                                 })}
@@ -533,16 +536,19 @@ export default function UserSidebar2026({
                                     const daysUntilStart = Math.floor((startDate - now) / (1000 * 60 * 60 * 24) + 1);
                                     const daysLeft = Math.floor((endDate - now) / (1000 * 60 * 60 * 24) + 1);
                                     const isDisabled = daysUntilStart > 0 || daysLeft < 0;
-                                    const isEnded = daysLeft < 0;
 
-                                    if (isDisabled) return null;
+                                    if (!isDisabled) return null;
+
+
                                     return (
                                         <div className="class-dropdown__item class-dropdown__item--disabled" key={myClass.class_id}>
                                             <div className="class-dropdown__item-info">
                                                 <div className="class-dropdown__item-name">{myClass.class_title}</div>
                                                 <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
                                             </div>
-                                            <span className={`class-dropdown__item-badge class-dropdown__item-badge--${isEnded ? 'ended' : 'not-started'}`}>{isEnded ? '종료' : '예정'}</span>
+                                            <span className={`class-dropdown__item-badge class-dropdown__item-badge--${daysLeft < 0 ? 'ended' : 'not-started'}`}>
+                                                {daysLeft < 0 ? '종료' : '예정'}
+                                            </span>
                                         </div>
                                     )
                                 })}
