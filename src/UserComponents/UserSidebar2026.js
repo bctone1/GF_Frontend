@@ -19,7 +19,7 @@ export default function UserSidebar2026({
     currentSession,
     setCurrentSession,
     fetchSessionRef,
-    
+
 }) {
     const navigate = useNavigate();
     const location = useLocation();
@@ -599,8 +599,7 @@ export default function UserSidebar2026({
                     </Link>
 
                     <Link
-                        onClick={() => showToast2026("준비중입니다.")}
-                        // to="/user/knowledge"
+                        to="/user/knowledge"
                         className={`sidebar__nav-item ${currentMenu === 'knowledge' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">

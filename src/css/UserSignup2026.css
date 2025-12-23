@@ -1,0 +1,583 @@
+.signup-body {
+    font-family: 'Noto Sans KR', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    height: 100vh;
+    background: #f5f5f7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* 메인 컨테이너 */
+.signup-wrapper {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1300px;
+    height: calc(100vh - 32px);
+    max-height: 800px;
+    /* max-height: 1000px; */
+    background: white;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    margin: 0 auto;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* ========== 좌측 설명 영역 ========== */
+.info-section {
+    background: linear-gradient(165deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    padding: 40px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.brand {
+    margin-bottom: 24px;
+}
+
+.brand-name {
+    font-family: 'Outfit', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -0.8px;
+}
+
+.hero-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hero-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: white;
+    margin-bottom: 12px;
+    letter-spacing: -1.2px;
+}
+
+.hero-description {
+    font-size: 15px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 28px;
+    font-weight: 300;
+}
+
+/* 가입 혜택 목록 */
+.benefits-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.benefit-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(4px);
+}
+
+.benefit-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, rgba(147, 51, 234, 0.3), rgba(59, 130, 246, 0.3));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.benefit-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke: white;
+    fill: none;
+}
+
+.benefit-content {
+    flex: 1;
+}
+
+.benefit-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 4px;
+}
+
+.benefit-description {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 300;
+}
+
+/* ========== 우측 회원가입 영역 ========== */
+.signup-section {
+    background: white;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.signup-header {
+    margin-bottom: 20px;
+}
+
+.signup-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+    letter-spacing: -0.8px;
+}
+
+.signup-subtitle {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 400;
+}
+
+/* 탭 */
+.tabs {
+    display: flex;
+    gap: 4px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.tab {
+    flex: 1;
+    padding: 9px 16px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.tab.active {
+    background: white;
+    color: #1a1a2e;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* 안내 박스 */
+.notice-box {
+    background: linear-gradient(135deg, #ede9fe 0%, #e0e7ff 100%);
+    border-left: 3px solid #7c3aed;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.notice-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5b21b6;
+    margin-bottom: 5px;
+}
+
+.notice-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.notice-text {
+    font-size: 12px;
+    color: #6d28d9;
+    line-height: 1.5;
+}
+
+/* 폼 컨테이너 */
+.form-container {
+    position: relative;
+}
+
+.signup-form {
+    display: block;
+}
+
+.signup-form.hidden {
+    display: none;
+}
+
+/* 폼 필드 */
+.form-field {
+    margin-bottom: 14px;
+}
+
+.field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 5px;
+}
+
+.field-label .required {
+    color: #ef4444;
+    margin-left: 2px;
+}
+
+.field-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: white;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.field-input::placeholder {
+    color: #94a3b8;
+}
+
+.field-hint {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 5px;
+}
+
+/* 이메일 입력 + 버튼 */
+.email-field-group {
+    display: flex;
+    gap: 10px;
+}
+
+.email-field-group .field-input {
+    flex: 1;
+}
+
+.verify-button {
+    padding: 10px 14px;
+    background: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.verify-button:hover {
+    background: #6d28d9;
+}
+
+.verify-button:disabled {
+    background: #c4b5fd;
+    cursor: not-allowed;
+}
+
+/* 비밀번호 필드 */
+.password-field {
+    position: relative;
+}
+
+.password-field .field-input {
+    padding-right: 45px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: #64748b;
+}
+
+.password-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* 추가 정보 섹션 */
+.additional-section {
+    margin-top: 6px;
+    margin-bottom: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.additional-title {
+    font-size: 11px;
+    color: #94a3b8;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+/* 셀렉트 박스 */
+.field-select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s;
+    background: white;
+    color: #1e293b;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 36px;
+}
+
+.field-select:focus {
+    outline: none;
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+/* 체크박스 */
+.checkbox-group {
+    margin-bottom: 14px;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.checkbox-wrapper input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #7c3aed;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.checkbox-wrapper label {
+    font-size: 12px;
+    color: #475569;
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.5;
+}
+
+.checkbox-wrapper label a {
+    color: #7c3aed;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.checkbox-wrapper label a:hover {
+    text-decoration: underline;
+}
+
+/* 제출 버튼 */
+.submit-button {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: inherit;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+
+.submit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+
+.submit-button:active {
+    transform: translateY(0);
+}
+
+.submit-button:disabled {
+    background: #c4b5fd;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 로그인 링크 */
+.login-link-box {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.login-link-text {
+    font-size: 12px;
+    color: #64748b;
+}
+
+.login-link-text a {
+    color: #7c3aed;
+    text-decoration: none;
+    font-weight: 600;
+    margin-left: 4px;
+}
+
+.login-link-text a:hover {
+    text-decoration: underline;
+}
+
+/* 2열 그리드 */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* ========== 반응형 ========== */
+@media (max-width: 1200px) {
+    .signup-wrapper {
+        max-width: 1100px;
+    }
+
+    .hero-title {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 1024px) {
+    body {
+        padding: 16px;
+        height: auto;
+        min-height: 100vh;
+        overflow: auto;
+    }
+
+    .signup-wrapper {
+        grid-template-columns: 1fr;
+        height: auto;
+        max-height: none;
+    }
+
+    .info-section {
+        padding: 32px 28px;
+    }
+
+    .signup-section {
+        padding: 32px 28px;
+    }
+
+    .benefits-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .benefit-item {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 12px;
+    }
+
+    .info-section {
+        padding: 24px 20px;
+    }
+
+    .hero-title {
+        font-size: 24px;
+    }
+
+    .signup-section {
+        padding: 24px 20px;
+    }
+
+    .signup-title {
+        font-size: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .email-field-group {
+        flex-direction: column;
+    }
+
+    .benefits-list {
+        flex-direction: column;
+    }
+
+    .benefit-item {
+        min-width: auto;
+    }
+}
+
+/* 스피너 애니메이션 */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -4,11 +4,12 @@ import Login from './LoginComponents/Login';
 import Login2026 from './LoginComponents/Login2026';
 
 import UserSignup from './LoginComponents/UserSignup';
+import UserSignup2026 from './LoginComponents/UserSignup2026';
 import OrganizationSignup from './LoginComponents/OrganizationSignup';
 
 import UserPractice2026 from './UserComponents/UserPractice2026';
 import UserProject2026 from './UserComponents/UserProject2026';
-
+import UserKnowledge2026 from './UserComponents/UserKnowledge2026';
 
 import PartnerDashboard from './PartnerComponents/PartnerDashboard';
 import PartnerProjectManagement from './PartnerComponents/PartnerProjectManagement';
@@ -32,7 +33,7 @@ export default function App() {
 
         <Route path="/" element={<Login2026 />} />
         <Route path="/login" element={<Login2026 />} />
-        <Route path="/signup/user" element={<UserSignup />} />
+        <Route path="/signup/user" element={<UserSignup2026 />} />
         <Route path="/signup/organization" element={<OrganizationSignup />} />
 
 
@@ -40,6 +41,7 @@ export default function App() {
         {/* 유저 리뉴얼 컴포넌트 */}
         <Route path="/user/practice" element={<UserPractice2026 />} />
         <Route path="/user/project" element={<UserProject2026 />} />
+        <Route path="/user/knowledge" element={<UserKnowledge2026 />} />
 
 
         {/* 파트너 컴포넌트 */}
