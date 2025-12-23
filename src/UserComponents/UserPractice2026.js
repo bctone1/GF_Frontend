@@ -404,7 +404,6 @@ export default function UserPractice2026() {
     const getCompareResponse = async (question) => {
         try {
             const documentIds = currentKnowledgeIds.filter(doc => doc.knowledge_id).map(file => file.knowledge_id);
-            console.log(documentIds);
 
             let URL = '';
             let Param = {};
@@ -413,7 +412,9 @@ export default function UserPractice2026() {
                 Param = {
                     prompt_text: question,
                     model_names: selectedModels,
-                    knowledge_ids: documentIds.length > 0 ? documentIds : [0]
+                    knowledge_ids: documentIds.length > 0 ? documentIds : [0],
+                    generation_params: tuningData,
+                    project_id: selectedProject
                 };
             } else {
                 URL = `${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/chat`;
@@ -422,6 +423,8 @@ export default function UserPractice2026() {
                     model_names: selectedModels,
                 };
             }
+            console.log('요청 URL', URL);
+            console.log('요청 파라미터', Param);
             const res = await axios.post(
                 URL,
                 Param,
@@ -433,10 +436,18 @@ export default function UserPractice2026() {
                     timeout: 60000, // 60초 타임아웃
                 }
             );
-            if (res.data.session_id) {
+
+            // if (res.data.session_id) {
+            //     setCurrentSession(res.data.session_id);
+            //     fetchSessionsTrigger();
+            // }
+            if (currentSession === 0) {
+                console.log("새로운 세션 생성됨");
+                console.log('응답 데이터', res.data);
                 setCurrentSession(res.data.session_id);
                 fetchSessionsTrigger();
             }
+
             return res.data;
         } catch (err) {
             console.error('API 호출 오류:', err);
@@ -490,6 +501,11 @@ export default function UserPractice2026() {
 
     const getSessionResponses = (sessionData) => {
         console.log(sessionData.settings);
+
+        setBcakUpTuningData(sessionData.settings.generation_params);
+        setTuningData(sessionData.settings.generation_params);
+
+        setTuningPreset(sessionData.settings.generation_params.temperature === 0.3 ? "accurate" : sessionData.settings.generation_params.temperature === 0.7 ? "balanced" : "creative");
 
 
 
@@ -661,10 +677,37 @@ export default function UserPractice2026() {
         setCompareMessages({});
         setCurrentSession(0);
         setSelectedModels([]);
+        setSelectedProject(null);
+        setTuningData({
+            temperature: 0.7,
+            top_p: 0.9,
+            max_tokens: 4096,
+            max_completion_tokens: 10240,
+        });
+        setBcakUpTuningData({
+            temperature: 0.7,
+            top_p: 0.9,
+            max_tokens: 4096,
+            max_completion_tokens: 10240,
+        });
+        setTuningPreset("balanced");
+        setSelectedDocument([]);
+        setCurrentKnowledgeIds([]);
+        setCurrentProject('');
         showToast2026('새 채팅이 시작되었습니다', 'success');
     };
 
+
+
+    const [selectedProject, setSelectedProject] = useState(null);
     const selectProjectFromPlusMenu = async (project) => {
+        if (currentSession === 0) {
+            setSelectedProject(project.project_id);
+            showToast2026(`'${project.name}' 프로젝트가 선택되었습니다.`, 'success');
+            setCurrentProject(project.name);
+            toggleProjectModal();
+            return;
+        }
         axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}`,
             {
                 project_id: project.project_id
@@ -672,12 +715,13 @@ export default function UserPractice2026() {
             { headers: { Authorization: `Bearer ${accessToken}`, }, }
         ).then(response => {
             showToast2026(`'${project.name}' 프로젝트가 선택되었습니다.`, 'success');
+            setCurrentProject(project.name);
+            fetchSessionsTrigger();
+            toggleProjectModal();
         }).catch(error => {
             console.error('세션 프로젝트 업데이트 실패:', error);
         });
-        setCurrentProject(project.name);
-        fetchSessionsTrigger();
-        toggleProjectModal();
+
     }
 
     const RenamedModelName = (modelName) => {
@@ -735,11 +779,47 @@ export default function UserPractice2026() {
     }, []);
 
 
+    const [tuningData, setTuningData] = useState({
+        temperature: 0.7,
+        top_p: 0.9,
+        max_tokens: 4096,
+        max_completion_tokens: 10240,
+    });
+    const [bcakUpTuningData, setBcakUpTuningData] = useState({
+        temperature: 0.7,
+        top_p: 0.9,
+        max_tokens: 4096,
+        max_completion_tokens: 10240,
+    });
+    const [tuningPreset, setTuningPreset] = useState("balanced");
 
+    const handleApplyTuning = () => {
+        // console.log(tuningData);
 
+        if (currentSession === 0) {
+            setBcakUpTuningData(tuningData);
+            showToast2026('세팅이 적용되었습니다.', 'success');
+            toggleTuningModal();
+            return;
+        }
 
-
-
+        axios.patch(`${process.env.REACT_APP_API_URL}/user/practice/sessions/${currentSession}/settings`,
+            {
+                "generation_params": tuningData
+            },
+            { headers: { Authorization: `Bearer ${accessToken}`, }, }
+        ).then(response => {
+            setBcakUpTuningData(tuningData);
+            showToast2026('세팅이 적용되었습니다.', 'success');
+            toggleTuningModal();
+        }).catch(error => {
+            console.error('세팅 적용 실패:', error);
+        });
+    }
+    const handleCancelTuning = () => {
+        toggleTuningModal();
+        setTuningData(bcakUpTuningData);
+    }
 
 
     return (
@@ -1249,12 +1329,11 @@ export default function UserPractice2026() {
                             <div className="plus-menu__desc">Temperature, Few-shot 등 파인튜닝</div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
 
-            <div className="modal-overlay" id="tuningModal" onClick={toggleTuningModal}>
+            <div className="modal-overlay" id="tuningModal" onClick={handleCancelTuning}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>
                     <div className="modal__header">
 
@@ -1274,7 +1353,7 @@ export default function UserPractice2026() {
                         </h3>
 
 
-                        <button className="modal__close" onClick={toggleTuningModal} >
+                        <button className="modal__close" onClick={handleCancelTuning} >
                             <svg className="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </button>
                     </div>
@@ -1289,19 +1368,36 @@ export default function UserPractice2026() {
 
 
                             <div className="tuning-presets">
-                                <div className="tuning-preset " >
+                                <div className={`tuning-preset ${tuningPreset === "accurate" ? "tuning-preset--active" : ""}`}
+                                    onClick={() => {
+                                        setTuningPreset("accurate");
+                                        setTuningData({ ...tuningData, temperature: 0.3 });
+                                    }}
+                                >
                                     <div className="tuning-preset__name">정확한</div>
                                     <div className="tuning-preset__value">T: 0.3</div>
                                 </div>
-                                <div className="tuning-preset tuning-preset--active">
+                                <div className={`tuning-preset ${tuningPreset === "balanced" ? "tuning-preset--active" : ""}`}
+                                    onClick={() => {
+                                        setTuningPreset("balanced");
+                                        setTuningData({ ...tuningData, temperature: 0.7 });
+                                    }}
+                                >
                                     <div className="tuning-preset__name">균형잡힌</div>
                                     <div className="tuning-preset__value">T: 0.7</div>
                                 </div>
-                                <div className="tuning-preset " >
+                                <div className={`tuning-preset ${tuningPreset === "creative" ? "tuning-preset--active" : ""}`}
+                                    onClick={() => {
+                                        setTuningPreset("creative");
+                                        setTuningData({ ...tuningData, temperature: 1.0 });
+                                    }}
+                                >
                                     <div className="tuning-preset__name">창의적</div>
                                     <div className="tuning-preset__value">T: 1.0</div>
                                 </div>
-                                <div className="tuning-preset " >
+                                <div className={`tuning-preset ${tuningPreset === "custom" ? "tuning-preset--active" : ""}`}
+                                    onClick={() => setTuningPreset("custom")}
+                                >
                                     <div className="tuning-preset__name">사용자 정의</div>
                                     <div className="tuning-preset__value">커스텀</div>
                                 </div>
@@ -1318,27 +1414,39 @@ export default function UserPractice2026() {
                             <div className="tuning-slider">
                                 <div className="tuning-slider__header">
                                     <span className="tuning-slider__label">Temperature</span>
-                                    <span className="tuning-slider__value" id="tempValue">0.7</span>
+                                    <span className="tuning-slider__value" id="tempValue">{tuningData.temperature || 0.7}</span>
                                 </div>
-                                <input type="range" className="tuning-slider__input" id="tempSlider" min="0" max="2" step="0.1" />
+                                <input type="range" className="tuning-slider__input" id="tempSlider" min="0" max="2" step="0.1"
+                                    value={tuningData.temperature || 0.7}
+                                    onChange={(e) => {
+                                        setTuningData({ ...tuningData, temperature: e.target.value })
+                                        setTuningPreset("custom");
+                                    }}
+                                />
                                 <div className="tuning-slider__desc">낮을수록 일관된 응답, 높을수록 창의적인 응답</div>
                             </div>
 
                             <div className="tuning-slider">
                                 <div className="tuning-slider__header">
                                     <span className="tuning-slider__label">Top P</span>
-                                    <span className="tuning-slider__value" id="topPValue">0.9</span>
+                                    <span className="tuning-slider__value" id="topPValue">{tuningData.top_p || 0.9}</span>
                                 </div>
-                                <input type="range" className="tuning-slider__input" id="topPSlider" min="0" max="1" step="0.05" />
+                                <input type="range" className="tuning-slider__input" id="topPSlider" min="0" max="1" step="0.05"
+                                    value={tuningData.top_p || 0.9}
+                                    onChange={(e) => setTuningData({ ...tuningData, top_p: e.target.value })}
+                                />
                                 <div className="tuning-slider__desc">확률 기반 토큰 선택 범위 (0.9 권장)</div>
                             </div>
 
                             <div className="tuning-slider">
                                 <div className="tuning-slider__header">
                                     <span className="tuning-slider__label">Max Length</span>
-                                    <span className="tuning-slider__value" id="maxLengthValue">2048</span>
+                                    <span className="tuning-slider__value" id="maxLengthValue">{tuningData.max_tokens || 4096}</span>
                                 </div>
-                                <input type="range" className="tuning-slider__input" id="maxLengthSlider" min="256" max="4096" step="256" />
+                                <input type="range" className="tuning-slider__input" id="maxLengthSlider" min="256" max={tuningData.max_completion_tokens || 10240} step="256"
+                                    value={tuningData.max_tokens || 4096}
+                                    onChange={(e) => setTuningData({ ...tuningData, max_tokens: e.target.value })}
+                                />
                                 <div className="tuning-slider__desc">생성할 최대 토큰 수</div>
                             </div>
                         </div>
@@ -1363,8 +1471,27 @@ export default function UserPractice2026() {
                                 </div>
                             </div>
                         </div>
+
+
                     </div>
-                    <div className="modal__footer" id="modalFooter" style={{ display: 'flex' }}><button className="modal__btn " >기본값으로 초기화</button><button className="modal__btn modal__btn--primary" >적용</button></div>
+                    <div className="modal__footer" id="modalFooter" style={{ display: 'flex' }}>
+                        <button className="modal__btn "
+                            onClick={() => {
+                                setTuningData({
+                                    ...tuningData,
+                                    temperature: 0.7,
+                                    top_p: 0.9,
+                                    max_tokens: 4096,
+                                    max_completion_tokens: 10240,
+                                });
+                                setTuningPreset("balanced");
+                            }}
+                        >기본값으로 초기화</button>
+                        <button className="modal__btn modal__btn--primary"
+                            onClick={handleApplyTuning}
+
+                        >적용</button>
+                    </div>
                 </div>
             </div >
 
@@ -1448,14 +1575,16 @@ export default function UserPractice2026() {
                         <div className="popup-list" id="projectPopupList">
 
                             {projectList.map((project, index) => {
-                                // console.log(project);
                                 const itemColor = ['#9333ea', '#4285f4', '#d97757', '#d97757', '#10a37f', '#a50034', '#f59e0b'];
+                                const isDisabled = project.status === "inactive";
+                                // console.log(project);
                                 return (
                                     <div
-                                        className="popup-item" key={project.project_id}
-                                        onClick={() => selectProjectFromPlusMenu(project)}
+                                        className={`popup-item ${isDisabled ? 'popup-item--disabled' : ''}`}
+                                        key={project.project_id}
+                                        onClick={() => !isDisabled && selectProjectFromPlusMenu(project)}
                                     >
-                                        <div className="popup-item__color" style={{ background: itemColor[index] }}></div>
+                                        <div className="popup-item__color" style={{ background: itemColor[Math.floor(Math.random() * itemColor.length)] }}></div>
                                         <div className="popup-item__info">
                                             <div className="popup-item__name">{project.name}</div>
                                             <div className="popup-item__meta">

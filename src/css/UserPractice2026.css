@@ -2887,6 +2887,25 @@ body {
     cursor: default;
 }
 
+.popup-item--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.popup-item--disabled:hover {
+    background: transparent;
+}
+
+.popup-item--disabled .popup-item__name {
+    color: var(--text-tertiary);
+}
+
+.popup-item--disabled .popup-item__meta {
+    color: var(--text-tertiary);
+    opacity: 0.7;
+}
+
 .popup-item__color {
     width: 3px;
     height: 40px;
