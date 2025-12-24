@@ -1,7 +1,7 @@
 import UserSidebar2026 from './UserSidebar2026';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import axios from 'axios';
-import { getSelectedClassId, showToast2026 } from '../utill/utill';
+import { getSelectedClassId, showToast2026, formatDate_MM_DD_HH_MM } from '../utill/utill';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -597,7 +597,10 @@ export default function UserProject2026() {
                                             <div className="conversation-card__desc">{session.last_message_preview}</div>
                                         </div>
                                         <div className="conversation-card__right">
-                                            <div className="conversation-card__date">{session.last_activity_at.split('T')[0].slice(5)} {session.last_activity_at.split('T')[1].slice(0, 5)}</div>
+                                            <div className="conversation-card__date">
+                                                {formatDate_MM_DD_HH_MM(session.last_activity_at)}
+
+                                            </div>
                                             <button
                                                 className="conversation-card__menu"
                                                 onClick={(e) => showChatContextMenu(e, session.session_id)}

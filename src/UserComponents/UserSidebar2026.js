@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { setSelectedClass, getSelectedClassId, showToast2026 } from '../utill/utill';
+import { setSelectedClass, getSelectedClassId, showToast2026, formatDate_MM_DD_HH_MM, formatDate_YY_MM_DD } from '../utill/utill';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function UserSidebar2026({
@@ -438,7 +438,9 @@ export default function UserSidebar2026({
                             <p style={{ color: 'var(--text-secondary)' }}>{myaccount?.email}</p>
                         </div>
                         <div style={{ display: 'grid', gap: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--surface)', borderRadius: '8px' }}><span>가입일</span><span style={{ color: 'var(--text-secondary)' }}>{myaccount?.created_at.split('T')[0]}</span></div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--surface)', borderRadius: '8px' }}><span>가입일</span><span style={{ color: 'var(--text-secondary)' }}>
+                                {formatDate_YY_MM_DD(myaccount?.created_at)}
+                            </span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--surface)', borderRadius: '8px' }}><span>총 대화 수</span><span style={{ color: 'var(--text-secondary)' }}>데이터 필요</span></div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'var(--surface)', borderRadius: '8px' }}><span>이번 달 사용량</span><span style={{ color: 'var(--text-secondary)' }}>데이터 필요</span></div>
                         </div>
@@ -516,7 +518,9 @@ export default function UserSidebar2026({
                                         >
                                             <div className="class-dropdown__item-info">
                                                 <div className="class-dropdown__item-name">{myClass.class_title}</div>
-                                                <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
+                                                <div className="class-dropdown__item-period">
+                                                    {formatDate_YY_MM_DD(myClass.class_start_at)} ~ {formatDate_YY_MM_DD(myClass.class_end_at)}
+                                                </div>
                                             </div>
                                             <span className="class-dropdown__item-badge class-dropdown__item-badge--active">{daysLeft === 0 ? '오늘' : `D-` + daysLeft}</span>
                                         </div>
@@ -544,7 +548,9 @@ export default function UserSidebar2026({
                                         <div className="class-dropdown__item class-dropdown__item--disabled" key={myClass.class_id}>
                                             <div className="class-dropdown__item-info">
                                                 <div className="class-dropdown__item-name">{myClass.class_title}</div>
-                                                <div className="class-dropdown__item-period">{myClass.class_start_at.split('T')[0]} ~ {myClass.class_end_at.split('T')[0]}</div>
+                                                <div className="class-dropdown__item-period">
+                                                    {formatDate_YY_MM_DD(myClass.class_start_at)} ~ {formatDate_YY_MM_DD(myClass.class_end_at)}
+                                                </div>
                                             </div>
                                             <span className={`class-dropdown__item-badge class-dropdown__item-badge--${daysLeft < 0 ? 'ended' : 'not-started'}`}>
                                                 {daysLeft < 0 ? '종료' : '예정'}
@@ -692,8 +698,7 @@ export default function UserSidebar2026({
                                 <div className="chat-item__title">{session.title}</div>
                                 <div className="chat-item__meta">
                                     <div className="chat-item__time">
-                                        {session.created_at.split('T')[0].slice(5)}{' '}
-                                        {session.created_at.split('T')[1].split(':').slice(0, 2).join(':')}
+                                        {formatDate_MM_DD_HH_MM(session.created_at)}
                                     </div>
                                     {session.project_id && (
                                         <span className="chat-item__project-badge">

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import UserSidebar2026 from './UserSidebar2026';
-import { showToast2026, getSelectedClassId } from '../utill/utill';
+import { showToast2026, getSelectedClassId, getDisplayName, formatFileSize, formatDate_YY_MM_DD } from '../utill/utill';
 import axios from 'axios';
 
 export default function UserPractice2026() {
@@ -1695,7 +1695,10 @@ export default function UserPractice2026() {
                                                 <span>•</span>
                                                 <span>{formatFileSize(document.file_size_bytes)}</span>
                                                 <span>•</span>
-                                                <span>{document.uploaded_at.split('T')[0].slice(5)} {document.uploaded_at.split('T')[1].split('.')[0]}</span>
+                                                <span>
+                                                    {formatDate_YY_MM_DD(document.uploaded_at)}
+
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1731,15 +1734,5 @@ export default function UserPractice2026() {
         </>
     )
 }
-const getDisplayName = (originName) => {
-    // console.log(originName);
-    // return "테스트";
-    const parts = originName.split("_");
-    return parts.slice(2).join("_");
-}
 
-const formatFileSize = (bytes) => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-};
+

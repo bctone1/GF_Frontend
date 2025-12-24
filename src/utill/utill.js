@@ -345,3 +345,34 @@ export function showToast2026(message, type = 'info') {
   document.body.appendChild(toast);
   setTimeout(() => toast.remove(), 3000);
 }
+
+
+
+
+export const getDisplayName = (originName) => {
+  const parts = originName.split("_");
+  return parts.slice(2).join("_");
+}
+
+export const formatFileSize = (bytes) => {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+// 날짜 포맷: 2025-12-24
+export const formatDate_YY_MM_DD = (date) => {
+  if (!date) return '';
+  return date.split('T')[0];
+};
+
+// 날짜 포맷: 12/24 16:30
+export const formatDate_MM_DD_HH_MM = (date) => {
+  if (!date) return '';
+
+  const [ymd, time] = date.split('T');
+  const mmdd = ymd.slice(5).replace('-', '/');
+  const hhmm = time.slice(0, 5);
+
+  return `${mmdd} ${hhmm}`;
+};
