@@ -369,7 +369,8 @@ export default function UserKnowledge2026() {
                                 </div>
 
                                 <div className="mode-card" id="advancedCard"
-                                    onClick={() => setMainPageStatus('advanced')}
+                                    // onClick={() => setMainPageStatus('advanced')}
+                                    onClick={() => showToast2026('고급 설정 모드는 현재 개발중입니다.')}
                                 >
                                     <div className="mode-card__check">
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -408,7 +409,8 @@ export default function UserKnowledge2026() {
                                 </div>
 
                                 <div className="mode-card" id="compareCard"
-                                    onClick={() => setPageStatus('compare')}
+                                    // onClick={() => setPageStatus('compare')}
+                                    onClick={() => showToast2026('비교 모드는 현재 개발중입니다.')}
                                 >
                                     <div className="mode-card__check">
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
