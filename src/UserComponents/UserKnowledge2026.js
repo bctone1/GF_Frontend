@@ -67,7 +67,20 @@ export default function UserKnowledge2026() {
 
     useEffect(() => {
         fetchDocuments();
-    }, []);
+    }, [fetchDocuments]);
+
+    // progress가 100이 아닌 항목이 있으면 5초마다 자동 갱신
+    useEffect(() => {
+        const hasInProgress = documents.some(doc => doc.progress < 100);
+
+        if (!hasInProgress) return;
+
+        const intervalId = setInterval(() => {
+            fetchDocuments();
+        }, 5000);
+
+        return () => clearInterval(intervalId);
+    }, [documents, fetchDocuments]);
 
 
 
@@ -163,6 +176,135 @@ export default function UserKnowledge2026() {
         };
     }, []);
 
+    const [pageStatus, setPageStatus] = useState('main');
+    const [mainPageStatus, setMainPageStatus] = useState('modeSelection');
+
+
+
+    const [isUploading, setIsUploading] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [uploadError, setUploadError] = useState(null);
+    const fileInputRef = useRef(null);
+    const dropzoneRef = useRef(null);
+    const dragCounterRef = useRef(0);
+
+
+    const handleFileInputChange = (e) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            uploadFiles(files);
+        }
+        // 같은 파일을 다시 선택할 수 있도록 input 값 초기화
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const uploadFiles = async (files) => {
+        if (!files || files.length === 0) return;
+        if (uploadError) return; // 오류 상태일 때 업로드 차단
+
+        // 파일 크기 검증 (10MB)
+        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+        const invalidFiles = Array.from(files).filter(file => file.size > maxSize);
+
+        if (invalidFiles.length > 0) {
+            showToast2026('파일 크기는 10MB를 초과할 수 없습니다.', 'error');
+            return;
+        }
+
+        setIsUploading(true);
+        setUploadError(null); // 이전 오류 상태 초기화
+
+        try {
+            const formData = new FormData();
+            Array.from(files).forEach(file => {
+                formData.append('file', file);
+            });
+
+            const response = await axios.post(
+                `${process.env.REACT_APP_API_URL}/user/upload`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    timeout: 300000,
+                }
+            );
+
+            showToast2026('파일이 성공적으로 업로드되었습니다.', 'success');
+            console.log('Upload response:', response.data);
+            fetchDocuments();
+
+        } catch (error) {
+            console.error('File upload error:', error);
+
+            // timeout 오류 감지
+            if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+                const timeoutMessage = '파일 업로드 시간이 초과되었습니다. 네트워크 연결을 확인하고 다시 시도해주세요.';
+                setUploadError(timeoutMessage);
+                showToast2026(timeoutMessage, 'error');
+            } else {
+                const errorMessage = error.response?.data?.message || '파일 업로드 중 오류가 발생했습니다.';
+                setUploadError(errorMessage);
+                showToast2026(errorMessage, 'error');
+            }
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+
+
+    // 드래그 앤 드롭 이벤트 핸들러
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        dragCounterRef.current += 1;
+        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            setIsDragging(true);
+        }
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        dragCounterRef.current -= 1;
+        if (dragCounterRef.current === 0) {
+            setIsDragging(false);
+        }
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            e.dataTransfer.dropEffect = 'copy';
+        }
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        dragCounterRef.current = 0;
+        setIsDragging(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0 && !uploadError) {
+            uploadFiles(files);
+        }
+    };
+
+    const handleDropzoneClick = () => {
+        if (fileInputRef.current && !isUploading && !uploadError) {
+            fileInputRef.current.click();
+        }
+    };
 
 
 
@@ -178,16 +320,18 @@ export default function UserKnowledge2026() {
                         </div>
                     </header>
 
-                    <div className="kb-content">
+                    <div className="kb-content" style={{ display: pageStatus === 'main' ? 'block' : 'none' }}>
                         {/* Mode Selection  */}
-                        <div className="mode-selection" id="modeSelection">
+                        <div className="mode-selection" id="modeSelection" style={{ display: mainPageStatus === 'modeSelection' ? 'block' : 'none' }}>
                             <div className="mode-selection__header">
                                 <h2 className="mode-selection__title">지식베이스 생성 방식 선택</h2>
                                 <p className="mode-selection__desc">목적에 맞는 방식을 선택해주세요</p>
                             </div>
 
                             <div className="mode-cards">
-                                <div className="mode-card" id="simpleCard" >
+                                <div className="mode-card" id="simpleCard"
+                                    onClick={() => setMainPageStatus('simple')}
+                                >
                                     <div className="mode-card__check">
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                             <polyline points="20 6 9 17 4 12" />
@@ -224,7 +368,9 @@ export default function UserKnowledge2026() {
                                     </div>
                                 </div>
 
-                                <div className="mode-card" id="advancedCard" >
+                                <div className="mode-card" id="advancedCard"
+                                    onClick={() => setMainPageStatus('advanced')}
+                                >
                                     <div className="mode-card__check">
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                             <polyline points="20 6 9 17 4 12" />
@@ -261,7 +407,9 @@ export default function UserKnowledge2026() {
                                     </div>
                                 </div>
 
-                                <div className="mode-card" id="compareCard" >
+                                <div className="mode-card" id="compareCard"
+                                    onClick={() => setPageStatus('compare')}
+                                >
                                     <div className="mode-card__check">
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                             <polyline points="20 6 9 17 4 12" />
@@ -614,17 +762,17 @@ export default function UserKnowledge2026() {
                                                             key={page}
                                                             className={`pagination__btn ${currentPage === page ? 'pagination__btn--active' : ''}`}
                                                             onClick={() => handlePageChange(page)}
-                                                            // style={{
-                                                            //     minWidth: '32px',
-                                                            //     height: '32px',
-                                                            //     padding: '0 8px',
-                                                            //     border: '1px solid var(--border)',
-                                                            //     borderRadius: '4px',
-                                                            //     background: currentPage === page ? 'var(--employee-primary)' : 'transparent',
-                                                            //     color: currentPage === page ? 'white' : 'var(--text-primary)',
-                                                            //     cursor: 'pointer',
-                                                            //     fontSize: '14px'
-                                                            // }}
+                                                        // style={{
+                                                        //     minWidth: '32px',
+                                                        //     height: '32px',
+                                                        //     padding: '0 8px',
+                                                        //     border: '1px solid var(--border)',
+                                                        //     borderRadius: '4px',
+                                                        //     background: currentPage === page ? 'var(--employee-primary)' : 'transparent',
+                                                        //     color: currentPage === page ? 'white' : 'var(--text-primary)',
+                                                        //     cursor: 'pointer',
+                                                        //     fontSize: '14px'
+                                                        // }}
                                                         >
                                                             {page}
                                                         </button>
@@ -650,7 +798,7 @@ export default function UserKnowledge2026() {
                                             </svg>
                                         </button>
                                         <span className="pagination__info" id="paginationInfo">
-                                            {startIndex + 1}-{Math.min(endIndex, filteredAndSortedDocuments.length)} / {filteredAndSortedDocuments.length}
+                                            {startIndex + 1}-{Math.min(endIndex, filteredAndSortedDocuments.length)} / {filteredAndSortedDocuments.length}개
                                         </span>
                                     </div>
                                 )}
@@ -668,10 +816,6 @@ export default function UserKnowledge2026() {
                                     <div className="empty-state__desc">파일을 업로드하여 지식베이스를 구축하세요</div>
                                 </div>
 
-
-
-
-
                             </div>
                         </div>
 
@@ -680,8 +824,10 @@ export default function UserKnowledge2026() {
 
 
                         {/* Simple Upload Mode */}
-                        <div className="simple-upload" id="simpleUpload">
-                            <div className="simple-upload__back" >
+                        <div className={`simple-upload ${mainPageStatus === 'simple' ? 'simple-upload--active' : ''}`} id="simpleUpload">
+                            <div className="simple-upload__back"
+                                onClick={() => { setPageStatus('main'); setMainPageStatus('modeSelection') }}
+                            >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                     <line x1="19" y1="12" x2="5" y2="12" />
                                     <polyline points="12 19 5 12 12 5" />
@@ -695,10 +841,26 @@ export default function UserKnowledge2026() {
                                     <p className="step-card__desc">AI 학습에 활용될 문서를 업로드하세요</p>
                                 </div>
 
-                                <div className="upload-zone" id="simpleUploadZone"
+                                <div
+                                    className={`upload-zone ${isDragging ? 'upload-zone--dragover' : ''} ${isUploading ? 'upload-dropzone--uploading' : ''}`}
+                                    ref={dropzoneRef}
+                                    onDragEnter={handleDragEnter}
+                                    onDragOver={handleDragOver}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={handleDropzoneClick}
+                                    style={{ cursor: isUploading ? 'not-allowed' : 'pointer' }}
                                 >
-                                    <input type="file" id="simpleFileInput" multiple accept=".pdf,.txt,.docx,.csv"
-                                        style={{ display: 'none' }} />
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        style={{ display: 'none' }}
+                                        // multiple
+                                        accept=".pdf,.txt,.doc,.docx"
+                                        onChange={handleFileInputChange}
+                                        disabled={isUploading || uploadError}
+                                    />
+
                                     <div className="upload-zone__icon">
                                         <svg className="icon icon--lg" viewBox="0 0 24 24">
                                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -706,17 +868,73 @@ export default function UserKnowledge2026() {
                                             <line x1="12" y1="3" x2="12" y2="15" />
                                         </svg>
                                     </div>
+
                                     <div className="upload-zone__title">파일을 드래그하거나 클릭하여 업로드</div>
                                     <div className="upload-zone__desc">AI가 문서를 분석하여 대화에 활용할 수 있습니다</div>
                                     <div className="upload-zone__formats">지원 형식: PDF, TXT, DOCX, CSV (최대 10MB)</div>
+
                                 </div>
-                                <div className="upload-progress" id="simpleUploadProgress"></div>
+
+                                <div className="upload-progress" id="simpleUploadProgress">
+
+                                    <div className="upload-progress__item">
+                                        <div className="upload-progress__icon">
+                                            <svg className="icon" viewBox="0 0 24 24">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div className="upload-progress__info">
+                                            <div className="upload-progress__name">[금호건설] 안전사고사례+인사규정+공사성공실패사례+자문용역Q&amp;A+회계Q&amp;A.pdf</div>
+                                            <div className="upload-progress__bar">
+                                                <div className="upload-progress__fill" id="progress-simple-0" style={{ width: '100%' }}></div>
+                                            </div>
+                                        </div>
+                                        <span className="upload-progress__status" id="status-simple-0" style={{ color: 'var(--success)' }}>완료</span>
+                                    </div>
+
+                                    <div className="upload-progress__item">
+                                        <div className="upload-progress__icon">
+                                            <svg className="icon" viewBox="0 0 24 24">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div className="upload-progress__info">
+                                            <div className="upload-progress__name">2025 META LLM MSP 특허 1.pptx.pdf</div>
+                                            <div className="upload-progress__bar">
+                                                <div className="upload-progress__fill" id="progress-simple-1" style={{ width: '93.0278%' }}></div>
+                                            </div>
+                                        </div>
+                                        <span className="upload-progress__status" id="status-simple-1">93%</span>
+                                    </div>
+
+                                    <div className="upload-progress__item">
+                                        <div className="upload-progress__icon">
+                                            <svg className="icon" viewBox="0 0 24 24">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div className="upload-progress__info">
+                                            <div className="upload-progress__name">2025 META LLM MSP 특허 2.pptx.pdf</div>
+                                            <div className="upload-progress__bar">
+                                                <div className="upload-progress__fill" id="progress-simple-2" style={{ width: '100%' }}></div>
+                                            </div>
+                                        </div>
+                                        <span className="upload-progress__status" id="status-simple-2" style={{ color: 'var(--success)' }}>완료</span>
+                                    </div>
+
+                                </div>
+
                             </div>
                         </div>
 
                         {/* Advanced Mode */}
-                        <div className="advanced-mode" id="advancedMode">
-                            <div className="advanced-mode__back" >
+                        <div className={`advanced-mode ${mainPageStatus === 'advanced' ? 'advanced-mode--active' : ''}`} id="advancedMode">
+                            <div className="advanced-mode__back"
+                                onClick={() => { setPageStatus('main'); setMainPageStatus('modeSelection') }}
+                            >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                     <line x1="19" y1="12" x2="5" y2="12" />
                                     <polyline points="12 19 5 12 12 5" />
@@ -779,7 +997,7 @@ export default function UserKnowledge2026() {
                             </div>
 
                             {/* Step 2: Chunking */}
-                            <div className="step" id="step2">
+                            <div className="step step--active" id="step2">
                                 <div className="step-card" id="chunkingStepCard">
                                     {/* Settings Section (왼쪽) */}
                                     <div className="step-card__settings">
@@ -924,7 +1142,7 @@ export default function UserKnowledge2026() {
                             </div>
 
                             {/* Step 3: Search Settings */}
-                            <div className="step" id="step3">
+                            <div className="step step--active" id="step3">
                                 <div className="step-card">
                                     <div className="step-card__header">
                                         <h3 className="step-card__title">검색 설정</h3>
@@ -1070,7 +1288,7 @@ export default function UserKnowledge2026() {
                             </div>
 
                             {/* Step 4: Preview */}
-                            <div className="step" id="step4">
+                            <div className="step step--active" id="step4">
                                 <div className="step-card">
                                     <div className="step-card__header">
                                         <h3 className="step-card__title">설정 확인</h3>
@@ -1152,13 +1370,633 @@ export default function UserKnowledge2026() {
 
                                     <div className="step-actions">
                                         <button className="btn btn--outline" >이전</button>
-                                        <button className="btn btn--primary btn--lg" >지식베이스
-                                            생성</button>
+                                        <button className="btn btn--primary btn--lg" >지식베이스 생성</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+
+
+
+
+
+
+
+
+
+                    {/* Compare Mode  */}
+                    <div className={`compare-mode ${pageStatus === 'compare' ? 'active' : ''}`} id="compareMode">
+                        <button className="compare-mode__back"
+                            onClick={() => { setPageStatus('main'); setMainPageStatus('modeSelection') }}
+                        >
+                            <svg className="icon" viewBox="0 0 24 24">
+                                <path d="M19 12H5" />
+                                <path d="M12 19l-7-7 7-7" />
+                            </svg>
+                            지식베이스로 돌아가기
+                        </button>
+
+                        {/* Header Section */}
+                        <div className="compare-header">
+                            <div className="compare-header__left">
+                                <div className="compare-header__icon">
+                                    <svg className="icon" viewBox="0 0 24 24">
+                                        <path d="M9 17H7A5 5 0 0 1 7 7h2" />
+                                        <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
+                                        <line x1="8" y1="12" x2="16" y2="12" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div className="compare-header__title">지식베이스 비교 학습</div>
+                                    <div className="compare-header__desc">각 패널에서 모드를 선택하여 다양한 조합으로 AI 응답을 비교해보세요</div>
+                                </div>
+                            </div>
+
+                            {/* Model Selector */}
+                            <div className="model-selector">
+                                <span className="model-selector__label">사용 모델</span>
+                                <div className="model-selector__dropdown">
+                                    <button className="model-selector__button" id="modelButton" >
+                                        <span className="model-selector__dot model-selector__dot--gpt" id="selectedModelDot"></span>
+                                        <span className="model-selector__name" id="selectedModelName">GPT-4</span>
+                                        <svg className="icon icon--sm model-selector__arrow" viewBox="0 0 24 24">
+                                            <path d="M6 9l6 6 6-6" />
+                                        </svg>
+                                    </button>
+                                    <div className="model-dropdown" id="modelDropdown">
+                                        <div className="model-dropdown__item selected" data-model="gpt">
+                                            <span className="model-selector__dot model-selector__dot--gpt"></span>
+                                            <span>GPT-4</span>
+                                        </div>
+                                        <div className="model-dropdown__item" data-model="claude">
+                                            <span className="model-selector__dot model-selector__dot--claude"></span>
+                                            <span>Claude 3.5</span>
+                                        </div>
+                                        <div className="model-dropdown__item" data-model="gemini">
+                                            <span className="model-selector__dot model-selector__dot--gemini"></span>
+                                            <span>Gemini Pro</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Compare Panels */}
+                        <div className="compare-panels">
+                            {/* Panel A */}
+                            <div className="compare-panel" id="panelA">
+                                <div className="compare-panel__header">
+                                    <div className="compare-panel__title">
+                                        <span className="compare-panel__badge compare-panel__badge--a">A</span>
+                                        패널 A
+                                    </div>
+                                    <div className="compare-panel__actions">
+                                        <button className="panel-reset-btn" title="패널 초기화">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                                <path d="M3 3v5h5" />
+                                            </svg>
+                                        </button>
+                                        <span className="mode-status mode-status--llm" id="modeStatusA">순수 LLM</span>
+                                    </div>
+                                </div>
+                                <div className="compare-panel__body">
+                                    {/* Mode Selector */}
+                                    <div className="mode-selector">
+                                        <div className="mode-selector__item active" data-mode="llm">
+                                            <div className="mode-selector__icon mode-selector__icon--llm">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                                    <line x1="8" y1="21" x2="16" y2="21" />
+                                                    <line x1="12" y1="17" x2="12" y2="21" />
+                                                </svg>
+                                            </div>
+                                            <div className="mode-selector__label">순수 LLM</div>
+                                            <div className="mode-selector__desc">파일 없이<br />기본 지식만</div>
+                                        </div>
+                                        <div className="mode-selector__item" data-mode="doc" >
+                                            <div className="mode-selector__icon mode-selector__icon--doc">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                </svg>
+                                            </div>
+                                            <div className="mode-selector__label">문서 참조</div>
+                                            <div className="mode-selector__desc">기본 설정으로<br />문서 활용</div>
+                                        </div>
+                                        <div className="mode-selector__item" data-mode="rag" >
+                                            <div className="mode-selector__icon mode-selector__icon--rag">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                            </div>
+                                            <div className="mode-selector__label">RAG 설정</div>
+                                            <div className="mode-selector__desc">세부 파라미터<br />직접 조절</div>
+                                        </div>
+                                    </div>
+
+                                    {/* LLM Only Content */}
+                                    <div className="mode-content show" id="llmContentA">
+                                        <div className="llm-state">
+                                            <div className="llm-state__icon">
+                                                <svg className="icon icon--lg" viewBox="0 0 24 24">
+                                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                                    <line x1="8" y1="21" x2="16" y2="21" />
+                                                    <line x1="12" y1="17" x2="12" y2="21" />
+                                                </svg>
+                                            </div>
+                                            <div className="llm-state__title">순수 LLM 응답</div>
+                                            <div className="llm-state__text">외부 문서 없이 AI 모델의<br />기본 학습 지식만으로 응답합니다</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Doc Reference Content */}
+                                    <div className="mode-content show" id="docContentA">
+                                        <div className="doc-selector">
+                                            <div className="doc-selector__label">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                </svg>
+                                                문서 선택
+                                            </div>
+                                            <div className="doc-selector__dropdown">
+                                                <button className="doc-selector__button" id="docButtonDocA">
+                                                    <div className="doc-selector__icon">
+                                                        <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                            <polyline points="14 2 14 8 20 8" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="doc-selector__info">
+                                                        <span className="doc-selector__placeholder" id="docPlaceholderDocA">문서를
+                                                            선택하세요</span>
+                                                        <div id="docSelectedDocA" style={{ display: 'none' }}>
+                                                            <div className="doc-selector__name"></div>
+                                                            <div className="doc-selector__meta"></div>
+                                                        </div>
+                                                    </div>
+                                                    <svg className="icon icon--sm doc-selector__arrow" viewBox="0 0 24 24">
+                                                        <path d="M6 9l6 6 6-6" />
+                                                    </svg>
+                                                </button>
+                                                <div className="doc-dropdown" id="docDropdownDocA"></div>
+                                            </div>
+                                        </div>
+                                        <div className="default-settings" id="defaultSettingsDocA" style={{ display: 'none' }}>
+                                            <div className="default-settings__title">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                                </svg>
+                                                기본 RAG 설정 적용
+                                            </div>
+                                            <div className="default-settings__grid">
+                                                <div className="default-settings__item">
+                                                    <div className="default-settings__label">Top-K</div>
+                                                    <div className="default-settings__value">3개</div>
+                                                </div>
+                                                <div className="default-settings__item">
+                                                    <div className="default-settings__label">Chunk</div>
+                                                    <div className="default-settings__value">500자</div>
+                                                </div>
+                                                <div className="default-settings__item">
+                                                    <div className="default-settings__label">유사도</div>
+                                                    <div className="default-settings__value">0.7</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* RAG Settings Content */}
+                                    <div className="mode-content show" id="ragContentA">
+                                        <div className="doc-selector">
+                                            <div className="doc-selector__label">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                </svg>
+                                                문서 선택
+                                            </div>
+                                            <div className="doc-selector__dropdown">
+                                                <button className="doc-selector__button" id="docButtonRagA">
+                                                    <div className="doc-selector__icon">
+                                                        <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                            <polyline points="14 2 14 8 20 8" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="doc-selector__info">
+                                                        <span className="doc-selector__placeholder" id="docPlaceholderRagA">문서를
+                                                            선택하세요</span>
+                                                        <div id="docSelectedRagA" style={{ display: 'none' }}>
+                                                            <div className="doc-selector__name"></div>
+                                                            <div className="doc-selector__meta"></div>
+                                                        </div>
+                                                    </div>
+                                                    <svg className="icon icon--sm doc-selector__arrow" viewBox="0 0 24 24">
+                                                        <path d="M6 9l6 6 6-6" />
+                                                    </svg>
+                                                </button>
+                                                <div className="doc-dropdown" id="docDropdownRagA"></div>
+                                            </div>
+                                        </div>
+                                        <div className="settings-section" id="settingsSectionRagA" style={{ display: 'none' }}>
+                                            <div className="settings-section__title">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                                RAG 파라미터 설정
+                                            </div>
+                                            <div className="setting-row">
+                                                <span className="setting-row__label">Top-K</span>
+                                                <div className="setting-row__slider">
+                                                    <input type="range" min="1" max="10" value="3" id="topKA"
+                                                        onchange="updateSliderValue('topKA', this.value)" />
+                                                    <span className="setting-row__value" id="topKAValue">3개</span>
+                                                </div>
+                                            </div>
+                                            <div className="setting-row">
+                                                <span className="setting-row__label">Chunk Size</span>
+                                                <div className="setting-row__slider">
+                                                    <input type="range" min="200" max="1000" step="100" value="500"
+                                                        id="chunkSizeA" onchange="updateSliderValue('chunkSizeA', this.value)" />
+                                                    <span className="setting-row__value" id="chunkSizeAValue">500자</span>
+                                                </div>
+                                            </div>
+                                            <div className="setting-row">
+                                                <span className="setting-row__label">유사도 임계값</span>
+                                                <div className="setting-row__slider">
+                                                    <input type="range" min="0.5" max="0.9" step="0.1" value="0.7"
+                                                        id="thresholdA" onchange="updateSliderValue('thresholdA', this.value)" />
+                                                    <span className="setting-row__value" id="thresholdAValue">0.7</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="section-divider"></div>
+
+                                    {/* Test Section */}
+                                    <div className="test-section">
+                                        <div className="test-section__label">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                                            </svg>
+                                            질문 입력
+                                        </div>
+                                        <textarea className="test-input" id="questionA" rows="2" placeholder="질문을 입력하세요..."
+                                            oninput="syncQuestion('A')"></textarea>
+                                        <div className="test-actions">
+                                            <button className="btn btn--primary" id="testBtnA" >
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                                </svg>
+                                                실행
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Result Box */}
+                                    <div className="result-box" id="resultBoxA">
+                                        <div className="result-card">
+                                            <div className="result-card__header">
+                                                <span className="result-card__label" id="resultLabelA">AI 응답</span>
+                                                <span className="result-card__model result-card__model--gpt" id="resultModelA">
+                                                    <span className="model-selector__dot model-selector__dot--gpt"></span>
+                                                    GPT-4
+                                                </span>
+                                            </div>
+                                            <div className="result-card__body">
+                                                <div className="result-card__text" id="resultContentA">
+                                                    Python은 1991년 귀도 반 로섬이 개발한 고수준 프로그래밍 언어입니다. 간결하고 읽기 쉬운 문법이 특징이며, 웹 개발, 데이터
+                                                    분석, 인공지능 등 다양한 분야에서 널리 사용됩니다.
+
+                                                    주요 특징:
+                                                    • 간결하고 읽기 쉬운 문법
+                                                    • 동적 타이핑 지원
+                                                    • 풍부한 라이브러리 생태계
+                                                    • 크로스 플랫폼 지원
+                                                    • 객체지향 및 함수형 프로그래밍 지원
+
+                                                    Python은 초보자부터 전문가까지 폭넓게 사용되는 언어입니다.
+                                                </div>
+                                            </div>
+                                            <div className="result-card__footer">
+                                                <div className="result-card__stat">
+                                                    <div className="result-card__stat-value" id="resultTimeA">1.2초</div>
+                                                    <div className="result-card__stat-label">응답 시간</div>
+                                                </div>
+                                                <div className="result-card__stat">
+                                                    <div className="result-card__stat-value" id="resultTokensA">127</div>
+                                                    <div className="result-card__stat-label">토큰</div>
+                                                </div>
+                                                <div className="result-card__stat">
+                                                    <div className="result-card__stat-value" id="resultChunksA">-</div>
+                                                    <div className="result-card__stat-label">청크</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Panel B */}
+                            <div className="compare-panel" id="panelB">
+                                <div className="compare-panel__header">
+                                    <div className="compare-panel__title">
+                                        <span className="compare-panel__badge compare-panel__badge--b">B</span>
+                                        패널 B
+                                    </div>
+                                    <div className="compare-panel__actions">
+                                        <button className="panel-reset-btn" title="패널 초기화">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                                                <path d="M3 3v5h5" />
+                                            </svg>
+                                        </button>
+                                        <span className="mode-status mode-status--doc" id="modeStatusB">문서 참조</span>
+                                    </div>
+                                </div>
+                                <div className="compare-panel__body">
+                                    {/* Mode Selector */}
+                                    <div className="mode-selector">
+                                        <div className="mode-selector__item" data-mode="llm" >
+                                            <div className="mode-selector__icon mode-selector__icon--llm">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                                    <line x1="8" y1="21" x2="16" y2="21" />
+                                                    <line x1="12" y1="17" x2="12" y2="21" />
+                                                </svg>
+                                            </div>
+                                            <div className="mode-selector__label">순수 LLM</div>
+                                            <div className="mode-selector__desc">파일 없이<br />기본 지식만</div>
+                                        </div>
+                                        <div className="mode-selector__item active" data-mode="doc">
+                                            <div className="mode-selector__icon mode-selector__icon--doc">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                </svg>
+                                            </div>
+                                            <div className="mode-selector__label">문서 참조</div>
+                                            <div className="mode-selector__desc">기본 설정으로<br />문서 활용</div>
+                                        </div>
+                                        <div className="mode-selector__item" data-mode="rag" >
+                                            <div className="mode-selector__icon mode-selector__icon--rag">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                            </div>
+                                            <div className="mode-selector__label">RAG 설정</div>
+                                            <div className="mode-selector__desc">세부 파라미터<br />직접 조절</div>
+                                        </div>
+                                    </div>
+
+                                    {/* LLM Only Content */}
+                                    <div className="mode-content" id="llmContentB">
+                                        <div className="llm-state">
+                                            <div className="llm-state__icon">
+                                                <svg className="icon icon--lg" viewBox="0 0 24 24">
+                                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                                                    <line x1="8" y1="21" x2="16" y2="21" />
+                                                    <line x1="12" y1="17" x2="12" y2="21" />
+                                                </svg>
+                                            </div>
+                                            <div className="llm-state__title">순수 LLM 응답</div>
+                                            <div className="llm-state__text">외부 문서 없이 AI 모델의<br />기본 학습 지식만으로 응답합니다</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Doc Reference Content */}
+                                    <div className="mode-content show" id="docContentB">
+                                        <div className="doc-selector">
+                                            <div className="doc-selector__label">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                </svg>
+                                                문서 선택
+                                            </div>
+                                            <div className="doc-selector__dropdown">
+                                                <button className="doc-selector__button" id="docButtonDocB">
+                                                    <div className="doc-selector__icon">
+                                                        <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                            <polyline points="14 2 14 8 20 8" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="doc-selector__info">
+                                                        <span className="doc-selector__placeholder" id="docPlaceholderDocB">문서를
+                                                            선택하세요</span>
+                                                        <div id="docSelectedDocB" style={{ display: 'none' }}>
+                                                            <div className="doc-selector__name"></div>
+                                                            <div className="doc-selector__meta"></div>
+                                                        </div>
+                                                    </div>
+                                                    <svg className="icon icon--sm doc-selector__arrow" viewBox="0 0 24 24">
+                                                        <path d="M6 9l6 6 6-6" />
+                                                    </svg>
+                                                </button>
+                                                <div className="doc-dropdown" id="docDropdownDocB"></div>
+                                            </div>
+                                        </div>
+                                        <div className="default-settings" id="defaultSettingsDocB" style={{ display: 'none' }}>
+                                            <div className="default-settings__title">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="10" />
+                                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                                </svg>
+                                                기본 RAG 설정 적용
+                                            </div>
+                                            <div className="default-settings__grid">
+                                                <div className="default-settings__item">
+                                                    <div className="default-settings__label">Top-K</div>
+                                                    <div className="default-settings__value">3개</div>
+                                                </div>
+                                                <div className="default-settings__item">
+                                                    <div className="default-settings__label">Chunk</div>
+                                                    <div className="default-settings__value">500자</div>
+                                                </div>
+                                                <div className="default-settings__item">
+                                                    <div className="default-settings__label">유사도</div>
+                                                    <div className="default-settings__value">0.7</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* RAG Settings Content */}
+                                    <div className="mode-content" id="ragContentB">
+                                        <div className="doc-selector">
+                                            <div className="doc-selector__label">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                    <polyline points="14 2 14 8 20 8" />
+                                                </svg>
+                                                문서 선택
+                                            </div>
+                                            <div className="doc-selector__dropdown">
+                                                <button className="doc-selector__button" id="docButtonRagB">
+                                                    <div className="doc-selector__icon">
+                                                        <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                            <path
+                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                            <polyline points="14 2 14 8 20 8" />
+                                                        </svg>
+                                                    </div>
+                                                    <div className="doc-selector__info">
+                                                        <span className="doc-selector__placeholder" id="docPlaceholderRagB">문서를
+                                                            선택하세요</span>
+                                                        <div id="docSelectedRagB" style={{ display: 'none' }}>
+                                                            <div className="doc-selector__name"></div>
+                                                            <div className="doc-selector__meta"></div>
+                                                        </div>
+                                                    </div>
+                                                    <svg className="icon icon--sm doc-selector__arrow" viewBox="0 0 24 24">
+                                                        <path d="M6 9l6 6 6-6" />
+                                                    </svg>
+                                                </button>
+                                                <div className="doc-dropdown" id="docDropdownRagB"></div>
+                                            </div>
+                                        </div>
+                                        <div className="settings-section" id="settingsSectionRagB" style={{ display: 'none' }}>
+                                            <div className="settings-section__title">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                                    <circle cx="12" cy="12" r="3" />
+                                                </svg>
+                                                RAG 파라미터 설정
+                                            </div>
+                                            <div className="setting-row">
+                                                <span className="setting-row__label">Top-K</span>
+                                                <div className="setting-row__slider">
+                                                    <input type="range" min="1" max="10" value="5" id="topKB"
+                                                        onchange="updateSliderValue('topKB', this.value)" />
+                                                    <span className="setting-row__value" id="topKBValue">5개</span>
+                                                </div>
+                                            </div>
+                                            <div className="setting-row">
+                                                <span className="setting-row__label">Chunk Size</span>
+                                                <div className="setting-row__slider">
+                                                    <input type="range" min="200" max="1000" step="100" value="500"
+                                                        id="chunkSizeB" onchange="updateSliderValue('chunkSizeB', this.value)" />
+                                                    <span className="setting-row__value" id="chunkSizeBValue">500자</span>
+                                                </div>
+                                            </div>
+                                            <div className="setting-row">
+                                                <span className="setting-row__label">유사도 임계값</span>
+                                                <div className="setting-row__slider">
+                                                    <input type="range" min="0.5" max="0.9" step="0.1" value="0.7"
+                                                        id="thresholdB" onchange="updateSliderValue('thresholdB', this.value)" />
+                                                    <span className="setting-row__value" id="thresholdBValue">0.7</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="section-divider"></div>
+
+                                    {/* Sync Notice */}
+                                    <div className="sync-notice">
+                                        <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                            <polyline points="23 4 23 10 17 10" />
+                                            <polyline points="1 20 1 14 7 14" />
+                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                        </svg>
+                                        A 패널과 동일한 질문이 자동 입력됩니다
+                                    </div>
+
+                                    {/* Test Section */}
+                                    <div className="test-section">
+                                        <div className="test-section__label">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="10" />
+                                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                                            </svg>
+                                            질문 입력
+                                        </div>
+                                        <textarea className="test-input" id="questionB" rows="2"
+                                            placeholder="질문을 입력하세요..."></textarea>
+                                        <div className="test-actions">
+                                            <button className="btn btn--primary" id="testBtnB" >
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                                </svg>
+                                                실행
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Result Box */}
+                                    <div className="result-box" id="resultBoxB">
+                                        <div className="result-card">
+                                            <div className="result-card__header">
+                                                <span className="result-card__label" id="resultLabelB">AI 응답 (문서 참조)</span>
+                                                <span className="result-card__model result-card__model--gpt" id="resultModelB">
+                                                    <span className="model-selector__dot model-selector__dot--gpt"></span>
+                                                    GPT-4
+                                                </span>
+                                            </div>
+                                            <div className="result-card__body">
+                                                <div className="result-card__text" id="resultContentB">
+                                                    업로드하신 문서에 따르면, Python은 1991년 귀도 반 로섬이 개발한 프로그래밍 언어로, 귀사의 데이터 분석 프로젝트에서 주로
+                                                    pandas와 numpy 라이브러리를 활용하고 있습니다.
+
+                                                    문서에서 발견된 관련 내용:
+                                                    • 데이터 전처리: pandas 라이브러리 사용
+                                                    • 수치 계산: numpy 라이브러리 활용
+                                                    • 시각화: matplotlib, seaborn 사용
+                                                    • 머신러닝: scikit-learn 프레임워크 적용
+
+                                                    귀사의 프로젝트에 최적화된 Python 버전은 3.9 이상입니다.
+                                                </div>
+                                            </div>
+                                            <div className="result-card__footer">
+                                                <div className="result-card__stat">
+                                                    <div className="result-card__stat-value" id="resultTimeB">1.8초</div>
+                                                    <div className="result-card__stat-label">응답 시간</div>
+                                                </div>
+                                                <div className="result-card__stat">
+                                                    <div className="result-card__stat-value" id="resultTokensB">156</div>
+                                                    <div className="result-card__stat-label">토큰</div>
+                                                </div>
+                                                <div className="result-card__stat">
+                                                    <div className="result-card__stat-value" id="resultChunksB">3개</div>
+                                                    <div className="result-card__stat-label">청크</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+
+
+
+
+
                 </main >
             </div >
 

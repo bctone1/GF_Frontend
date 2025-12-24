@@ -423,7 +423,7 @@ export default function UserSidebar2026({
             <div className={`modal-overlay ${profileModalStatus ? 'modal-overlay--open' : ''}`} onClick={() => setProfileModalStatus(false)}>
                 <div className="modal" onClick={(e) => e.stopPropagation()}>
                     <div className="modal__header">
-                        <h3 className="modal__title" >내 프로필</h3>
+                        <h3 className="modal__title" >프로필</h3>
                         <button className="modal__close" onClick={() => setProfileModalStatus(false)}>
                             <svg className="icon" viewBox="0 0 24 24">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -601,7 +601,7 @@ export default function UserSidebar2026({
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
                         </svg></span>
-                        <span>내 프로젝트</span>
+                        <span>프로젝트</span>
                     </Link>
 
                     <Link
@@ -627,7 +627,7 @@ export default function UserSidebar2026({
                             <circle cx="8" cy="16" r="1" />
                             <circle cx="16" cy="16" r="1" />
                         </svg></span>
-                        <span>내 에이전트</span>
+                        <span>에이전트</span>
                     </Link>
 
                     {/* <Link
@@ -657,7 +657,7 @@ export default function UserSidebar2026({
                             <line x1="16" y1="17" x2="8" y2="17" />
                             <line x1="10" y1="9" x2="8" y2="9" />
                         </svg></span>
-                        <span>내 기록</span>
+                        <span>기록</span>
                     </Link>
                 </nav>
 
