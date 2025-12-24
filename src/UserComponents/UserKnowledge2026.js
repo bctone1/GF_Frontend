@@ -1,7 +1,7 @@
 import UserSidebar2026 from './UserSidebar2026';
 import { showToast2026, getSelectedClassId, getDisplayName, formatFileSize, formatDate_YY_MM_DD } from '../utill/utill';
 import axios from 'axios';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 
 export default function UserKnowledge2026() {
     const accessToken = sessionStorage.getItem("access_token");
@@ -69,18 +69,30 @@ export default function UserKnowledge2026() {
         fetchDocuments();
     }, [fetchDocuments]);
 
-    // progress가 100이 아닌 항목이 있으면 5초마다 자동 갱신
+
+    // progress가 100이 아닌 항목이 있으면 2초마다 자동 갱신
+    // useEffect(() => {
+    //     const hasInProgress = documents.some(doc => doc.progress < 100);
+    //     if (!hasInProgress) return;
+    //     const intervalId = setInterval(() => {
+    //         fetchDocuments();
+    //     }, 2000);
+    //     return () => clearInterval(intervalId);
+    // }, [documents, fetchDocuments]);
+
+
+    // status가 ready 또는 failed가 아닌 항목이 있으면 2초마다 자동 갱신
+    const hasInProgress = useMemo(
+        () => documents.some(
+            doc => doc.status !== "ready" && doc.status !== "failed"
+        ),
+        [documents]
+    );
     useEffect(() => {
-        const hasInProgress = documents.some(doc => doc.progress < 100);
-
         if (!hasInProgress) return;
-
-        const intervalId = setInterval(() => {
-            fetchDocuments();
-        }, 5000);
-
+        const intervalId = setInterval(fetchDocuments, 2000);
         return () => clearInterval(intervalId);
-    }, [documents, fetchDocuments]);
+    }, [hasInProgress, fetchDocuments]);
 
 
 
@@ -203,11 +215,9 @@ export default function UserKnowledge2026() {
     const uploadFiles = async (files) => {
         if (!files || files.length === 0) return;
         if (uploadError) return; // 오류 상태일 때 업로드 차단
-
         // 파일 크기 검증 (10MB)
         const maxSize = 10 * 1024 * 1024; // 10MB in bytes
         const invalidFiles = Array.from(files).filter(file => file.size > maxSize);
-
         if (invalidFiles.length > 0) {
             showToast2026('파일 크기는 10MB를 초과할 수 없습니다.', 'error');
             return;
@@ -305,6 +315,9 @@ export default function UserKnowledge2026() {
             fileInputRef.current.click();
         }
     };
+
+
+    let documentsUploading = documents.filter(doc => doc.progress < 100);
 
 
 
@@ -542,7 +555,6 @@ export default function UserKnowledge2026() {
                                         <div className={`file-filter__dropdown ${isStatusDropdownOpen ? 'show' : ''}`} id="statusDropdown">
                                             <div
                                                 className={`file-filter__item ${statusFilter === 'all' ? 'selected' : ''}`}
-                                                data-value="all"
                                                 onClick={() => handleStatusFilterChange('all')}
                                             >
                                                 <svg className="icon icon--sm file-filter__check" viewBox="0 0 24 24">
@@ -552,7 +564,6 @@ export default function UserKnowledge2026() {
                                             </div>
                                             <div
                                                 className={`file-filter__item ${statusFilter === 'ready' ? 'selected' : ''}`}
-                                                data-value="ready"
                                                 onClick={() => handleStatusFilterChange('ready')}
                                             >
                                                 <svg className="icon icon--sm file-filter__check" viewBox="0 0 24 24">
@@ -562,7 +573,6 @@ export default function UserKnowledge2026() {
                                             </div>
                                             <div
                                                 className={`file-filter__item ${statusFilter === 'failed' ? 'selected' : ''}`}
-                                                data-value="failed"
                                                 onClick={() => handleStatusFilterChange('failed')}
                                             >
                                                 <svg className="icon icon--sm file-filter__check" viewBox="0 0 24 24">
@@ -586,7 +596,6 @@ export default function UserKnowledge2026() {
                                         <div className={`file-filter__dropdown ${isSortDropdownOpen ? 'show' : ''}`} id="sortDropdown">
                                             <div
                                                 className={`file-filter__item ${sortOption === 'recent' ? 'selected' : ''}`}
-                                                data-value="recent"
                                                 onClick={() => handleSortOptionChange('recent')}
                                             >
                                                 <svg className="icon icon--sm file-filter__check" viewBox="0 0 24 24">
@@ -596,7 +605,6 @@ export default function UserKnowledge2026() {
                                             </div>
                                             <div
                                                 className={`file-filter__item ${sortOption === 'oldest' ? 'selected' : ''}`}
-                                                data-value="oldest"
                                                 onClick={() => handleSortOptionChange('oldest')}
                                             >
                                                 <svg className="icon icon--sm file-filter__check" viewBox="0 0 24 24">
@@ -606,7 +614,6 @@ export default function UserKnowledge2026() {
                                             </div>
                                             <div
                                                 className={`file-filter__item ${sortOption === 'name' ? 'selected' : ''}`}
-                                                data-value="name"
                                                 onClick={() => handleSortOptionChange('name')}
                                             >
                                                 <svg className="icon icon--sm file-filter__check" viewBox="0 0 24 24">
@@ -616,7 +623,6 @@ export default function UserKnowledge2026() {
                                             </div>
                                             <div
                                                 className={`file-filter__item ${sortOption === 'size' ? 'selected' : ''}`}
-                                                data-value="size"
                                                 onClick={() => handleSortOptionChange('size')}
                                             >
                                                 <svg className="icon icon--sm file-filter__check" viewBox="0 0 24 24">
@@ -807,15 +813,15 @@ export default function UserKnowledge2026() {
 
 
 
-                                <div className="empty-state" id="emptyState" style={{ display: `${filteredAndSortedDocuments.length > 0 ? 'none' : 'block'}` }}>
-                                    <div className="empty-state__icon">
+                                <div className="kb-empty-state" style={{ display: `${filteredAndSortedDocuments.length > 0 ? 'none' : 'block'}` }}>
+                                    <div className="kb-empty-state__icon">
                                         <svg className="icon icon--lg" viewBox="0 0 24 24">
                                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                             <polyline points="14 2 14 8 20 8" />
                                         </svg>
                                     </div>
-                                    <div className="empty-state__title">파일이 없습니다</div>
-                                    <div className="empty-state__desc">파일을 업로드하여 지식베이스를 구축하세요</div>
+                                    <div className="kb-empty-state__title">파일이 없습니다</div>
+                                    <div className="kb-empty-state__desc">파일을 업로드하여 지식베이스를 구축하세요</div>
                                 </div>
 
                             </div>
@@ -857,7 +863,7 @@ export default function UserKnowledge2026() {
                                         ref={fileInputRef}
                                         type="file"
                                         style={{ display: 'none' }}
-                                        // multiple
+                                        multiple
                                         accept=".pdf,.txt,.doc,.docx"
                                         onChange={handleFileInputChange}
                                         disabled={isUploading || uploadError}
@@ -879,21 +885,32 @@ export default function UserKnowledge2026() {
 
                                 <div className="upload-progress" id="simpleUploadProgress">
 
-                                    <div className="upload-progress__item">
-                                        <div className="upload-progress__icon">
-                                            <svg className="icon" viewBox="0 0 24 24">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                            </svg>
-                                        </div>
-                                        <div className="upload-progress__info">
-                                            <div className="upload-progress__name">[금호건설] 안전사고사례+인사규정+공사성공실패사례+자문용역Q&amp;A+회계Q&amp;A.pdf</div>
-                                            <div className="upload-progress__bar">
-                                                <div className="upload-progress__fill" id="progress-simple-0" style={{ width: '100%' }}></div>
+                                    {documentsUploading.map((doc) => {
+                                        console.log(doc);
+                                        return (
+                                            <div className="upload-progress__item" key={doc.knowledge_id}>
+                                                <div className="upload-progress__icon">
+                                                    <svg className="icon" viewBox="0 0 24 24">
+                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                    </svg>
+                                                </div>
+                                                <div className="upload-progress__info">
+                                                    <div className="upload-progress__name">{getDisplayName(doc.name)}</div>
+                                                    <div className="upload-progress__bar">
+                                                        <div className="upload-progress__fill" style={{ width: `${doc.progress}%` }}></div>
+                                                    </div>
+                                                </div>
+                                                <span
+                                                    className="upload-progress__status"
+
+                                                    style={{ color: doc.status !== 'ready' && doc.status !== 'failed' ? 'var(--success)' : 'var(--error)' }}
+                                                >
+                                                    {doc.status !== 'ready' && doc.status !== 'failed' ? `${doc.progress}%` : '완료'}
+                                                </span>
                                             </div>
-                                        </div>
-                                        <span className="upload-progress__status" id="status-simple-0" style={{ color: 'var(--success)' }}>완료</span>
-                                    </div>
+                                        )
+                                    })}
 
                                     <div className="upload-progress__item">
                                         <div className="upload-progress__icon">
@@ -905,26 +922,10 @@ export default function UserKnowledge2026() {
                                         <div className="upload-progress__info">
                                             <div className="upload-progress__name">2025 META LLM MSP 특허 1.pptx.pdf</div>
                                             <div className="upload-progress__bar">
-                                                <div className="upload-progress__fill" id="progress-simple-1" style={{ width: '93.0278%' }}></div>
+                                                <div className="upload-progress__fill" style={{ width: '93.0278%' }}></div>
                                             </div>
                                         </div>
-                                        <span className="upload-progress__status" id="status-simple-1">93%</span>
-                                    </div>
-
-                                    <div className="upload-progress__item">
-                                        <div className="upload-progress__icon">
-                                            <svg className="icon" viewBox="0 0 24 24">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                            </svg>
-                                        </div>
-                                        <div className="upload-progress__info">
-                                            <div className="upload-progress__name">2025 META LLM MSP 특허 2.pptx.pdf</div>
-                                            <div className="upload-progress__bar">
-                                                <div className="upload-progress__fill" id="progress-simple-2" style={{ width: '100%' }}></div>
-                                            </div>
-                                        </div>
-                                        <span className="upload-progress__status" id="status-simple-2" style={{ color: 'var(--success)' }}>완료</span>
+                                        <span className="upload-progress__status">93%</span>
                                     </div>
 
                                 </div>
@@ -1235,10 +1236,7 @@ export default function UserKnowledge2026() {
                                                             </div>
                                                         </label>
                                                         <div className="rerank-settings__control">
-                                                            <input type="range" className="slider-input rerank-settings__slider"
-                                                                id="scoreThreshold" min="0" max="1" step="0.1" value="0.5"
-
-                                                                disabled />
+                                                            <input type="range" className="slider-input rerank-settings__slider" id="scoreThreshold" min="0" max="1" step="0.1" disabled />
                                                             <span className="rerank-settings__value"
                                                                 id="scoreThresholdValue">0.5</span>
                                                         </div>
@@ -1624,24 +1622,21 @@ export default function UserKnowledge2026() {
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Top-K</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="1" max="10" value="3" id="topKA"
-                                                        onchange="updateSliderValue('topKA', this.value)" />
+                                                    <input type="range" min="1" max="10" id="topKA" />
                                                     <span className="setting-row__value" id="topKAValue">3개</span>
                                                 </div>
                                             </div>
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Chunk Size</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="200" max="1000" step="100" value="500"
-                                                        id="chunkSizeA" onchange="updateSliderValue('chunkSizeA', this.value)" />
+                                                    <input type="range" min="200" max="1000" step="100" id="chunkSizeA" />
                                                     <span className="setting-row__value" id="chunkSizeAValue">500자</span>
                                                 </div>
                                             </div>
                                             <div className="setting-row">
                                                 <span className="setting-row__label">유사도 임계값</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="0.5" max="0.9" step="0.1" value="0.7"
-                                                        id="thresholdA" onchange="updateSliderValue('thresholdA', this.value)" />
+                                                    <input type="range" min="0.5" max="0.9" step="0.1" id="thresholdA" />
                                                     <span className="setting-row__value" id="thresholdAValue">0.7</span>
                                                 </div>
                                             </div>
@@ -1660,8 +1655,7 @@ export default function UserKnowledge2026() {
                                             </svg>
                                             질문 입력
                                         </div>
-                                        <textarea className="test-input" id="questionA" rows="2" placeholder="질문을 입력하세요..."
-                                            oninput="syncQuestion('A')"></textarea>
+                                        <textarea className="test-input" id="questionA" rows="2" placeholder="질문을 입력하세요..." />
                                         <div className="test-actions">
                                             <button className="btn btn--primary" id="testBtnA" >
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -1891,24 +1885,21 @@ export default function UserKnowledge2026() {
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Top-K</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="1" max="10" value="5" id="topKB"
-                                                        onchange="updateSliderValue('topKB', this.value)" />
+                                                    <input type="range" min="1" max="10" id="topKB" />
                                                     <span className="setting-row__value" id="topKBValue">5개</span>
                                                 </div>
                                             </div>
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Chunk Size</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="200" max="1000" step="100" value="500"
-                                                        id="chunkSizeB" onchange="updateSliderValue('chunkSizeB', this.value)" />
+                                                    <input type="range" min="200" max="1000" step="100" id="chunkSizeB" />
                                                     <span className="setting-row__value" id="chunkSizeBValue">500자</span>
                                                 </div>
                                             </div>
                                             <div className="setting-row">
                                                 <span className="setting-row__label">유사도 임계값</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="0.5" max="0.9" step="0.1" value="0.7"
-                                                        id="thresholdB" onchange="updateSliderValue('thresholdB', this.value)" />
+                                                    <input type="range" min="0.5" max="0.9" step="0.1" id="thresholdB" />
                                                     <span className="setting-row__value" id="thresholdBValue">0.7</span>
                                                 </div>
                                             </div>
