@@ -2725,12 +2725,12 @@
 }
 
 /* Empty State */
-.empty-state {
+.kb-empty-state {
     text-align: center;
     padding: 60px 20px;
 }
 
-.empty-state__icon {
+.kb-empty-state__icon {
     width: 64px;
     height: 64px;
     margin: 0 auto 16px;
@@ -2742,14 +2742,14 @@
     color: var(--primary-400);
 }
 
-.empty-state__title {
+.kb-empty-state__title {
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
     margin-bottom: 8px;
 }
 
-.empty-state__desc {
+.kb-empty-state__desc {
     font-size: 14px;
     color: var(--text-tertiary);
 }

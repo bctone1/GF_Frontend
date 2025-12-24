@@ -212,12 +212,16 @@ export default function UserKnowledge2026() {
         }
     };
 
+    const [uploadingFiles, setUploadingFiles] = useState([]);
+
     const uploadFiles = async (files) => {
         if (!files || files.length === 0) return;
         if (uploadError) return; // 오류 상태일 때 업로드 차단
+
         // 파일 크기 검증 (10MB)
         const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-        const invalidFiles = Array.from(files).filter(file => file.size > maxSize);
+        const fileArray = Array.from(files);
+        const invalidFiles = fileArray.filter(file => file.size > maxSize);
         if (invalidFiles.length > 0) {
             showToast2026('파일 크기는 10MB를 초과할 수 없습니다.', 'error');
             return;
@@ -226,44 +230,77 @@ export default function UserKnowledge2026() {
         setIsUploading(true);
         setUploadError(null); // 이전 오류 상태 초기화
 
-        try {
-            const formData = new FormData();
-            Array.from(files).forEach(file => {
+        const uploadResults = {
+            success: 0,
+            failed: 0,
+            errors: []
+        };
+
+        // 여러 파일을 순차적으로 업로드
+        for (let i = 0; i < fileArray.length; i++) {
+            const file = fileArray[i];
+
+            try {
+                const formData = new FormData();
                 formData.append('file', file);
-            });
 
-            const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/user/upload`,
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'multipart/form-data',
-                    },
-                    timeout: 300000,
-                }
-            );
+                const response = await axios.post(
+                    `${process.env.REACT_APP_API_URL}/user/upload`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'multipart/form-data',
+                        },
+                        timeout: 300000,
+                    }
+                );
 
-            showToast2026('파일이 성공적으로 업로드되었습니다.', 'success');
-            console.log('Upload response:', response.data);
-            fetchDocuments();
+                uploadResults.success++;
+                console.log(`File ${i + 1}/${fileArray.length} uploaded:`, response.data);
+                setUploadingFiles(prev => [...prev, response.data.knowledge_id]);
 
-        } catch (error) {
-            console.error('File upload error:', error);
+            } catch (error) {
+                console.error(`File ${i + 1}/${fileArray.length} upload error:`, error);
+                uploadResults.failed++;
 
-            // timeout 오류 감지
-            if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-                const timeoutMessage = '파일 업로드 시간이 초과되었습니다. 네트워크 연결을 확인하고 다시 시도해주세요.';
-                setUploadError(timeoutMessage);
-                showToast2026(timeoutMessage, 'error');
-            } else {
-                const errorMessage = error.response?.data?.message || '파일 업로드 중 오류가 발생했습니다.';
-                setUploadError(errorMessage);
-                showToast2026(errorMessage, 'error');
+                const errorMessage = error.code === 'ECONNABORTED' || error.message?.includes('timeout')
+                    ? `${file.name}: 업로드 시간 초과`
+                    : `${file.name}: ${error.response?.data?.message || '업로드 실패'}`;
+
+                uploadResults.errors.push(errorMessage);
             }
-        } finally {
-            setIsUploading(false);
         }
+
+        // 모든 파일 업로드 완료 후 결과 처리
+        if (uploadResults.success > 0) {
+            if (uploadResults.failed === 0) {
+                showToast2026(
+                    fileArray.length === 1
+                        ? '파일이 성공적으로 업로드되었습니다.'
+                        : `${uploadResults.success}개의 파일이 성공적으로 업로드되었습니다.`,
+                    'success'
+                );
+            } else {
+                showToast2026(
+                    `${uploadResults.success}개 성공, ${uploadResults.failed}개 실패`,
+                    'warning'
+                );
+            }
+            fetchDocuments();
+        }
+
+        if (uploadResults.failed > 0 && uploadResults.success === 0) {
+            // 모든 파일이 실패한 경우
+            const errorMessage = uploadResults.errors[0] || '파일 업로드 중 오류가 발생했습니다.';
+            setUploadError(errorMessage);
+            showToast2026(errorMessage, 'error');
+        } else if (uploadResults.errors.length > 0) {
+            // 일부 파일만 실패한 경우
+            console.error('Upload errors:', uploadResults.errors);
+        }
+
+        setIsUploading(false);
     };
 
 
@@ -317,7 +354,7 @@ export default function UserKnowledge2026() {
     };
 
 
-    let documentsUploading = documents.filter(doc => doc.progress < 100);
+    let documentsUploading = documents.filter(doc => doc.knowledge_id && uploadingFiles.includes(doc.knowledge_id));
 
 
 
@@ -886,7 +923,7 @@ export default function UserKnowledge2026() {
                                 <div className="upload-progress" id="simpleUploadProgress">
 
                                     {documentsUploading.map((doc) => {
-                                        console.log(doc);
+                                        // console.log(doc);
                                         return (
                                             <div className="upload-progress__item" key={doc.knowledge_id}>
                                                 <div className="upload-progress__icon">
@@ -904,7 +941,7 @@ export default function UserKnowledge2026() {
                                                 <span
                                                     className="upload-progress__status"
 
-                                                    style={{ color: doc.status !== 'ready' && doc.status !== 'failed' ? 'var(--success)' : 'var(--error)' }}
+                                                    style={{ color: doc.status !== 'ready' && doc.status !== 'failed' ? 'var(--error)' : 'var(--success)' }}
                                                 >
                                                     {doc.status !== 'ready' && doc.status !== 'failed' ? `${doc.progress}%` : '완료'}
                                                 </span>
@@ -912,7 +949,7 @@ export default function UserKnowledge2026() {
                                         )
                                     })}
 
-                                    <div className="upload-progress__item">
+                                    {/* <div className="upload-progress__item">
                                         <div className="upload-progress__icon">
                                             <svg className="icon" viewBox="0 0 24 24">
                                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -926,7 +963,7 @@ export default function UserKnowledge2026() {
                                             </div>
                                         </div>
                                         <span className="upload-progress__status">93%</span>
-                                    </div>
+                                    </div> */}
 
                                 </div>
 

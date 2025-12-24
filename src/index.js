@@ -7,6 +7,7 @@ import './css/UserSignup2026.css';
 import './css/UserPractice2026.css';
 import './css/UserProject2026.css';
 import './css/UserKnowledge2026.css';
+import './css/UserSetting2026.css';
 
 
 

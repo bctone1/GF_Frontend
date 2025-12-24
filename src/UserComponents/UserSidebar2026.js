@@ -724,7 +724,10 @@ export default function UserSidebar2026({
 
 
                 <div className="sidebar__footer">
-                    <div className="sidebar__footer-item" onClick={() => setSettingsModalStatus(true)}>
+                    <div className="sidebar__footer-item"
+                        //  onClick={() => setSettingsModalStatus(true)}
+                        onClick={() => window.location.href = "/user/setting"}
+                    >
                         <svg className="icon" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="3" />
                             <path
