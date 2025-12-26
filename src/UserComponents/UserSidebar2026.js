@@ -253,7 +253,7 @@ export default function UserSidebar2026({
         const sessionIdFromUrl = searchParams.get('sessionId');
         if (sessionIdFromUrl) {
             const sessionId = parseInt(sessionIdFromUrl, 10);
-            console.log(sessionId);
+            // console.log(sessionId);
             if (sessionId && !isNaN(sessionId)) {
                 const timer = setTimeout(() => {
                     handleSessionClick(sessionId);
@@ -348,7 +348,7 @@ export default function UserSidebar2026({
     // 신청 유무 확인
     const [partnerRequestStatus, setPartnerRequestStatus] = useState(false);
     const getPartnerList = (myAccount) => {
-        console.log(myAccount);
+        // console.log(myAccount);
 
         if (myAccount.default_role === 'partner') {
             setPartnerRequestStatus(true);
@@ -357,12 +357,12 @@ export default function UserSidebar2026({
 
         axios.get(`${process.env.REACT_APP_API_URL}/supervisor/core/promotions/partner-requests?status=pending`)
             .then(response => {
-                console.log(response.data);
+                // console.log(response.data);
                 if (response.data.find(item => item.user_id === myAccount.user_id)) {
-                    console.log("신청 유무 확인: true");
+                    // console.log("신청 유무 확인: true");
                     setPartnerRequestStatus(true);
                 } else {
-                    console.log("신청 유무 확인: false");
+                    // console.log("신청 유무 확인: false");
                     setPartnerRequestStatus(false);
                 }
             }).catch(error => {

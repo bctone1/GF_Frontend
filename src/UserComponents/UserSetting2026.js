@@ -1,23 +1,158 @@
 import UserSidebar2026 from './UserSidebar2026';
-import { useState } from 'react';
-import { formatDate_YY_MM_DD } from '../utill/utill';
+import { useState, useCallback } from 'react';
+import { formatDate_YY_MM_DD, showToast2026, showConfirm } from '../utill/utill';
+import { useRef } from 'react';
+import axios from 'axios';
+
+
 
 export default function UserSetting2026() {
+    const accessToken = sessionStorage.getItem("access_token");
     const [classArray, setClassArray] = useState([]);
 
-
-    const handleClassesData = (classes, isLoading) => {
+    const handleClassesData = useCallback((classes, isLoading) => {
         console.log(classes);
         if (!isLoading) {
             setClassArray(classes);
         }
+    }, []);
+
+    const [currentSection, setCurrentSection] = useState('enrolled');
+
+    const [inviteStatus, setInviteStatus] = useState(false);
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        const code = inviteCodeRefs.current.map(ref => ref?.value || '').join('');
+
+        if (code.length === 6) {
+            axios.post(`${process.env.REACT_APP_API_URL}/user/class/invites/redeem`, {
+                code: code
+            }, {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            }).then(response => {
+                setInviteStatus(false);
+                showToast2026(`강의가 등록되었습니다!`, 'info');
+                resetInviteCodeInputs();
+                setRefreshClassesTrigger(prev => prev + 1);
+            }).catch(error => {
+                const errorMessage = error.response?.data?.message || error.message || '초대코드 등록에 실패했습니다.';
+                showToast2026(errorMessage, 'error');
+            });
+        }
     };
+
+    const handleDeleteClass = async (enrollment_id) => {
+        if (!window.confirm('수강을 취소하겠습니까?')) return;
+
+        console.log(enrollment_id);
+        axios.delete(`${process.env.REACT_APP_API_URL}/user/class/enrollments/${enrollment_id}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            console.log(response.data);
+            showToast2026(`강의가 삭제되었습니다.`, 'success');
+            setRefreshClassesTrigger(prev => prev + 1);
+        }).catch(error => {
+            console.log(error);
+        });
+
+        console.log(enrollment_id);
+        axios.delete(`${process.env.REACT_APP_API_URL}/user/class/enrollments/${enrollment_id}`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            console.log(response.data);
+            showToast2026(`강의가 삭제되었습니다.`, 'success');
+            setRefreshClassesTrigger(prev => prev + 1);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+
+
+
+
+
+    const [refreshClassesTrigger, setRefreshClassesTrigger] = useState(0);
+    const inviteCodeRefs = useRef([]);
+
+    // 초대코드 입력 필드 초기화
+    if (inviteCodeRefs.current.length !== 6) {
+        inviteCodeRefs.current = Array(6).fill().map((_, i) => inviteCodeRefs.current[i] || null);
+    }
+
+
+
+    const handleInviteCodeChange = (index, value) => {
+        // 영문자와 숫자만 허용
+        const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+        // 현재 필드에 값 설정
+        if (inviteCodeRefs.current[index]) {
+            inviteCodeRefs.current[index].value = sanitizedValue;
+        }
+
+        // 값이 입력되었고 다음 필드가 있으면 다음 필드로 이동
+        if (sanitizedValue && index < 5) {
+            inviteCodeRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleInviteCodeKeyDown = (index, e) => {
+        // 백스페이스 키를 눌렀을 때
+        if (e.key === 'Backspace' && !inviteCodeRefs.current[index].value && index > 0) {
+            inviteCodeRefs.current[index - 1]?.focus();
+        }
+        // 화살표 키로 이동
+        else if (e.key === 'ArrowLeft' && index > 0) {
+            e.preventDefault();
+            inviteCodeRefs.current[index - 1]?.focus();
+        }
+        else if (e.key === 'ArrowRight' && index < 5) {
+            e.preventDefault();
+            inviteCodeRefs.current[index + 1]?.focus();
+        }
+    };
+
+    const handleInviteCodePaste = (e) => {
+        e.preventDefault();
+        const pastedData = (e.clipboardData || window.clipboardData).getData('text');
+        const sanitizedData = pastedData.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+
+        // 각 필드에 값 설정
+        sanitizedData.split('').forEach((char, i) => {
+            if (i < 6 && inviteCodeRefs.current[i]) {
+                inviteCodeRefs.current[i].value = char;
+            }
+        });
+
+        // 마지막 입력된 필드 다음으로 포커스 이동
+        const nextIndex = Math.min(sanitizedData.length, 5);
+        inviteCodeRefs.current[nextIndex]?.focus();
+    };
+
+    // 초대코드 입력 필드 초기화 함수
+    const resetInviteCodeInputs = () => {
+        inviteCodeRefs.current.forEach(ref => {
+            if (ref) {
+                ref.value = '';
+            }
+        });
+    };
+
 
     return (
         <>
             <div className="app">
                 <UserSidebar2026
                     onClassesData={handleClassesData}
+                    refreshTrigger={refreshClassesTrigger}
                 />
                 <main className="main">
                     <div className="page-header">
@@ -32,19 +167,19 @@ export default function UserSetting2026() {
                             {/* Settings Sidebar */}
                             <div className="settings-sidebar">
                                 <nav className="settings-nav">
-                                    <button className="settings-nav__item settings-nav__item--active" >
+                                    <button className={`settings-nav__item ${currentSection === 'enrolled' ? 'settings-nav__item--active' : ''}`} onClick={() => setCurrentSection('enrolled')}>
                                         <span className="settings-nav__icon"><svg className="icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" /></svg></span>
                                         <span>수강 강의</span>
                                     </button>
-                                    <button className="settings-nav__item" >
+                                    <button className={`settings-nav__item ${currentSection === 'account' ? 'settings-nav__item--active' : ''}`} onClick={() => setCurrentSection('account')}>
                                         <span className="settings-nav__icon"><svg className="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></span>
                                         <span>내 계정</span>
                                     </button>
-                                    <button className="settings-nav__item" >
+                                    <button className={`settings-nav__item ${currentSection === 'preferences' ? 'settings-nav__item--active' : ''}`} onClick={() => setCurrentSection('preferences')}>
                                         <span className="settings-nav__icon"><svg className="icon" viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg></span>
                                         <span>환경설정</span>
                                     </button>
-                                    <button className="settings-nav__item" >
+                                    <button className={`settings-nav__item ${currentSection === 'help' ? 'settings-nav__item--active' : ''}`} onClick={() => setCurrentSection('help')}>
                                         <span className="settings-nav__icon"><svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg></span>
                                         <span>도움말</span>
                                     </button>
@@ -52,18 +187,29 @@ export default function UserSetting2026() {
                             </div>
 
                             {/* Settings Panel */}
-                            <div className="settings-panel">
+                            <div className="user-settings-panel">
                                 {/* 수강 강의 섹션 */}
-                                <div id="enrolled-section" className="settings-section settings-section--active">
-                                    <div className="settings-section__header">
-                                        <h2 className="settings-section__title">수강 강의</h2>
-                                        <p className="settings-section__desc">현재 수강 중인 강의를 관리하고 새 강의를 등록하세요</p>
+                                <div id="enrolled-section" className={`user-settings-section ${currentSection === 'enrolled' ? 'user-settings-section--active' : ''}`}>
+                                    <div className="user-settings-section__header">
+                                        <h2 className="user-settings-section__title">수강 강의</h2>
+                                        <p className="user-settings-section__desc">현재 수강 중인 강의를 관리하고 새 강의를 등록하세요</p>
                                     </div>
-                                    <div className="settings-section__body">
+                                    <div className="user-settings-section__body">
 
 
 
                                         <div className="class-list">
+                                            {classArray.length === 0 && (
+                                                <div className="no-classes">
+                                                    <div className="no-classes__icon">
+                                                        <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"></path></svg>
+                                                    </div>
+                                                    <h3 className="no-classes__title">등록된 강의가 없습니다</h3>
+                                                    <p className="no-classes__desc">초대코드를 입력하여 새로운 강의를 등록하세요</p>
+                                                </div>
+                                            )}
+
+
 
 
                                             {classArray.map((classInfo) => {
@@ -95,13 +241,13 @@ export default function UserSetting2026() {
                                                             <div className="class-card__icon">
                                                                 <svg className="icon" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5"></path></svg>
                                                             </div>
-                                                            <span className="class-card__badge class-card__badge--active">{statusBadge}</span>
+                                                            <span className={`class-card__badge ${isDisabled ? 'class-card__badge--ended' : 'class-card__badge--active'}`}>{statusBadge}</span>
                                                         </div>
                                                         <h3 className="class-card__title">{classInfo.class_title}</h3>
                                                         <div className="class-card__info">
                                                             <div className="class-card__info-item">
                                                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                                                                <span>{classInfo.class_teacher_name}</span>
+                                                                <span>{classInfo.teacher_name}</span>
                                                             </div>
                                                             <div className="class-card__info-item">
                                                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
@@ -109,8 +255,12 @@ export default function UserSetting2026() {
                                                             </div>
                                                         </div>
                                                         <div className="class-card__actions">
-                                                            <button className="class-card__action-btn" >실습하기</button>
-                                                            <button className="class-card__action-btn class-card__action-btn--danger">삭제</button>
+                                                            <button className="class-card__action-btn"
+                                                                disabled={isDisabled}
+                                                            >실습하기</button>
+                                                            <button className="class-card__action-btn class-card__action-btn--danger"
+                                                                onClick={() => handleDeleteClass(classInfo.enrollment_id)}
+                                                            >삭제</button>
                                                         </div>
                                                     </div>
                                                 )
@@ -121,7 +271,9 @@ export default function UserSetting2026() {
 
 
 
-                                        <button className="btn-add-class" style={{ marginTop: "16px" }}>
+                                        <button className="btn-add-class" style={{ marginTop: "16px" }}
+                                            onClick={() => setInviteStatus(true)}
+                                        >
                                             <svg className="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                                             <span>새 강의 등록</span>
                                         </button>
@@ -129,12 +281,12 @@ export default function UserSetting2026() {
                                 </div>
 
                                 {/* 내 계정 섹션 */}
-                                <div id="account-section" className="settings-section">
-                                    <div className="settings-section__header">
-                                        <h2 className="settings-section__title">내 계정</h2>
-                                        <p className="settings-section__desc">프로필 정보와 계정 보안을 관리하세요</p>
+                                <div id="account-section" className={`user-settings-section ${currentSection === 'account' ? 'user-settings-section--active' : ''}`}>
+                                    <div className="user-settings-section__header">
+                                        <h2 className="user-settings-section__title">내 계정</h2>
+                                        <p className="user-settings-section__desc">프로필 정보와 계정 보안을 관리하세요</p>
                                     </div>
-                                    <div className="settings-section__body">
+                                    <div className="user-settings-section__body">
                                         {/* 프로필 */}
                                         <div className="setting-group">
                                             <h3 className="setting-group__title">프로필 정보</h3>
@@ -190,12 +342,12 @@ export default function UserSetting2026() {
                                 </div>
 
                                 {/* 환경설정 섹션 */}
-                                <div id="preferences-section" className="settings-section">
-                                    <div className="settings-section__header">
-                                        <h2 className="settings-section__title">환경설정</h2>
-                                        <p className="settings-section__desc">앱 사용 환경을 맞춤 설정하세요</p>
+                                <div id="preferences-section" className={`user-settings-section ${currentSection === 'preferences' ? 'user-settings-section--active' : ''}`}>
+                                    <div className="user-settings-section__header">
+                                        <h2 className="user-settings-section__title">환경설정</h2>
+                                        <p className="user-settings-section__desc">앱 사용 환경을 맞춤 설정하세요</p>
                                     </div>
-                                    <div className="settings-section__body">
+                                    <div className="user-settings-section__body">
                                         {/* 테마 */}
                                         <div className="setting-group">
                                             <h3 className="setting-group__title">테마</h3>
@@ -262,12 +414,12 @@ export default function UserSetting2026() {
                                 </div>
 
                                 {/* 도움말 섹션 */}
-                                <div id="help-section" className="settings-section">
-                                    <div className="settings-section__header">
-                                        <h2 className="settings-section__title">도움말</h2>
-                                        <p className="settings-section__desc">자주 묻는 질문과 문의 방법을 확인하세요</p>
+                                <div id="help-section" className={`user-settings-section ${currentSection === 'help' ? 'user-settings-section--active' : ''}`}>
+                                    <div className="user-settings-section__header">
+                                        <h2 className="user-settings-section__title">도움말</h2>
+                                        <p className="user-settings-section__desc">자주 묻는 질문과 문의 방법을 확인하세요</p>
                                     </div>
-                                    <div className="settings-section__body">
+                                    <div className="user-settings-section__body">
                                         {/* FAQ */}
                                         <div className="setting-group">
                                             <h3 className="setting-group__title">자주 묻는 질문</h3>
@@ -337,8 +489,11 @@ export default function UserSetting2026() {
             </div>
 
 
-            <div className="modal-overlay " id="inviteModal">
-                <div className="invite-modal">
+            <div className={`modal-overlay ${inviteStatus ? 'modal-overlay--visible' : ''}`} id="inviteModal" onClick={() => {
+                setInviteStatus(false);
+                resetInviteCodeInputs();
+            }}>
+                <div className="invite-modal" onClick={e => e.stopPropagation()}>
                     <div className="invite-modal__header">
                         <div className="invite-modal__icon">
                             <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z" /><path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" /></svg>
@@ -351,26 +506,64 @@ export default function UserSetting2026() {
                             강사님께 받은 6자리 초대코드를 입력하면<br />해당 강의에 등록됩니다.
                         </p>
 
-                        <label className="invite-code-label">초대코드 입력</label>
-                        <div className="invite-code-inputs">
-                            <input type="text" className="invite-code-input" maxLength="1" />
-                            <input type="text" className="invite-code-input" maxLength="1" />
-                            <input type="text" className="invite-code-input" maxLength="1" />
-                            <input type="text" className="invite-code-input" maxLength="1" />
-                            <input type="text" className="invite-code-input" maxLength="1" />
-                            <input type="text" className="invite-code-input" maxLength="1" />
-                        </div>
-                        <div className="invite-code-help">영문 대문자와 숫자 조합</div>
 
-                        <div className="invite-code-error" id="inviteError">
-                            <svg className="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-                            <span id="inviteErrorText">올바른 초대코드가 아닙니다</span>
-                        </div>
+                        <form id="inviteCodeForm" onSubmit={handleSubmit}>
+                            <label className="invite-code-label">초대코드 입력</label>
+                            <div className="invite-code-inputs">
+                                <input ref={el => inviteCodeRefs.current[0] = el} type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required
+                                    autoComplete="off"
+                                    onChange={(e) => handleInviteCodeChange(0, e.target.value)}
+                                    onKeyDown={(e) => handleInviteCodeKeyDown(0, e)}
+                                    onPaste={handleInviteCodePaste}
+                                />
+                                <input ref={el => inviteCodeRefs.current[1] = el} type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required
+                                    autoComplete="off"
+                                    onChange={(e) => handleInviteCodeChange(1, e.target.value)}
+                                    onKeyDown={(e) => handleInviteCodeKeyDown(1, e)}
+                                    onPaste={handleInviteCodePaste}
+                                />
+                                <input ref={el => inviteCodeRefs.current[2] = el} type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required
+                                    autoComplete="off"
+                                    onChange={(e) => handleInviteCodeChange(2, e.target.value)}
+                                    onKeyDown={(e) => handleInviteCodeKeyDown(2, e)}
+                                    onPaste={handleInviteCodePaste}
+                                />
+                                <input ref={el => inviteCodeRefs.current[3] = el} type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required
+                                    autoComplete="off"
+                                    onChange={(e) => handleInviteCodeChange(3, e.target.value)}
+                                    onKeyDown={(e) => handleInviteCodeKeyDown(3, e)}
+                                    onPaste={handleInviteCodePaste}
+                                />
+                                <input ref={el => inviteCodeRefs.current[4] = el} type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required
+                                    autoComplete="off"
+                                    onChange={(e) => handleInviteCodeChange(4, e.target.value)}
+                                    onKeyDown={(e) => handleInviteCodeKeyDown(4, e)}
+                                    onPaste={handleInviteCodePaste}
+                                />
+                                <input ref={el => inviteCodeRefs.current[5] = el} type="text" className="invite-code-input" maxLength="1" pattern="[A-Za-z0-9]" required
+                                    autoComplete="off"
+                                    onChange={(e) => handleInviteCodeChange(5, e.target.value)}
+                                    onKeyDown={(e) => handleInviteCodeKeyDown(5, e)}
+                                    onPaste={handleInviteCodePaste}
+                                />
+                            </div>
+                            <div className="invite-code-help">영문 대문자와 숫자 조합</div>
 
-                        <div className="invite-modal__actions">
-                            <button className="btn btn--outline" >취소</button>
-                            <button className="btn btn--primary" id="submitCodeBtn" >등록하기</button>
-                        </div>
+                            <div className="invite-code-error" id="inviteError">
+                                <svg className="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+                                <span id="inviteErrorText">올바른 초대코드가 아닙니다</span>
+                            </div>
+
+                            <div className="invite-modal__actions">
+                                <button className="btn btn--outline" onClick={() => {
+                                    setInviteStatus(false);
+                                    resetInviteCodeInputs();
+                                }}>취소</button>
+                                <button className="btn btn--primary" id="submitCodeBtn" type="submit" >등록하기</button>
+                            </div>
+                        </form>
+
+
                     </div>
                 </div>
             </div>

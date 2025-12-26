@@ -613,18 +613,18 @@
 }
 
 /* Settings Panel */
-.settings-panel {
+.user-settings-panel {
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     overflow: hidden;
 }
 
-.settings-section {
+.user-settings-section {
     display: none;
 }
 
-.settings-section--active {
+.user-settings-section--active {
     display: block;
     animation: fadeIn 0.2s ease-out;
 }
@@ -641,23 +641,23 @@
     }
 }
 
-.settings-section__header {
+.user-settings-section__header {
     padding: 24px 24px 0;
 }
 
-.settings-section__title {
+.user-settings-section__title {
     font-size: 18px;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 4px;
 }
 
-.settings-section__desc {
+.user-settings-section__desc {
     font-size: 13px;
     color: var(--text-tertiary);
 }
 
-.settings-section__body {
+.user-settings-section__body {
     padding: 24px;
 }
 
@@ -1013,6 +1013,18 @@
     color: var(--text-primary);
     cursor: pointer;
     transition: all 0.2s;
+}
+
+.class-card__action-btn:disabled {
+    background: var(--gray-200);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+}
+
+.class-card__action-btn:disabled:hover {
+    background: var(--gray-200);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
 }
 
 .class-card__action-btn:hover {
