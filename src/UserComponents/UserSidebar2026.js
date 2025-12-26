@@ -140,6 +140,11 @@ export default function UserSidebar2026({
             },
         }).then(response => {
             const classes = response.data.items || [];
+            if (classes.length === 0) {
+                setTimeout(() => {
+                    setRoleModalOpen(true);
+                }, 500);
+            }
             setMyClasses(classes);
 
             // 부모 컴포넌트에 클래스 데이터 전달
@@ -188,7 +193,9 @@ export default function UserSidebar2026({
             sessionStorage.setItem("partner_id", response.data.partner_id);
             sessionStorage.setItem("user_id", response.data.user_id);
             sessionStorage.setItem("user_email", response.data.email);
+            // console.log(response.data);
             setMyaccount(response.data);
+            getPartnerList(response.data.user_id);
             if (handleAccountData) {
                 handleAccountData(response.data);
             }
@@ -196,6 +203,8 @@ export default function UserSidebar2026({
             console.error('계정 조회 실패:', error);
         });
     }, [accessToken, handleAccountData]);
+
+
 
     const getMyProfile = useCallback(() => {
         axios.get(`${process.env.REACT_APP_API_URL}/user/my/profile`, {
@@ -267,6 +276,7 @@ export default function UserSidebar2026({
         fetchSessions();
         getMyAccount();
         getMyProfile();
+
         if (savedClassId) {
             fetchProjects(savedClassId);
         }
@@ -333,6 +343,318 @@ export default function UserSidebar2026({
         }
     }, [contextMenuOpen, closeChatContextMenu]);
 
+
+
+    // 신청 유무 확인
+    const [partnerRequestStatus, setPartnerRequestStatus] = useState(false);
+    const getPartnerList = (myId) => {
+        console.log(myId);
+        axios.get(`${process.env.REACT_APP_API_URL}/supervisor/core/promotions/partner-requests?status=pending`)
+            .then(response => {
+                console.log(response.data);
+                if (response.data.find(item => item.user_id === myId)) {
+                    console.log("신청 유무 확인: true");
+                    setPartnerRequestStatus(true);
+                } else {
+                    console.log("신청 유무 확인: false");
+                    setPartnerRequestStatus(false);
+                }
+            }).catch(error => {
+                console.log(error);
+            });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    const [roleModalOpen, setRoleModalOpen] = useState(false);
+    const [partnerSignUpModalOpen, setPartnerSignUpModalOpen] = useState(false);
+    const [partnerSignUpStep, setPartnerSignUpStep] = useState(0);
+
+    // 파트너 회원가입 폼 상태
+    const [partnerFormData, setPartnerFormData] = useState({
+        password: '',
+        passwordConfirm: '',
+        phone: '',
+        organization: '',
+        teachingField: '',
+        otherField: '',
+        verifyCode: '',
+        agreeTerms: false,
+        agreeMarketing: false
+    });
+    const [partnerErrors, setPartnerErrors] = useState({});
+    const [partnerSuccess, setPartnerSuccess] = useState({});
+    const [emailVerified, setEmailVerified] = useState(false);
+    const [showVerifyCode, setShowVerifyCode] = useState(false);
+    const [verificationToken, setVerificationToken] = useState('');
+    const [timer, setTimer] = useState(180);
+    const [timerActive, setTimerActive] = useState(false);
+    const [sendingCode, setSendingCode] = useState(false);
+    const [showOtherField, setShowOtherField] = useState(false);
+
+    // 타이머 효과
+    useEffect(() => {
+        let interval = null;
+        if (timerActive && timer > 0) {
+            interval = setInterval(() => {
+                setTimer(timer => timer - 1);
+            }, 1000);
+        } else if (timer === 0) {
+            setTimerActive(false);
+            setShowVerifyCode(false);
+        }
+        return () => clearInterval(interval);
+    }, [timerActive, timer]);
+
+    const handlePartnerSignUpBack = () => {
+        switch (partnerSignUpStep) {
+            case 1:
+                setRoleModalOpen(true);
+                setPartnerSignUpModalOpen(false);
+                setPartnerSignUpStep(0);
+                break;
+            case 2:
+                setPartnerSignUpStep(1);
+                break;
+        }
+    }
+
+    const handlePartnerFormChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setPartnerFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+
+        // 에러 초기화
+        if (partnerErrors[name]) {
+            setPartnerErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+
+        // 성공 메시지 초기화
+        if (partnerSuccess[name]) {
+            setPartnerSuccess(prev => ({
+                ...prev,
+                [name]: false
+            }));
+        }
+    };
+
+
+    const formatPhoneNumber = (input) => {
+        let value = input.value.replace(/[^\d]/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+
+        if (value.length <= 3) {
+            input.value = value;
+        } else if (value.length <= 7) {
+            input.value = `${value.slice(0, 3)}-${value.slice(3)}`;
+        } else {
+            input.value = `${value.slice(0, 3)}-${value.slice(3, 7)}-${value.slice(7)}`;
+        }
+
+        setPartnerFormData(prev => ({ ...prev, phone: input.value }));
+    };
+
+    const handleFieldChange = (e) => {
+        const value = e.target.value;
+        setPartnerFormData(prev => ({ ...prev, teachingField: value }));
+        setShowOtherField(value === 'other');
+        if (value !== 'other') {
+            setPartnerFormData(prev => ({ ...prev, otherField: '' }));
+        }
+    };
+
+    const handleSendVerification = () => {
+        const email = myaccount?.email || '';
+        if (!email.trim()) {
+            setPartnerErrors(prev => ({ ...prev, email: '이메일을 입력해주세요.' }));
+            return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setPartnerErrors(prev => ({ ...prev, email: '올바른 이메일 형식이 아닙니다.' }));
+            return;
+        }
+
+        setSendingCode(true);
+        setPartnerErrors(prev => ({ ...prev, email: '' }));
+
+        axios.post(`${process.env.REACT_APP_API_URL}/user/email/send-code`, {
+            email: email
+        }).then(response => {
+            const data = response.data;
+            setVerificationToken(data.verification_token);
+            setShowVerifyCode(true);
+            setTimerActive(true);
+            setTimer(180);
+            setPartnerSuccess(prev => ({ ...prev, emailSend: true }));
+            setPartnerErrors(prev => ({ ...prev, email: '' }));
+            setSendingCode(false);
+            // 인증번호 입력 필드 표시
+            const verifyGroup = document.querySelector('#formStep1 .form-group[style*="display: none"]');
+            if (verifyGroup) verifyGroup.style.display = 'block';
+        }).catch(error => {
+            setSendingCode(false);
+            if (error.response) {
+                const errorMessage = error.response.data?.message || error.response.data?.detail || '인증번호 발송에 실패했습니다.';
+                setPartnerErrors(prev => ({ ...prev, email: errorMessage }));
+            } else {
+                setPartnerErrors(prev => ({ ...prev, email: '네트워크 오류가 발생했습니다.' }));
+            }
+        });
+    };
+
+    const checkVerification = () => {
+        const verifyCode = partnerFormData.verifyCode || '';
+        if (!verifyCode.trim()) {
+            setPartnerErrors(prev => ({ ...prev, verifyCode: '인증번호를 입력해주세요.' }));
+            return;
+        }
+        axios.post(`${process.env.REACT_APP_API_URL}/user/email/verify-code`, {
+            email: myaccount?.email || '',
+            code: verifyCode,
+            verification_token: verificationToken
+        }).then(response => {
+            setEmailVerified(true);
+            setTimerActive(false);
+            setPartnerSuccess(prev => ({ ...prev, verify: true }));
+            setPartnerErrors(prev => ({ ...prev, verifyCode: '' }));
+            setPartnerSignUpStep(2);
+        }).catch(error => {
+            setPartnerErrors(prev => ({ ...prev, verifyCode: '인증번호가 일치하지 않습니다.' }));
+            setPartnerSuccess(prev => ({ ...prev, verify: false }));
+        });
+    };
+
+    const formatTimer = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const validateStep1 = () => {
+        const newErrors = {};
+        if (!myprofile?.full_name || myprofile.full_name.length < 2) {
+            newErrors.name = '이름을 2자 이상 입력해주세요';
+        }
+        if (!myaccount?.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(myaccount.email)) {
+            newErrors.email = '올바른 이메일을 입력해주세요';
+        } else if (!emailVerified) {
+            newErrors.email = '이메일 인증을 완료해주세요';
+        }
+        setPartnerErrors(prev => ({ ...prev, ...newErrors }));
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const validateStep2 = () => {
+        const newErrors = {};
+        const phoneRegex = /^010-\d{4}-\d{4}$/;
+        if (!partnerFormData.phone || !phoneRegex.test(partnerFormData.phone)) {
+            newErrors.phone = '올바른 연락처를 입력해주세요';
+        }
+        if (!partnerFormData.organization.trim()) {
+            newErrors.organization = '소속 기관을 입력해주세요';
+        }
+        if (!partnerFormData.teachingField) {
+            newErrors.teachingField = '교육 분야를 선택해주세요';
+        } else if (partnerFormData.teachingField === 'other' && !partnerFormData.otherField.trim()) {
+            newErrors.otherField = '교육 분야를 입력해주세요';
+        }
+        if (!partnerFormData.agreeTerms) {
+            newErrors.agreeTerms = '이용약관에 동의해주세요';
+        }
+        setPartnerErrors(prev => ({ ...prev, ...newErrors }));
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const handlePartnerSignUpNext = () => {
+        if (partnerSignUpStep === 1) {
+            if (validateStep1()) {
+                setPartnerSignUpStep(2);
+            }
+        } else if (partnerSignUpStep === 2) {
+            if (validateStep2()) {
+                handlePartnerSignupSubmit();
+            }
+        }
+    };
+
+    const handlePartnerSignupSubmit = (e) => {
+        // alert("신청폼 제출");
+        if (e) e.preventDefault();
+        if (!validateStep2()) {
+            return;
+        }
+
+        const teachingField = partnerFormData.teachingField === 'other'
+            ? partnerFormData.otherField
+            : partnerFormData.teachingField;
+
+        axios.post(
+            `${process.env.REACT_APP_API_URL}/user/partner-promotion-requests`,
+            {
+                name: myprofile?.full_name || '',
+                email: myaccount?.email || '',
+                // phone: partnerFormData.phone,
+                org_name: partnerFormData.organization,
+                edu_category: teachingField,
+                target_role: "partner",
+                // agree_marketing: partnerFormData.agreeMarketing
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        ).then(response => {
+            console.log(response.data);
+            showToast2026('강사 신청이 완료되었습니다. 관리자 승인 후 사용 가능합니다.');
+            setPartnerSignUpModalOpen(false);
+            setPartnerSignUpStep(0);
+            // 폼 초기화
+            setPartnerFormData({
+                password: '',
+                passwordConfirm: '',
+                phone: '',
+                organization: '',
+                teachingField: '',
+                otherField: '',
+                agreeTerms: false,
+                agreeMarketing: false
+            });
+            setEmailVerified(false);
+            setShowVerifyCode(false);
+            setPartnerErrors({});
+            setPartnerSuccess({});
+            setVerificationToken('');
+            setTimer(180);
+            setTimerActive(false);
+            setShowOtherField(false);
+        }).catch(error => {
+            const errorMessage = error.response?.data?.message || error.message || '강사 신청에 실패했습니다.';
+            showToast2026(errorMessage);
+        });
+    };
 
 
     return (
@@ -780,6 +1102,392 @@ export default function UserSidebar2026({
                     삭제
                 </div>
             </div>
+
+
+
+
+
+            <div className="blur-overlay" style={{ display: !partnerRequestStatus && roleModalOpen && currentMenu !== "setting" || partnerSignUpModalOpen ? 'block' : 'none' }}></div>
+
+            <div className={`modal-overlay ${partnerSignUpModalOpen ? "modal-overlay--open" : ""}`}>
+                <div className="partner-signup-modal">
+
+                    <div className="partner-signup-modal__header" style={{ position: 'relative' }}>
+                        <button
+                            className="partner-signup-modal__back"
+                            onClick={handlePartnerSignUpBack}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"></path>
+                            </svg>
+                            뒤로
+                        </button>
+
+                        <div className="partner-signup-modal__logo">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '28px', height: '28px' }}>
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                        </div>
+                        <h1 className="partner-signup-modal__title">강사 회원가입</h1>
+                        <p className="partner-signup-modal__subtitle">
+                            강의를 생성하고 학생들을 관리하세요
+                        </p>
+                    </div>
+
+                    <div className="partner-signup-modal__body">
+                        <div className="step-indicator">
+                            <div className={`step-dot ${partnerSignUpStep === 1 ? 'active' : 'completed'}`} id="step1"></div>
+                            <div className={`step-dot ${partnerSignUpStep === 2 ? 'active' : ''}`} id="step2"></div>
+                        </div>
+
+
+
+                        <form id="signupForm" onSubmit={handlePartnerSignupSubmit}>
+
+
+
+                            <div id="formStep1" style={{ display: partnerSignUpStep === 1 ? 'block' : 'none' }}>
+                                <div className="info-box">
+                                    <div className="info-box__icon">💡</div>
+                                    <div className="info-box__content">
+                                        <strong>강사 신청 안내</strong>
+                                        관리자 승인 후 강의 생성이 가능합니다. (1~2 영업일 소요)
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="name">이름 <span className="required">*</span></label>
+                                    <input
+                                        name="name"
+                                        type="text"
+                                        className="form-input"
+                                        id="name"
+                                        placeholder="실명을 입력해주세요"
+                                        value={myprofile?.full_name || ""}
+                                        readOnly
+                                        required
+                                    />
+                                    <div className="form-error" id="nameError">이름을 2자 이상 입력해주세요</div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="email">이메일 <span className="required">*</span></label>
+                                    <div className="input-group">
+                                        <input
+                                            name="email"
+                                            type="email"
+                                            className="form-input"
+                                            id="email"
+                                            value={myaccount?.email || ""}
+                                            readOnly
+                                            placeholder="growfit@gmail.com"
+                                            required
+                                        />
+                                        {timerActive && timer > 0 && (
+                                            <span className="verify-timer">{formatTimer(timer)}</span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className="input-action"
+                                            onClick={handleSendVerification}
+                                            disabled={emailVerified || timerActive || sendingCode}
+                                        >
+                                            {sendingCode ? '발송 중...' : emailVerified ? '인증완료' : timerActive ? `재발송` : '인증요청'}
+                                        </button>
+                                    </div>
+                                    <div className="form-error" id="emailError" style={{ display: partnerErrors.email ? 'block' : 'none' }}>
+                                        {partnerErrors.email || '올바른 이메일을 입력해주세요'}
+                                    </div>
+                                    {partnerSuccess.emailSend && !emailVerified && !sendingCode && (
+                                        <div className="form-success">인증번호가 발송되었습니다.</div>
+                                    )}
+                                    {emailVerified && (
+                                        <div className="form-success">이메일 인증이 완료되었습니다.</div>
+                                    )}
+                                </div>
+
+                                <div className="form-group" style={{ display: showVerifyCode && !emailVerified ? 'block' : 'none' }}>
+                                    <label className="form-label">인증번호 <span className="required">*</span></label>
+                                    <div className="input-group">
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            id="verifyCode"
+                                            placeholder="6자리 인증번호"
+                                            maxLength="6"
+                                            value={partnerFormData.verifyCode || ''}
+                                            onChange={(e) => {
+                                                setPartnerFormData(prev => ({ ...prev, verifyCode: e.target.value }));
+                                                if (partnerErrors.verifyCode) {
+                                                    setPartnerErrors(prev => ({ ...prev, verifyCode: '' }));
+                                                }
+                                            }}
+                                        />
+                                        <button type="button" className="input-action" onClick={checkVerification}>확인</button>
+                                    </div>
+
+                                    <div className="form-error" id="verifyError" style={{ display: partnerErrors.verifyCode ? 'block' : 'none' }}>
+                                        {partnerErrors.verifyCode || '인증번호가 일치하지 않습니다'}
+                                    </div>
+                                    <div className="form-success" id="verifySuccess" style={{ display: partnerSuccess.verify ? 'block' : 'none' }}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M20 6L9 17l-5-5"></path>
+                                        </svg>
+                                        이메일 인증이 완료되었습니다
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div id="formStep2" style={{ display: partnerSignUpStep === 2 ? 'block' : 'none' }}>
+                                <div className="form-group">
+                                    <label className="form-label">연락처 <span className="required">*</span></label>
+                                    <input
+                                        type="tel"
+                                        className="form-input"
+                                        id="phone"
+                                        name="phone"
+                                        placeholder="010-0000-0000"
+                                        value={partnerFormData.phone}
+                                        onChange={(e) => {
+                                            formatPhoneNumber(e.target);
+                                        }}
+                                        required
+                                    />
+                                    <div className="form-error" id="phoneError" style={{ display: partnerErrors.phone ? 'block' : 'none' }}>
+                                        {partnerErrors.phone || '올바른 연락처를 입력해주세요'}
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label className="form-label">소속 기관 <span className="required">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="form-input"
+                                            id="organization"
+                                            name="organization"
+                                            placeholder="회사/학교명"
+                                            value={partnerFormData.organization}
+                                            onChange={handlePartnerFormChange}
+                                        />
+                                        <div className="form-error" id="organizationError" style={{ display: partnerErrors.organization ? 'block' : 'none' }}>
+                                            {partnerErrors.organization || '소속 기관을 입력해주세요'}
+                                        </div>
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label">교육 분야</label>
+                                        <select
+                                            className="form-select"
+                                            id="teachingField"
+                                            name="teachingField"
+                                            value={partnerFormData.teachingField}
+                                            onChange={handleFieldChange}
+                                        >
+                                            <option value="">선택해주세요</option>
+                                            <option value="it">IT/개발</option>
+                                            <option value="business">비즈니스</option>
+                                            <option value="design">디자인</option>
+                                            <option value="marketing">마케팅</option>
+                                            <option value="language">외국어</option>
+                                            <option value="academic">학술/연구</option>
+                                            <option value="other">기타</option>
+                                        </select>
+                                        {partnerErrors.teachingField && (
+                                            <div className="form-error">{partnerErrors.teachingField}</div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="form-group" id="otherFieldGroup" style={{ display: showOtherField ? 'block' : 'none' }}>
+                                    <label className="form-label">교육 분야 직접 입력 <span className="required">*</span></label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        id="otherField"
+                                        name="otherField"
+                                        placeholder="교육 분야를 입력해주세요"
+                                        value={partnerFormData.otherField}
+                                        onChange={handlePartnerFormChange}
+                                    />
+                                    <div className="form-hint">예: 음악, 요리, 헬스케어 등</div>
+                                    <div className="form-error" id="otherFieldError" style={{ display: partnerErrors.otherField ? 'block' : 'none' }}>
+                                        {partnerErrors.otherField || '교육 분야를 입력해주세요'}
+                                    </div>
+                                </div>
+
+                                <div className="section-divider">약관 동의</div>
+
+                                <div className="partner-signup-checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        className="checkbox-input"
+                                        id="agreeTerms"
+                                        name="agreeTerms"
+                                        checked={partnerFormData.agreeTerms}
+                                        onChange={handlePartnerFormChange}
+                                        required
+                                    />
+                                    <label className="checkbox-label" htmlFor="agreeTerms">
+                                        <span className="required">[필수]</span> <a href="#">서비스 이용약관</a> 및 <a href="#">개인정보 처리방침</a>에 동의합니다
+                                    </label>
+                                    {partnerErrors.agreeTerms && (
+                                        <div className="form-error">{partnerErrors.agreeTerms}</div>
+                                    )}
+                                </div>
+
+                                <div className="partner-signup-checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        className="checkbox-input"
+                                        id="agreeMarketing"
+                                        name="agreeMarketing"
+                                        checked={partnerFormData.agreeMarketing}
+                                        onChange={handlePartnerFormChange}
+                                    />
+                                    <label className="checkbox-label" htmlFor="agreeMarketing">
+                                        [선택] 마케팅 정보 수신에 동의합니다
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+
+
+
+
+                    </div>
+
+                    <div className="partner-signup-modal__footer">
+                        <button type="button" className="submit-btn" onClick={handlePartnerSignUpNext}>
+                            {partnerSignUpStep === 2 ? '신청하기' : '다음'}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M5 12h14M12 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+
+                        <p className="modal__note">
+                            이미 계정이 있으신가요? <a href="/login">로그인</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <div className={`modal-overlay ${!partnerRequestStatus && roleModalOpen && currentMenu !== "setting" ? 'modal-overlay--open' : ''}`}>
+                <div className="role-modal">
+                    <div className="role-modal__header">
+                        <div className="role-modal__logo">
+                            GF
+                        </div>
+                        <h1 className="role-modal__title">GrowFit에 오신 것을 환영합니다!</h1>
+                        <p className="role-modal__subtitle">
+                            AI 교육을 시작하기 위해<br />역할을 선택해주세요
+                        </p>
+                    </div>
+
+                    <div className="role-modal__body">
+                        <div className="role-selection">
+
+                            <div className="role-card role-card--student" onClick={() => navigate('/user/setting')}>
+                                <div className="role-card__header">
+                                    <div className="role-card__icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '28px', height: '28px', color: 'white' }}>
+                                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div className="role-card__title">수강생</div>
+                                        <span className="role-card__badge">학습자</span>
+                                    </div>
+                                </div>
+                                <p className="role-card__description">
+                                    강의를 수강하고 AI 모델을 실습하며 학습합니다.
+                                </p>
+                                <div className="role-card__features">
+                                    <div className="role-card__feature">
+                                        <svg className="role-card__feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>초대코드로 강의 등록</span>
+                                    </div>
+                                    <div className="role-card__feature">
+                                        <svg className="role-card__feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>단일/다중 LLM 실습 환경</span>
+                                    </div>
+                                    <div className="role-card__feature">
+                                        <svg className="role-card__feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>지식베이스 및 RAG 활용</span>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div className="role-card role-card--instructor"
+                                onClick={() => {
+                                    setPartnerSignUpModalOpen(true);
+                                    setRoleModalOpen(false);
+                                    setPartnerSignUpStep(1);
+                                }}
+                            >
+                                <div className="role-card__header">
+                                    <div className="role-card__icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '28px', height: '28px', color: 'white' }}>
+                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="9" cy="7" r="4"></circle>
+                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div className="role-card__title">강사</div>
+                                        <span className="role-card__badge">교육자</span>
+                                    </div>
+                                </div>
+                                <p className="role-card__description">
+                                    강의를 생성하고 학생들을 관리하며 교육을 진행합니다.
+                                </p>
+                                <div className="role-card__features">
+                                    <div className="role-card__feature">
+                                        <svg className="role-card__feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>강의 생성 및 관리</span>
+                                    </div>
+                                    <div className="role-card__feature">
+                                        <svg className="role-card__feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>학생 초대 및 관리</span>
+                                    </div>
+                                    <div className="role-card__feature">
+                                        <svg className="role-card__feature-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>학습 현황 모니터링</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="role-modal__footer">
+                        <div className="modal__note">
+                            <strong>💡 참고:</strong> 강사 신청 시 관리자 승인 후 강의 생성이 가능합니다. (1~2 영업일 소요)
+                        </div>
+                    </div>
+                </div>
+            </div >
         </>
     );
 }

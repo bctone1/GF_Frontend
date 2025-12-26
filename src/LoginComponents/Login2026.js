@@ -104,6 +104,8 @@ export default function Login() {
             sessionStorage.setItem("token_type", response.data.token_type);
             sessionStorage.setItem("email", formData.email);
 
+            console.log(response.data);
+
             if (selectedRole === 'student') {
                 navigate('/user/practice');
             } else if (selectedRole === 'organization') {
