@@ -946,8 +946,7 @@ export default function UserSidebar2026({
                     </Link>
 
                     <Link
-                        onClick={() => showToast2026("준비중입니다.")}
-                        // to="/user/agent"
+                        to="/user/agent"
                         className={`sidebar__nav-item ${currentMenu === 'agent' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
@@ -976,8 +975,8 @@ export default function UserSidebar2026({
                     </Link> */}
 
                     <Link
-                        onClick={() => showToast2026("준비중입니다.")}
-                        // to="/user/history"
+                        // onClick={() => showToast2026("준비중입니다.")}
+                        to="/user/history"
                         className={`sidebar__nav-item ${currentMenu === 'history' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">

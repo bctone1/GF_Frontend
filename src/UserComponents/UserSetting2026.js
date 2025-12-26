@@ -619,7 +619,7 @@ export default function UserSetting2026() {
             </div>
 
 
-            <div className={`modal-overlay ${inviteStatus ? 'modal-overlay--visible' : ''}`} id="inviteModal" onClick={() => {
+            <div className={`setting-modal-overlay ${inviteStatus ? 'setting-modal-overlay--visible' : ''}`} id="inviteModal" onClick={() => {
                 setInviteStatus(false);
                 resetInviteCodeInputs();
             }}>

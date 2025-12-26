@@ -515,23 +515,6 @@
 }
 
 /* ========== Main ========== */
-.main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    background: var(--surface);
-}
-
-.page-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 24px;
-    background: var(--background);
-    border-bottom: 1px solid var(--border);
-}
-
 .page-header__left {
     display: flex;
     align-items: center;
@@ -1175,7 +1158,7 @@
 }
 
 /* ========== 초대코드 모달 ========== */
-.modal-overlay {
+.setting-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -1191,7 +1174,7 @@
     transition: all 0.2s;
 }
 
-.modal-overlay--visible {
+.setting-modal-overlay--visible {
     opacity: 1;
     visibility: visible;
 }
@@ -1206,7 +1189,7 @@
     transition: transform 0.3s;
 }
 
-.modal-overlay--visible .invite-modal {
+.setting-modal-overlay--visible .invite-modal {
     transform: translateY(0);
 }
 
@@ -1465,12 +1448,12 @@
 }
 
 /* Modal */
-.modal-overlay--open {
+.setting-modal-overlay--open {
     opacity: 1;
     visibility: visible;
 }
 
-.modal {
+.setting-modal {
     background: var(--background);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
@@ -1482,11 +1465,11 @@
     transition: transform 0.2s;
 }
 
-.modal-overlay--open .modal {
+.setting-modal-overlay--open .setting-modal {
     transform: scale(1);
 }
 
-.modal__header {
+.setting-modal__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1494,7 +1477,7 @@
     border-bottom: 1px solid var(--border);
 }
 
-.modal__title {
+.setting-modal__title {
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
@@ -1503,7 +1486,7 @@
     gap: 8px;
 }
 
-.modal__close {
+.setting-modal__close {
     width: 32px;
     height: 32px;
     border: none;
@@ -1517,18 +1500,18 @@
     transition: all 0.2s;
 }
 
-.modal__close:hover {
+.setting-modal__close:hover {
     background: var(--gray-100);
     color: var(--text-primary);
 }
 
-.modal__body {
+.setting-modal__body {
     padding: 20px;
     max-height: 60vh;
     overflow-y: auto;
 }
 
-.modal__footer {
+.setting-modal__footer {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
@@ -1537,7 +1520,7 @@
     background: var(--gray-50);
 }
 
-.modal__btn {
+.setting-modal__btn {
     padding: 8px 16px;
     border: 1px solid var(--border);
     background: var(--background);
@@ -1548,27 +1531,27 @@
     transition: all 0.2s;
 }
 
-.modal__btn:hover {
+.setting-modal__btn:hover {
     background: var(--gray-100);
 }
 
-.modal__btn--primary {
+.setting-modal__btn--primary {
     background: var(--primary-600);
     border-color: var(--primary-600);
     color: white;
 }
 
-.modal__btn--primary:hover {
+.setting-modal__btn--primary:hover {
     background: var(--primary-700);
 }
 
-.modal__btn--danger {
+.setting-modal__btn--danger {
     background: var(--error);
     border-color: var(--error);
     color: white;
 }
 
-.modal__btn--danger:hover {
+.setting-modal__btn--danger:hover {
     background: #dc2626;
 }
 
@@ -1879,15 +1862,15 @@
 }
 
 /* Modal size adjustment for popups */
-.modal--popup {
+.setting-modal--popup {
     max-width: 480px;
 }
 
-.modal--popup .modal__body {
+.setting-modal--popup .setting-modal__body {
     padding: 0;
 }
 
-.modal--popup .modal__header {
+.setting-modal--popup .setting-modal__header {
     display: none;
 }
 
