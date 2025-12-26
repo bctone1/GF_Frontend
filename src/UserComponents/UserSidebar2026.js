@@ -195,7 +195,7 @@ export default function UserSidebar2026({
             sessionStorage.setItem("user_email", response.data.email);
             // console.log(response.data);
             setMyaccount(response.data);
-            getPartnerList(response.data.user_id);
+            getPartnerList(response.data);
             if (handleAccountData) {
                 handleAccountData(response.data);
             }
@@ -347,12 +347,18 @@ export default function UserSidebar2026({
 
     // 신청 유무 확인
     const [partnerRequestStatus, setPartnerRequestStatus] = useState(false);
-    const getPartnerList = (myId) => {
-        console.log(myId);
+    const getPartnerList = (myAccount) => {
+        console.log(myAccount);
+
+        if (myAccount.default_role === 'partner') {
+            setPartnerRequestStatus(true);
+            return;
+        }
+
         axios.get(`${process.env.REACT_APP_API_URL}/supervisor/core/promotions/partner-requests?status=pending`)
             .then(response => {
                 console.log(response.data);
-                if (response.data.find(item => item.user_id === myId)) {
+                if (response.data.find(item => item.user_id === myAccount.user_id)) {
                     console.log("신청 유무 확인: true");
                     setPartnerRequestStatus(true);
                 } else {
@@ -627,7 +633,7 @@ export default function UserSidebar2026({
                 },
             }
         ).then(response => {
-            console.log(response.data);
+            // console.log(response.data);
             showToast2026('강사 신청이 완료되었습니다. 관리자 승인 후 사용 가능합니다.');
             setPartnerSignUpModalOpen(false);
             setPartnerSignUpStep(0);
