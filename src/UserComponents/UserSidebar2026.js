@@ -890,7 +890,9 @@ export default function UserSidebar2026({
                         </div>
                     </div>
 
-                    <button className="sidebar__new-chat" onClick={startNewChat}>
+                    <button className="sidebar__new-chat"
+                        onClick={() => { if (startNewChat) { startNewChat() } else { navigate("/user/practice") } }}
+                    >
                         <svg className="icon" viewBox="0 0 24 24">
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />
@@ -1075,11 +1077,12 @@ export default function UserSidebar2026({
                     </div>
 
                 </div>
-            </aside>
+            </aside >
 
             {/* 컨텍스트 메뉴 */}
-            <div
-                className={`context-menu ${contextMenuOpen ? 'context-menu--open' : ''}`}
+            < div
+                className={`context-menu ${contextMenuOpen ? 'context-menu--open' : ''}`
+                }
                 style={{
                     left: `${contextMenuPosition.left}px`,
                     top: `${contextMenuPosition.top}px`
@@ -1107,7 +1110,7 @@ export default function UserSidebar2026({
                     </svg>
                     삭제
                 </div>
-            </div>
+            </div >
 
 
 

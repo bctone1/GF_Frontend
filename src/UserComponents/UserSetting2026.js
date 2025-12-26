@@ -1,7 +1,7 @@
 import UserSidebar2026 from './UserSidebar2026';
 import { useState, useCallback } from 'react';
 import { formatDate_YY_MM_DD, showToast2026, showConfirm } from '../utill/utill';
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import axios from 'axios';
 
 
@@ -9,22 +9,34 @@ import axios from 'axios';
 export default function UserSetting2026() {
     const accessToken = sessionStorage.getItem("access_token");
     const [classArray, setClassArray] = useState([]);
+    const [currentSection, setCurrentSection] = useState('enrolled');
+    const [inviteStatus, setInviteStatus] = useState(false);
+    const [myprofile, setMyprofile] = useState(null);
+    const [myaccount, setMyaccount] = useState(null);
+    const [openFaqItems, setOpenFaqItems] = useState(new Set());
 
     const handleClassesData = useCallback((classes, isLoading) => {
-        console.log(classes);
         if (!isLoading) {
             setClassArray(classes);
         }
     }, []);
 
-    const [currentSection, setCurrentSection] = useState('enrolled');
+    const handleProfileData = (profileData) => {
+        // console.log(profileData);
+        setMyprofile(profileData);
+    }
 
-    const [inviteStatus, setInviteStatus] = useState(false);
+    const handleAccountData = (accountData) => {
+        // console.log(accountData);
+        setMyaccount(accountData);
+    }
+
+
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
         const code = inviteCodeRefs.current.map(ref => ref?.value || '').join('');
-
         if (code.length === 6) {
             axios.post(`${process.env.REACT_APP_API_URL}/user/class/invites/redeem`, {
                 code: code
@@ -47,21 +59,6 @@ export default function UserSetting2026() {
 
     const handleDeleteClass = async (enrollment_id) => {
         if (!window.confirm('수강을 취소하겠습니까?')) return;
-
-        console.log(enrollment_id);
-        axios.delete(`${process.env.REACT_APP_API_URL}/user/class/enrollments/${enrollment_id}`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-            },
-        }).then(response => {
-            console.log(response.data);
-            showToast2026(`강의가 삭제되었습니다.`, 'success');
-            setRefreshClassesTrigger(prev => prev + 1);
-        }).catch(error => {
-            console.log(error);
-        });
-
-        console.log(enrollment_id);
         axios.delete(`${process.env.REACT_APP_API_URL}/user/class/enrollments/${enrollment_id}`, {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -147,12 +144,124 @@ export default function UserSetting2026() {
     };
 
 
+
+
+
+    const [profileData, setProfileData] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+
+    // myprofile이 변경될 때 profileData 초기화
+    useEffect(() => {
+        if (myprofile) {
+            setProfileData({
+                full_name: myprofile.full_name || '',
+                job_title: myprofile.job_title || '',
+                bio: myprofile.bio || '',
+                phone_number: myprofile.phone_number || '',
+                department: myprofile.department || ''
+            });
+            setHasChanges(false);
+        }
+    }, [myprofile]);
+
+    // 필드 값 변경 핸들러
+    const handleFieldChange = useCallback((field, value) => {
+        setProfileData(prev => {
+            if (!prev) return prev;
+            const updated = { ...prev, [field]: value };
+            // 변경사항 확인
+            const changed = myprofile && (
+                updated.full_name !== (myprofile.full_name || '') ||
+                updated.job_title !== (myprofile.job_title || '') ||
+                updated.bio !== (myprofile.bio || '') ||
+                updated.phone_number !== (myprofile.phone_number || '') ||
+                updated.department !== (myprofile.department || '')
+            );
+            setHasChanges(changed);
+            return updated;
+        });
+    }, [myprofile]);
+
+    const UpdateProfile = async () => {
+        if (!profileData || !hasChanges) {
+            showToast2026('변경된 내용이 없습니다.', 'info');
+            return;
+        }
+
+        if (isSubmitting) return;
+        console.log(profileData);
+
+        setIsSubmitting(true);
+        const accessToken = sessionStorage.getItem("access_token");
+
+        try {
+            const response = await axios.patch(
+                `${process.env.REACT_APP_API_URL}/user/my/profile`,
+                profileData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            showToast2026('프로필이 성공적으로 업데이트되었습니다.', 'success');
+            setHasChanges(false);
+
+            // 프로필 데이터 새로고침을 위해 콜백 호출
+            handleProfileUpdate(response.data);
+        } catch (error) {
+            console.error('프로필 업데이트 실패:', error);
+            const errorMessage = error.response?.data?.message || '프로필 업데이트에 실패했습니다.';
+            showToast2026(errorMessage, 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleReset = () => {
+        if (myprofile) {
+            setProfileData({
+                full_name: myprofile.full_name || '',
+                job_title: myprofile.job_title || '',
+                bio: myprofile.bio || '',
+                phone_number: myprofile.phone_number || '',
+                department: myprofile.department || ''
+            });
+            setHasChanges(false);
+        }
+    };
+
+    const handleProfileUpdate = (updatedProfile) => {
+        setMyprofile(updatedProfile);
+        if (handleProfileData) {
+            handleProfileData(updatedProfile);
+        }
+    };
+
+    // FAQ 항목 토글 함수
+    const toggleFaq = useCallback((faqId) => {
+        setOpenFaqItems(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(faqId)) {
+                newSet.delete(faqId);
+            } else {
+                newSet.add(faqId);
+            }
+            return newSet;
+        });
+    }, []);
+
     return (
         <>
             <div className="app">
                 <UserSidebar2026
                     onClassesData={handleClassesData}
                     refreshTrigger={refreshClassesTrigger}
+                    handleProfileData={handleProfileData}
+                    handleAccountData={handleAccountData}
                 />
                 <main className="main">
                     <div className="page-header">
@@ -293,21 +402,31 @@ export default function UserSetting2026() {
                                             <p className="setting-group__desc">기본 프로필 정보를 수정하세요</p>
 
                                             <div className="profile-avatar">
-                                                <div className="profile-avatar__image">홍</div>
+                                                <div className="profile-avatar__image">{myprofile?.full_name?.charAt(0)}</div>
                                                 <div className="profile-avatar__actions">
-                                                    <button className="btn btn--outline btn--sm" >사진 변경</button>
-                                                    <button className="btn btn--outline btn--sm" >사진 제거</button>
+                                                    <button className="btn btn--outline btn--sm"
+                                                        onClick={() => showToast2026('준비중입니다.')}
+                                                    >사진 변경</button>
+                                                    <button className="btn btn--outline btn--sm"
+                                                        onClick={() => showToast2026('준비중입니다.')}
+                                                    >사진 제거</button>
                                                 </div>
                                             </div>
 
                                             <div className="form-group">
                                                 <label className="form-label">이름</label>
-                                                <input type="text" className="form-input" id="userName" />
+                                                <input
+                                                    type="text"
+                                                    className="form-input"
+                                                    id="userName"
+                                                    value={profileData?.full_name || ''}
+                                                    onChange={(e) => handleFieldChange('full_name', e.target.value)}
+                                                />
                                             </div>
 
                                             <div className="form-group">
                                                 <label className="form-label">이메일</label>
-                                                <input type="email" className="form-input" id="userEmail" disabled />
+                                                <input type="email" className="form-input" id="userEmail" value={myaccount?.email || ''} disabled />
                                                 <div className="form-hint">이메일은 관리자만 변경할 수 있습니다</div>
                                             </div>
                                         </div>
@@ -336,7 +455,12 @@ export default function UserSetting2026() {
 
                                         <div className="action-buttons">
                                             <button className="btn btn--outline" >취소</button>
-                                            <button className="btn btn--primary" >변경사항 저장</button>
+                                            <button className="btn btn--primary"
+                                                onClick={UpdateProfile}
+                                                disabled={isSubmitting || !hasChanges || !profileData}
+                                            >
+                                                {isSubmitting ? '저장 중...' : '변경사항 저장'}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -419,46 +543,48 @@ export default function UserSetting2026() {
                                         <h2 className="user-settings-section__title">도움말</h2>
                                         <p className="user-settings-section__desc">자주 묻는 질문과 문의 방법을 확인하세요</p>
                                     </div>
+
+
                                     <div className="user-settings-section__body">
-                                        {/* FAQ */}
+
                                         <div className="setting-group">
                                             <h3 className="setting-group__title">자주 묻는 질문</h3>
 
                                             <div className="faq-list">
-                                                <div className="faq-item" >
+                                                <div className={`faq-item ${openFaqItems.has('faq1') ? 'faq-item--open' : ''}`} onClick={() => toggleFaq('faq1')}>
                                                     <div className="faq-item__question">
                                                         <span>초대코드는 어디서 받나요?</span>
-                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
                                                     </div>
                                                     <div className="faq-item__answer">
                                                         초대코드는 담당 강사님께 문의하시면 받으실 수 있습니다. 강의 시작 전 또는 첫 수업 시간에 안내받으실 수 있습니다.
                                                     </div>
                                                 </div>
 
-                                                <div className="faq-item" >
+                                                <div className={`faq-item ${openFaqItems.has('faq2') ? 'faq-item--open' : ''}`} onClick={() => toggleFaq('faq2')}>
                                                     <div className="faq-item__question">
                                                         <span>AI 모델은 어떤 것들이 있나요?</span>
-                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
                                                     </div>
                                                     <div className="faq-item__answer">
                                                         현재 GPT-4, Claude, Gemini, EXAONE 등 다양한 AI 모델을 지원합니다. 강의에 따라 사용 가능한 모델이 다를 수 있습니다.
                                                     </div>
                                                 </div>
 
-                                                <div className="faq-item" >
+                                                <div className={`faq-item ${openFaqItems.has('faq3') ? 'faq-item--open' : ''}`} onClick={() => toggleFaq('faq3')}>
                                                     <div className="faq-item__question">
                                                         <span>대화 기록은 어디서 확인하나요?</span>
-                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
                                                     </div>
                                                     <div className="faq-item__answer">
                                                         좌측 사이드바의 "내 기록" 메뉴에서 모든 대화 기록을 확인할 수 있습니다. 프로젝트별로 정리하여 관리할 수도 있습니다.
                                                     </div>
                                                 </div>
 
-                                                <div className="faq-item" >
+                                                <div className={`faq-item ${openFaqItems.has('faq4') ? 'faq-item--open' : ''}`} onClick={() => toggleFaq('faq4')}>
                                                     <div className="faq-item__question">
                                                         <span>비밀번호를 잊어버렸어요</span>
-                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+                                                        <svg className="icon icon--sm faq-item__arrow" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
                                                     </div>
                                                     <div className="faq-item__answer">
                                                         로그인 페이지의 "비밀번호 찾기" 버튼을 클릭하여 등록된 이메일로 재설정 링크를 받으실 수 있습니다.
@@ -467,20 +593,24 @@ export default function UserSetting2026() {
                                             </div>
                                         </div>
 
-                                        {/* 문의하기  */}
+
                                         <div className="setting-group">
                                             <h3 className="setting-group__title">문의하기</h3>
 
                                             <div className="help-contact">
                                                 <div className="help-contact__title">추가 도움이 필요하신가요?</div>
                                                 <div className="help-contact__desc">담당 강사님께 문의하시거나 아래 버튼을 통해 문의해주세요</div>
-                                                <button className="btn btn--primary" >
-                                                    <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
+                                                <button className="btn btn--primary" onClick={() => showToast2026('준비중입니다.', 'info')}>
+                                                    <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                                                     문의하기
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
+
+
+
+
                                 </div>
                             </div>
                         </div>

@@ -16,7 +16,6 @@ export default function UserKnowledge2026() {
     const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 9;
-
     const filteredAndSortedDocuments = documents.filter((document) => {
         // 검색 필터
         if (searchQuery.trim() && !document.name.toLowerCase().includes(searchQuery.toLowerCase())) {
@@ -47,6 +46,14 @@ export default function UserKnowledge2026() {
                 return 0;
         }
     });
+
+    // 페이지네이션 계산
+    const totalPages = Math.ceil(filteredAndSortedDocuments.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentPageDocuments = filteredAndSortedDocuments.slice(startIndex, endIndex);
+
+
 
     const fetchDocuments = useCallback(async () => {
         try {
@@ -107,11 +114,38 @@ export default function UserKnowledge2026() {
         );
     };
 
+    // 전체 선택/해제 함수
+    const handleSelectAll = () => {
+        const currentPageIds = currentPageDocuments.map(doc => doc.knowledge_id);
+        const allSelected = currentPageIds.every(id => selectedDocuments.includes(id));
+
+        if (allSelected) {
+            // 현재 페이지의 모든 항목이 선택되어 있으면 해제
+            setSelectedDocuments(prev => prev.filter(id => !currentPageIds.includes(id)));
+        } else {
+            // 현재 페이지의 모든 항목 선택
+            setSelectedDocuments(prev => {
+                const newSelection = [...prev];
+                currentPageIds.forEach(id => {
+                    if (!newSelection.includes(id)) {
+                        newSelection.push(id);
+                    }
+                });
+                return newSelection;
+            });
+        }
+    };
+
+    // 현재 페이지의 모든 항목이 선택되었는지 확인
+    const isAllSelected = currentPageDocuments.length > 0 &&
+        currentPageDocuments.every(doc => selectedDocuments.includes(doc.knowledge_id));
+
     const handleDeleteDocuments = () => {
-        console.log(selectedDocuments);
+        for (const knowledgeId of selectedDocuments) {
+            handleDeleteDocument(knowledgeId);
+        }
         setShowDeleteModal(false);
         setSelectedDocuments([]);
-        showToast2026("준비중입니다.");
         fetchDocuments();
     };
 
@@ -150,11 +184,7 @@ export default function UserKnowledge2026() {
         setCurrentPage(1); // 정렬 변경 시 첫 페이지로
     };
 
-    // 페이지네이션 계산
-    const totalPages = Math.ceil(filteredAndSortedDocuments.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentPageDocuments = filteredAndSortedDocuments.slice(startIndex, endIndex);
+
 
     // 페이지 변경 핸들러
     const handlePageChange = (page) => {
@@ -355,6 +385,27 @@ export default function UserKnowledge2026() {
 
 
     let documentsUploading = documents.filter(doc => doc.knowledge_id && uploadingFiles.includes(doc.knowledge_id));
+
+
+    const handleDeleteDocument = async (knowledgeId) => {
+        try {
+            await axios.delete(
+                `${process.env.REACT_APP_API_URL}/user/document/${knowledgeId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                }
+            );
+
+            showToast2026('문서가 성공적으로 삭제되었습니다.', 'success');
+            fetchDocuments(); // 목록 새로고침
+        } catch (error) {
+            console.error('Failed to delete document:', error);
+            const errorMessage = error.response?.data?.message || '문서 삭제 중 오류가 발생했습니다.';
+            showToast2026(errorMessage, 'error');
+        }
+    };
 
 
 
@@ -705,7 +756,12 @@ export default function UserKnowledge2026() {
                                 {/* Selection Bar */}
                                 <div className={`selection-bar ${selectedDocuments.length > 0 ? '' : 'hidden'}`} id="selectionBar">
                                     <label className="selection-bar__checkbox">
-                                        <input type="checkbox" id="selectAllCheckbox" />
+                                        <input
+                                            type="checkbox"
+                                            id="selectAllCheckbox"
+                                            checked={isAllSelected}
+                                            onChange={handleSelectAll}
+                                        />
                                         <span className="selection-bar__checkbox-label">전체 선택</span>
                                     </label>
                                     <span className="selection-bar__count" id="selectedCount">{selectedDocuments.length}개 선택됨</span>
