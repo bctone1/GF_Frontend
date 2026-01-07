@@ -65,7 +65,7 @@ export default function UserKnowledge2026() {
                     },
                 }
             );
-            // console.log('Documents:', response.data.items);
+            console.log('Documents:', response.data.items);
             setDocuments(response.data.items);
         } catch (error) {
             console.error('Failed to fetch documents:', error);
@@ -221,18 +221,19 @@ export default function UserKnowledge2026() {
     const [pageStatus, setPageStatus] = useState('main');
     const [mainPageStatus, setMainPageStatus] = useState('modeSelection');
     const [currentStep, setCurrentStep] = useState(1); // Advanced mode 단계 관리 (1-4)
-    const [advancedSelectedDocuments, setAdvancedSelectedDocuments] = useState([]); // Advanced mode에서 선택된 문서 ID 목록
+    const [uploadedFiles, setUploadedFiles] = useState([]); // Advanced mode에서 업로드된 파일 목록
+    const advancedFileInputRef = useRef(null); // Advanced mode 파일 input ref
 
     // 청킹 설정 state (백엔드 필드명 기준)
     const [chunkingConfig, setChunkingConfig] = useState({
-        chunking_mode: 'general', // 'general' 또는 'parent_child'
+        chunking_mode: 'general', // 'general' 또는 'parent-child'
         segment_separator: '#n#n',
-        chunk_size: 800,
-        chunk_overlap: 200,
+        chunk_size: 1024,
+        chunk_overlap: 50,
         chunk_strategy: 'recursive',
         max_chunks: 100,
-        replaceSpaces: true,
-        removeUrls: false
+        replaceSpaces: true, // 프론트엔드 전처리 규칙
+        removeUrls: false // 프론트엔드 전처리 규칙
     });
 
 
@@ -421,31 +422,9 @@ export default function UserKnowledge2026() {
         }
     };
 
-    const preViewChunkResult = async () => {
+    const preViewChunkResult = () => {
         console.log(chunkingConfig);
-        let knowledgeId = advancedSelectedDocuments[0];
-        try {
-            await axios.post(
-                `${process.env.REACT_APP_API_URL}/user/document/${knowledgeId}/chunks/preview`,
-                {
-                    "chunk_overlap": chunkingConfig.chunk_overlap,
-                    "chunk_size": chunkingConfig.chunk_size,
-                    "chunk_strategy": chunkingConfig.chunk_strategy,
-                    "chunking_mode": chunkingConfig.chunking_mode,
-                    "max_chunks": chunkingConfig.max_chunks,
-                    "segment_separator": chunkingConfig.segment_separator
-                },
-                { headers: { Authorization: `Bearer ${accessToken}`, }, }
-            ).then(response => {
-                setSplitActive(true);
-                console.log(response.data);
-            });
-        } catch (error) {
-            console.log(error);
-        }
     };
-
-    const [splitActive, setSplitActive] = useState(false);
 
 
 
@@ -513,7 +492,7 @@ export default function UserKnowledge2026() {
                                     onClick={() => {
                                         setMainPageStatus('advanced');
                                         setCurrentStep(1);
-                                        setAdvancedSelectedDocuments([]);
+                                        setUploadedFiles([]);
                                     }}
                                 // onClick={() => showToast2026('고급 설정 모드는 현재 개발중입니다.')}
                                 >
@@ -1048,18 +1027,36 @@ export default function UserKnowledge2026() {
                                             </div>
                                         )
                                     })}
+
+                                    {/* <div className="upload-progress__item">
+                                        <div className="upload-progress__icon">
+                                            <svg className="icon" viewBox="0 0 24 24">
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                <polyline points="14 2 14 8 20 8"></polyline>
+                                            </svg>
+                                        </div>
+                                        <div className="upload-progress__info">
+                                            <div className="upload-progress__name">2025 META LLM MSP 특허 1.pptx.pdf</div>
+                                            <div className="upload-progress__bar">
+                                                <div className="upload-progress__fill" style={{ width: '93.0278%' }}></div>
+                                            </div>
+                                        </div>
+                                        <span className="upload-progress__status">93%</span>
+                                    </div> */}
+
                                 </div>
+
                             </div>
                         </div>
 
                         {/* Advanced Mode */}
-                        <div className={`advanced-mode ${mainPageStatus === 'advanced' ? 'advanced-mode--active' : ''} ${splitActive ? 'advanced-mode--split' : ''}`} id="advancedMode">
+                        <div className={`advanced-mode ${mainPageStatus === 'advanced' ? 'advanced-mode--active' : ''}`} id="advancedMode">
                             <div className="advanced-mode__back"
                                 onClick={() => {
                                     setPageStatus('main');
                                     setMainPageStatus('modeSelection');
                                     setCurrentStep(1);
-                                    setAdvancedSelectedDocuments([]);
+                                    setUploadedFiles([]);
                                 }}
                             >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -1117,112 +1114,57 @@ export default function UserKnowledge2026() {
                                 <div className="step-card">
                                     <div className="step-card__header">
                                         <h3 className="step-card__title">데이터 소스 선택</h3>
-                                        <p className="step-card__desc">지식베이스에 추가할 파일을 선택해주세요</p>
+                                        <p className="step-card__desc">지식베이스에 추가할 파일을 업로드해주세요</p>
                                     </div>
 
-                                    {/* 파일 목록 */}
-                                    <div style={{ marginTop: '20px' }}>
-                                        {documents.length === 0 ? (
-                                            <div style={{
-                                                padding: '40px',
-                                                textAlign: 'center',
-                                                color: '#64748b',
-                                                background: '#f8fafc',
-                                                borderRadius: '12px',
-                                                border: '1px dashed #e2e8f0'
-                                            }}>
-                                                <svg className="icon icon--lg" viewBox="0 0 24 24" style={{ marginBottom: '12px', opacity: 0.5 }}>
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                                </svg>
-                                                <div style={{ fontSize: '14px' }}>업로드된 파일이 없습니다</div>
+                                    <div className="upload-zone" id="advancedUploadZone"
+                                        onClick={() => advancedFileInputRef.current?.click()}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        <input
+                                            type="file"
+                                            ref={advancedFileInputRef}
+                                            // multiple
+                                            accept=".pdf,.txt,.docx,.csv"
+                                            style={{ display: 'none' }}
+                                            onChange={(e) => {
+                                                const files = Array.from(e.target.files || []);
+                                                if (files.length > 0) {
+                                                    setUploadedFiles(files);
+                                                }
+                                            }}
+                                        />
+                                        <div className="upload-zone__icon">
+                                            <svg className="icon icon--lg" viewBox="0 0 24 24">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                                <polyline points="17 8 12 3 7 8" />
+                                                <line x1="12" y1="3" x2="12" y2="15" />
+                                            </svg>
+                                        </div>
+                                        <div className="upload-zone__title">파일을 드래그하거나 클릭</div>
+                                        <div className="upload-zone__desc">PDF, TXT, DOCX, CSV 파일 지원</div>
+                                    </div>
+
+                                    <div className="upload-progress" id="advancedUploadProgress">
+
+                                        {uploadedFiles.map((file, index) => (
+                                            <div className="upload-progress__item" key={`advanced-file-${index}`}>
+                                                <div className="upload-progress__icon">
+                                                    <svg className="icon" viewBox="0 0 24 24">
+                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                    </svg>
+                                                </div>
+                                                <div className="upload-progress__info">
+                                                    <div className="upload-progress__name">• {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)</div>
+                                                    <div className="upload-progress__bar">
+                                                        <div className="upload-progress__fill" id="progress-advanced-0" style={{ width: '100%' }}></div>
+                                                    </div>
+                                                </div>
+                                                <span className="upload-progress__status" id="status-advanced-0" style={{ color: 'var(--success)' }}>완료</span>
+
                                             </div>
-                                        ) : (
-                                            <div style={{
-                                                maxHeight: '400px',
-                                                overflowY: 'auto',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '12px',
-                                                padding: '12px'
-                                            }}>
-                                                {documents
-                                                    .filter(doc => doc.status === 'ready')
-                                                    .map((document) => {
-                                                        const isSelected = advancedSelectedDocuments.includes(document.knowledge_id);
-                                                        return (
-                                                            <div
-                                                                key={`advanced-${document.knowledge_id}`}
-                                                                onClick={() => {
-                                                                    if (isSelected) {
-                                                                        // 선택 해제
-                                                                        setAdvancedSelectedDocuments([]);
-                                                                    } else {
-                                                                        // 단일 선택: 기존 선택을 해제하고 새 항목만 선택
-                                                                        setAdvancedSelectedDocuments([document.knowledge_id]);
-                                                                    }
-                                                                }}
-                                                                style={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    padding: '12px',
-                                                                    marginBottom: '8px',
-                                                                    borderRadius: '8px',
-                                                                    border: `2px solid ${isSelected ? '#9333ea' : '#e2e8f0'}`,
-                                                                    background: isSelected ? '#faf5ff' : 'white',
-                                                                    cursor: 'pointer',
-                                                                    transition: 'all 0.2s'
-                                                                }}
-                                                            >
-                                                                <div style={{
-                                                                    width: '20px',
-                                                                    height: '20px',
-                                                                    borderRadius: '50%',
-                                                                    border: `2px solid ${isSelected ? '#9333ea' : '#cbd5e1'}`,
-                                                                    background: isSelected ? '#9333ea' : 'white',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                    marginRight: '12px',
-                                                                    flexShrink: 0,
-                                                                    position: 'relative'
-                                                                }}>
-                                                                    {isSelected && (
-                                                                        <div style={{
-                                                                            width: '10px',
-                                                                            height: '10px',
-                                                                            borderRadius: '50%',
-                                                                            background: 'white'
-                                                                        }}></div>
-                                                                    )}
-                                                                </div>
-                                                                <div style={{ flex: 1, minWidth: 0 }}>
-                                                                    <div style={{
-                                                                        fontSize: '14px',
-                                                                        fontWeight: 600,
-                                                                        color: '#1e293b',
-                                                                        marginBottom: '4px',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis',
-                                                                        whiteSpace: 'nowrap'
-                                                                    }}>
-                                                                        {getDisplayName(document.name)}
-                                                                    </div>
-                                                                    <div style={{
-                                                                        fontSize: '12px',
-                                                                        color: '#64748b',
-                                                                        display: 'flex',
-                                                                        gap: '12px'
-                                                                    }}>
-                                                                        <span>{formatFileSize(document.file_size_bytes)}</span>
-                                                                        <span>•</span>
-                                                                        <span>{formatDate_YY_MM_DD(document.updated_at)}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                            </div>
-                                        )}
+                                        ))}
                                     </div>
 
                                     <div className="step-actions">
@@ -1230,15 +1172,15 @@ export default function UserKnowledge2026() {
                                             setPageStatus('main');
                                             setMainPageStatus('modeSelection');
                                             setCurrentStep(1);
-                                            setAdvancedSelectedDocuments([]);
+                                            setUploadedFiles([]);
                                         }}>취소</button>
                                         <button
                                             className="btn btn--primary"
                                             onClick={() => setCurrentStep(2)}
-                                            disabled={advancedSelectedDocuments.length === 0}
+                                            disabled={uploadedFiles.length === 0}
                                             style={{
-                                                opacity: advancedSelectedDocuments.length === 0 ? 0.5 : 1,
-                                                cursor: advancedSelectedDocuments.length === 0 ? 'not-allowed' : 'pointer'
+                                                opacity: uploadedFiles.length === 0 ? 0.5 : 1,
+                                                cursor: uploadedFiles.length === 0 ? 'not-allowed' : 'pointer'
                                             }}
                                         >다음 단계</button>
                                     </div>
@@ -1247,7 +1189,7 @@ export default function UserKnowledge2026() {
 
                             {/* Step 2: Chunking */}
                             <div className={`step ${currentStep === 2 ? 'step--active' : ''}`} id="step2">
-                                <div className={`step-card ${splitActive ? 'step-card--split' : ''}`} id="chunkingStepCard">
+                                <div className="step-card" id="chunkingStepCard">
                                     {/* Settings Section (왼쪽) */}
                                     <div className="step-card__settings">
                                         <div className="step-card__header">
@@ -1277,8 +1219,8 @@ export default function UserKnowledge2026() {
                                                     <p className="option-card__desc">텍스트 청크 모드에서는 검색된 청크와 회수된 청크가 동일합니다.</p>
                                                 </div>
                                                 <div
-                                                    className={`option-card ${chunkingConfig.chunking_mode === 'parent_child' ? 'option-card--active' : ''}`}
-                                                    onClick={() => setChunkingConfig({ ...chunkingConfig, chunking_mode: 'parent_child' })}
+                                                    className={`option-card ${chunkingConfig.chunking_mode === 'parent-child' ? 'option-card--active' : ''}`}
+                                                    onClick={() => setChunkingConfig({ ...chunkingConfig, chunking_mode: 'parent-child' })}
                                                     style={{ cursor: 'pointer' }}
                                                 >
                                                     <div className="option-card__header">
@@ -1379,7 +1321,7 @@ export default function UserKnowledge2026() {
                                     </div>
 
                                     {/* Preview Panel (오른쪽) - 토글로 표시 */}
-                                    <div className="step-card__preview" id="chunkPreviewPanel" style={{ display: splitActive ? 'block' : 'none' }}>
+                                    <div className="step-card__preview" id="chunkPreviewPanel" style={{ display: 'none' }}>
                                         <div className="step-card__preview-header">
                                             <div className="step-card__preview-title">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -1411,39 +1353,9 @@ export default function UserKnowledge2026() {
                                             </div>
 
                                             {/* Chunk List */}
-                                            <div className="step-card__preview-list" id="chunkPreviewList" style={{ display: chunkingConfig.chunking_mode === 'general' ? 'block' : 'none' }}>
-                                                <div className="doc-preview">
-                                                    <div className="doc-preview__chunk " data-label="청크 #1 · 863자">
-                                                        인공지능(AI)은 인간의 학습능력, 추론능력, 지각능력, 자연언어의 이해능력 등을 컴퓨터 프로그램으로 실현한 기술입니다. 머신러닝은 인공지능의 한 분야로, 컴퓨터가 데이터를 분석하고 패턴을 학습하여 스스로 성능을 개선하는 기술입니다. 지도학습, 비지도학습, 강화학습 등 다양한 방식이 있습니다. 딥러닝은 인공신경망을 기반으로 한 머신러닝의 한 종류입니다. 여러 층의 신경망을 통해 복잡한 패턴을 학습할 수 있으며, 이미지 인식, 음성 인식, 자연어 처리 등에서 뛰어난 성능을 보입니다. 자연어 처리(NLP)는 컴퓨터가 인간의 언어를 이해하고 처리하는 기술입니다. 텍스트 분석, 감정 분석, 기계 번역, 챗봇 등 다양한 응용 분야가 있습니다. 대규모 언어 모델(LLM)은 방대한 텍스트 데이터로 학습된 딥러닝 모델입니다. GPT, Claude, Gemini 등이 대표적이며, 다양한 자연어 작업을 수행할 수 있습니다. RAG(Retrieval-Augmented Generation)는 검색과 생성을 결합한 기술입니다. 외부 지식베이스에서 관련 정보를 검색하여 LLM의 응답 품질을 향상시킵니다. 청킹은 긴 문서를 작은 조각으로 나누는 과정입니다. 적절한 청킹 전략은 RAG 시스템의 검색 정확도와 응답 품질에 큰 영향을 미칩니다. 벡터 임베딩은 텍스트를 수치 벡터로 변환하는 기술입니다. 의미적으로 유사한 텍스트는 벡터 공간에서 가까운 거리에 위치하게 됩니다. 벡터 데이터베이스는 벡터 임베딩을 저장하고 유사도 검색을 수행하는 데이터베이스입니다. Pinecone, Weaviate, Chroma 등이 대표적입니다. 프롬프트 엔지니어링은 AI 모델에 효과적인 입력을 설계하는 기술입니다. 좋은 프롬프트는 모델의 성능을 크게 향상시킬 수 있습니다.
-                                                    </div>
-                                                </div>
+                                            <div className="step-card__preview-list" id="chunkPreviewList">
+                                                {/* 청크들이 여기에 동적으로 생성됨 */}
                                             </div>
-
-                                            <div className="step-card__preview-list" id="chunkPreviewList" style={{ display: chunkingConfig.chunking_mode === 'parent_child' ? 'block' : 'none' }}>
-                                                <div className="doc-preview">
-                                                    <div className="doc-preview__chunk doc-preview__parent" data-label="📁 부모 P1 · 863자">
-                                                        <div style={{ marginBottom: "12px", color: "var(--text-secondary)" }}>인공지능(AI)은 인간의 학습능력, 추론능력, 지각능력, 자연언어의 이해능력 등을 컴퓨터 프로그램으로 실현한 기술입니다. 머신러닝은 인공지능의 한 분야로, 컴퓨터가 데이터를 분석하고 패턴을 학습하여 스스로 성능을 개선하는 기술입니다. 지도학습, 비지도학습, 강화학습 등 다양한 방식이 있습니다. 딥러닝은 인공신경망을 기반으로 한 머신러닝의 한 종류입니다. 여러 층의 신경망을 통해 복잡한 패턴을 학습할 수 있으며, 이미지 인식, 음성 인식, 자연어 처리 등에서 뛰어난 성능을 보입니다. 자연어 처리(NLP)는 컴퓨터가 인간의 언어를 이해하고 처리하는 기술입니다. 텍스트 분석, 감정 분석, 기계 번역, 챗봇 등 다양한 응용 분야가 있습니다. 대규모 언어 모델(LLM)은 방대한 텍스트 데이터로 학습된 딥러닝 모델입니다. GPT, Claude, Gemini 등이 대표적이며, 다양한 자연어 작업을 수행할 수 있습니다. RAG(Retrieval-Augmented Generation)는 검색과 생성을 결합한 기술입니다. 외부 지식베이스에서 관련 정보를 검색하여 LLM의 응답 품질을 향상시킵니다. 청킹은 긴 문서를 작은 조각으로 나누는 과정입니다. 적절한 청킹 전략은 RAG 시스템의 검색 정확도와 응답 품질에 큰 영향을 미칩니다. 벡터 임베딩은 텍스트를 수치 벡터로 변환하는 기술입니다. 의미적으로 유사한 텍스트는 벡터 공간에서 가까운 거리에 위치하게 됩니다. 벡터 데이터베이스는 벡터 임베딩을 저장하고 유사도 검색을 수행하는 데이터베이스입니다. Pinecone, Weaviate, Chroma 등이 대표적입니다. 프롬프트 엔지니어링은 AI 모델에 효과적인 입력을 설계하는 기술입니다. 좋은 프롬프트는 모델의 성능을 크게 향상시킬 수 있습니다.</div>
-
-                                                        <div className="doc-preview__child-section">
-                                                            <div style={{ fontSize: '11px', color: '#2563eb', fontWeight: '600', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '14px', height: '14px' }}>
-                                                                    <circle cx="11" cy="11" r="8"></circle>
-                                                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                                                </svg>
-                                                                자식 청크 (검색 단위)
-                                                            </div>
-
-                                                            <div className="doc-preview__child" data-label="🔍 C1">
-                                                                인공지능(AI)은 인간의 학습능력, 추론능력, 지각능력, 자연언어의 이해능력 등을 컴퓨터 프로그램으로 실현한 기술입니다. 머신러닝은 인공지능의 한 분야로, 컴퓨터가 데이터를 분석하고 패턴을 학습하여 스스로 성능을 개선하는 기술입니다. 지도학습, 비지도학습, 강화학습 등 다양한 방식이 있습니다. 딥러닝은 인공신경망을 기반으로 한 머신러닝의 한 종류입니다. 여러 층의 신경망을 통해 복잡한 패턴을 학습할 수 있으며, 이미지 인식, 음성 인식, 자연어 처리 등에서 뛰어난 성능을 보입니다. 자연어 처리(NLP)는 컴퓨터가 인간의 언어를 이해하고 처리하는 기술입니다. 텍스트 분석, 감정 분석, 기계 번역, 챗봇 등 다양한 응용 분야가 있습니다. 대규모 언어 모델(LLM)은 방대한 텍스트 데이터로 학습된 딥러닝 모델입니다. GPT, Claude, Gemini 등이 대표적이며, 다양한 자연어 작업을 수행할 수 있습니다. RAG(Retrieval-Augmented Generation)는 검색과 생성을 결합한 기술입니다. 외부 지식베이스에서 관련 정보를 검색하여 LLM의 응답 품질을 향상시킵니다. 청킹은 긴 문서를 작은 조각으로 나누는 과정입니다. 적절한 청킹 전략은 RAG 시스템의 검색 정확도와 응답 품질에 큰 영향을 미칩니다. 벡터 임베딩은 텍스트를 수치 벡터로 변환하는 기술입니다. 의미적으로 유사한 텍스트는 벡터 공간에서 가까운 거리에 위치하게 됩니다. 벡터 데이터베이스는 벡터 임베딩을 저장하고 유사도 검색을 수행하는 데이터베이스입니다. Pinecone, Weaviate, Chroma 등이 대표적입니다. 프롬프트 엔지니어링은 AI 모델에 효과적인 입력을 설계하는 기술입니다. 좋은 프롬프트는 모델의 성능을 크게 향상시킬 수 있습니다.
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-
-
                                         </div>
                                         <div className="step-card__preview-footer">
                                             <button className="preview-refresh-btn" id="refreshPreviewBtn"
@@ -1693,6 +1605,8 @@ export default function UserKnowledge2026() {
                                 </div>
                             </div>
                         </div>
+
+
                     </div>
 
 
@@ -2300,8 +2214,28 @@ export default function UserKnowledge2026() {
                             </div>
                         </div>
                     </div>
+
+
+
+
+
+
                 </main >
             </div >
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
             <div
                 className={`kb-modal-overlay ${showDeleteModal ? 'kb-modal-overlay--open' : ''}`}
