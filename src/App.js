@@ -34,7 +34,7 @@ export default function App() {
     <>
       <Routes>
 
-        <Route path="/" element={<Login2026 />} />
+        <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login2026 />} />
         <Route path="/signup/user" element={<UserSignup2026 />} />
         <Route path="/signup/organization" element={<OrganizationSignup />} />
