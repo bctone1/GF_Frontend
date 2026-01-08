@@ -1865,8 +1865,8 @@ export default function UserKnowledge2026() {
                                     <div className="step-actions">
                                         <button className="btn btn--outline" onClick={() => setCurrentStep(3)}>이전</button>
                                         <button className="btn btn--primary btn--lg" onClick={() => {
-                                            setCurrentStep(1);
                                             setPageStatus('main');
+                                            setMainPageStatus('modeSelection');
                                             showToast2026('지식베이스 생성이 완료되었습니다.', 'success');
                                         }}>지식베이스 생성</button>
                                     </div>
