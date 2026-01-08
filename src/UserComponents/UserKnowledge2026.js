@@ -232,7 +232,22 @@ export default function UserKnowledge2026() {
         chunk_strategy: 'recursive',
         max_chunks: 100,
         replaceSpaces: true,
-        removeUrls: false
+        removeUrls: false,
+        embedding_model: 'text-embedding-3-small'
+    });
+
+    // 검색 설정 state (백엔드 필드명 기준)
+    const [searchConfig, setSearchConfig] = useState({
+        index_mode: 'high_quality',
+
+        reranker_enabled: true,
+        reranker_model: 'BAAI/bge-reranker-v2-m3',
+
+        top_k: 5,
+        top_n: 3,
+        min_score: 0.7,
+
+        economic_top_k: 5,
     });
 
 
@@ -454,6 +469,7 @@ export default function UserKnowledge2026() {
         try {
             await axios.patch(`${process.env.REACT_APP_API_URL}/user/document/${knowledgeId}/settings/ingestion`,
                 {
+                    "embedding_model": chunkingConfig.embedding_model,
                     "chunk_overlap": chunkingConfig.chunk_overlap,
                     "chunk_size": chunkingConfig.chunk_size,
                     "chunk_strategy": chunkingConfig.chunk_strategy,
@@ -467,6 +483,41 @@ export default function UserKnowledge2026() {
             });
         } catch (error) {
             console.log(error);
+        }
+    };
+
+    // 검색 설정 저장 함수
+    const fetchSearchSet = async () => {
+        let knowledgeId = advancedSelectedDocuments[0];
+        try {
+            const searchSettings = {};
+            if (searchConfig.index_mode === 'economic') {
+                searchSettings.top_k = searchConfig.economic_top_k;
+                searchSettings.min_score = 0.2;
+                searchSettings.score_type = 'cosine_similarity';
+                searchSettings.reranker_enabled = false;
+                searchSettings.reranker_model = '';
+                searchSettings.reranker_top_n = searchConfig.economic_top_k;
+
+            } else if (searchConfig.index_mode = 'high_quality') {
+                searchSettings.top_k = searchConfig.top_k;
+                searchSettings.min_score = searchConfig.min_score;
+                searchSettings.score_type = 'cosine_similarity';
+                searchSettings.reranker_enabled = searchConfig.reranker_enabled;
+                searchSettings.reranker_model = searchConfig.reranker_model;
+                searchSettings.reranker_top_n = searchConfig.top_n;
+            }
+            console.log('요청한 매개변수', searchSettings);
+
+            await axios.patch(`${process.env.REACT_APP_API_URL}/user/document/${knowledgeId}/settings/search`,
+                searchSettings,
+                { headers: { Authorization: `Bearer ${accessToken}`, }, }
+            ).then(response => {
+                showToast2026('검색 설정이 성공적으로 적용되었습니다.', 'success');
+            });
+        } catch (error) {
+            console.log(error);
+            showToast2026('검색 설정 적용 중 오류가 발생했습니다.', 'error');
         }
     };
 
@@ -1325,6 +1376,21 @@ export default function UserKnowledge2026() {
                                             </div>
                                         </div>
 
+                                        <div className="form-group">
+                                            <label className="form-label">임베딩 모델</label>
+                                            <select
+                                                className="form-select"
+                                                id="embeddingModel"
+                                                value={chunkingConfig.embedding_model}
+                                                onChange={(e) => setChunkingConfig({ ...chunkingConfig, embedding_model: e.target.value })}
+                                            >
+                                                <option value="text-embedding-3-small">text-embedding-3-small (권장)</option>
+                                                <option value="text-embedding-3-large">text-embedding-3-large</option>
+                                                <option value="text-embedding-ada-002">text-embedding-ada-002</option>
+                                            </select>
+                                            <p className="form-hint">벡터 검색에 사용할 임베딩 모델을 선택합니다</p>
+                                        </div>
+
                                         <div className="form-row">
                                             <div className="form-group">
                                                 <label className="form-label">세그먼트 식별자</label>
@@ -1352,6 +1418,7 @@ export default function UserKnowledge2026() {
                                                 />
                                             </div>
                                         </div>
+
 
                                         <div className="form-group">
                                             <label className="form-label">청크 중첩 <span className="form-label__hint">(자)</span></label>
@@ -1508,7 +1575,10 @@ export default function UserKnowledge2026() {
                                     <div className="form-group">
                                         <label className="form-label">인덱스 모드</label>
                                         <div className="option-cards">
-                                            <div className="option-card option-card--active"
+                                            <div
+                                                className={`option-card ${searchConfig.index_mode === 'high_quality' ? 'option-card--active' : ''}`}
+                                                onClick={() => setSearchConfig({ ...searchConfig, index_mode: 'high_quality' })}
+                                                style={{ cursor: 'pointer' }}
                                             >
                                                 <div className="option-card__header">
                                                     <div className="option-card__icon option-card__icon--blue">
@@ -1522,7 +1592,11 @@ export default function UserKnowledge2026() {
                                                 </div>
                                                 <p className="option-card__desc">임베딩 모델을 호출하여 높은 정확도의 검색 결과를 제공합니다.</p>
                                             </div>
-                                            <div className="option-card" >
+                                            <div
+                                                className={`option-card ${searchConfig.index_mode === 'economic' ? 'option-card--active' : ''}`}
+                                                onClick={() => setSearchConfig({ ...searchConfig, index_mode: 'economic' })}
+                                                style={{ cursor: 'pointer' }}
+                                            >
                                                 <div className="option-card__header">
                                                     <div className="option-card__icon option-card__icon--purple">
                                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -1537,20 +1611,14 @@ export default function UserKnowledge2026() {
                                     </div>
 
                                     {/* 고품질 모드 설정 */}
-                                    <div id="highQualitySettings">
-                                        <div className="form-group">
-                                            <label className="form-label">임베딩 모델</label>
-                                            <select className="form-select" id="embeddingModel">
-                                                <option value="text-embedding-3-large">text-embedding-3-large (권장)</option>
-                                                <option value="text-embedding-3-small">text-embedding-3-small</option>
-                                                <option value="text-embedding-ada-002">text-embedding-ada-002</option>
-                                            </select>
-                                            <p className="form-hint">벡터 검색에 사용할 임베딩 모델을 선택합니다</p>
-                                        </div>
+                                    <div id="highQualitySettings" style={{ display: searchConfig.index_mode === 'high_quality' ? 'block' : 'none' }}>
 
                                         <div className="form-group">
-                                            <label className="form-label">재랭크 모델</label>
-                                            <div className="option-card option-card--active" id="rerankToggleCard"
+                                            <div
+                                                className={`option-card ${searchConfig.reranker_enabled ? 'option-card--active' : ''}`}
+                                                id="rerankToggleCard"
+                                                onClick={() => setSearchConfig({ ...searchConfig, reranker_enabled: !searchConfig.reranker_enabled })}
+                                                style={{ cursor: 'pointer' }}
                                             >
                                                 <div className="option-card__header">
                                                     <div className="option-card__icon option-card__icon--green">
@@ -1559,83 +1627,128 @@ export default function UserKnowledge2026() {
                                                             <circle cx="12" cy="12" r="8" strokeDasharray="4 2" />
                                                         </svg>
                                                     </div>
-                                                    <span className="option-card__title">재랭크 모델</span>
+                                                    <span className="option-card__title">리랭크 모델 활성화</span>
                                                     <span className="option-card__radio"></span>
                                                 </div>
-                                                <p className="option-card__desc">재랭크 모델은 사용자 쿼리와의 의미적 일치를 기반으로 후보 문서 목록을 재배열하여 의미적
-                                                    순위를 향상시킵니다.</p>
-                                            </div>
+                                                <p className="option-card__desc">재랭크 모델은 사용자 쿼리와의 의미적 일치를 기반으로 후보 문서 목록을 재배열하여 의미적 순위를 향상시킵니다.</p>
 
-                                            {/* 재랭크 ON 설정 */}
-                                            <div className="rerank-settings" id="rerankSettings">
-                                                <div className="rerank-settings__item">
-                                                    <div className="rerank-settings__row">
-                                                        <label className="rerank-settings__label">상위 K</label>
-                                                        <div className="rerank-settings__control">
-                                                            <input type="range" className="slider-input rerank-settings__slider" id="rerankTopK" min="1" max="10" />
-                                                            <span className="rerank-settings__value" id="rerankTopKValue">3</span>
-                                                        </div>
+                                                {searchConfig.reranker_enabled && (
+                                                    <div className="form-group">
+                                                        <select
+                                                            className="form-select"
+                                                            id="RerankModel"
+                                                            value={setSearchConfig.reranker_model}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onMouseDown={(e) => e.stopPropagation()}
+                                                            onChange={(e) => setSearchConfig({ ...searchConfig, reranker_model: e.target.value })}
+                                                        >
+                                                            <option value="BAAI/bge-reranker-v2-m3">BAAI/bge-reranker-v2-m3 (권장)</option>
+                                                        </select>
+                                                        <p className="form-hint">링랭크 시 사용할 모델을 선택합니다.</p>
                                                     </div>
-                                                    <p className="rerank-settings__hint">재랭크 후 최종 반환할 문서 수</p>
-                                                </div>
+                                                )}
 
-                                                <div className="rerank-settings__item">
-                                                    <div className="rerank-settings__row">
-                                                        <label className="rerank-settings__label">
-                                                            <div className="rerank-settings__checkbox">
-                                                                <input type="checkbox" id="scoreThresholdEnabled"
-                                                                />
-                                                                점수 임계값
-                                                            </div>
-                                                        </label>
-                                                        <div className="rerank-settings__control">
-                                                            <input type="range" className="slider-input rerank-settings__slider" id="scoreThreshold" min="0" max="1" step="0.1" disabled />
-                                                            <span className="rerank-settings__value"
-                                                                id="scoreThresholdValue">0.5</span>
-                                                        </div>
-                                                    </div>
-                                                    <p className="rerank-settings__hint">이 점수 이상인 문서만 반환 (0~1)</p>
-                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* 재랭크 OFF 설정 (Top K, 유사도 임계값) */}
-                                        <div id="noRerankSettings" style={{ display: 'none' }}>
+
+                                        <label className="form-label">백터 검색 매개변수</label>
+
+                                        <div id="noRerankSettings">
                                             <div className="form-group">
                                                 <label className="form-label">Top K</label>
                                                 <p className="form-hint">검색 시 반환할 최대 청크 수</p>
                                                 <div className="slider-group">
-                                                    <input type="range" className="slider-input" id="topK" min="1" max="20" />
-                                                    <span className="slider-value" id="topKValue">5개</span>
+                                                    <input
+                                                        type="range"
+                                                        className="slider-input"
+                                                        id="topK"
+                                                        min="1"
+                                                        max="20"
+                                                        value={searchConfig.top_k}
+                                                        onChange={(e) => {
+                                                            const newTopK = parseInt(e.target.value);
+                                                            setSearchConfig({ 
+                                                                ...searchConfig, 
+                                                                top_k: newTopK,
+                                                                top_n: Math.min(searchConfig.top_n, newTopK) // top_n이 top_k를 초과하지 않도록 조정
+                                                            });
+                                                        }}
+                                                    />
+                                                    <span className="slider-value" id="topKValue">{searchConfig.top_k}개</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="form-group">
+                                                <label className="form-label">Top N</label>
+                                                <p className="form-hint">검색 시 반환할 최대 청크 수</p>
+                                                <div className="slider-group">
+                                                    <input
+                                                        type="range"
+                                                        className="slider-input"
+                                                        id="topN"
+                                                        min="1"
+                                                        max={searchConfig.top_k}
+                                                        value={searchConfig.top_n}
+                                                        onChange={(e) => {
+                                                            const newTopN = parseInt(e.target.value);
+                                                            // top_n이 top_k를 초과하지 않도록 제한
+                                                            const limitedTopN = Math.min(newTopN, searchConfig.top_k);
+                                                            setSearchConfig({ ...searchConfig, top_n: limitedTopN });
+                                                        }}
+                                                    />
+                                                    <span className="slider-value" id="topNValue">{searchConfig.top_n}개</span>
                                                 </div>
                                             </div>
 
                                             <div className="form-group">
                                                 <label className="form-label">유사도 임계값</label>
-                                                <p className="form-hint">최소 유사도 점수 (%)</p>
+                                                <p className="form-hint">최소 유사도 점수 (0~1)</p>
                                                 <div className="slider-group">
-                                                    <input type="range" className="slider-input" id="threshold" min="0" max="100" />
-                                                    <span className="slider-value" id="thresholdValue">70%</span>
+                                                    <input
+                                                        type="range"
+                                                        className="slider-input"
+                                                        id="threshold"
+                                                        min="0"
+                                                        max="100"
+                                                        value={searchConfig.min_score * 100}
+                                                        onChange={(e) => setSearchConfig({ ...searchConfig, min_score: parseFloat(e.target.value) / 100 })}
+                                                    />
+                                                    <span className="slider-value" id="thresholdValue">{(searchConfig.min_score * 100).toFixed(0)}%</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* 경제적 모드 설정 */}
-                                    <div id="economicSettings" style={{ display: 'none' }}>
+                                    <div id="economicSettings" style={{ display: searchConfig.index_mode === 'economic' ? 'block' : 'none' }}>
                                         <div className="form-group">
                                             <label className="form-label">Top K</label>
                                             <p className="form-hint">검색 시 반환할 최대 청크 수</p>
                                             <div className="slider-group">
-                                                <input type="range" className="slider-input" id="economicTopK" min="1" max="20" />
-                                                <span className="slider-value" id="economicTopKValue">5개</span>
+                                                <input
+                                                    type="range"
+                                                    className="slider-input"
+                                                    id="economicTopK"
+                                                    min="1"
+                                                    max="20"
+                                                    value={searchConfig.economic_top_k}
+                                                    onChange={(e) => setSearchConfig({ ...searchConfig, economic_top_k: parseInt(e.target.value) })}
+                                                />
+                                                <span className="slider-value" id="economicTopKValue">{searchConfig.economic_top_k}개</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="step-actions">
                                         <button className="btn btn--outline" onClick={() => setCurrentStep(2)}>이전</button>
-                                        <button className="btn btn--primary" onClick={() => setCurrentStep(4)}>다음 단계</button>
+                                        <button
+                                            className="btn btn--primary"
+                                            onClick={() => {
+                                                fetchSearchSet();
+                                                setCurrentStep(4);
+                                            }}
+                                        >다음 단계</button>
                                     </div>
                                 </div>
                             </div>
@@ -1659,11 +1772,25 @@ export default function UserKnowledge2026() {
                                         <div className="summary-list">
                                             <div className="summary-item">
                                                 <span className="summary-item__label">업로드된 파일</span>
-                                                <span className="summary-item__value">2개</span>
+                                                <span className="summary-item__value">
+                                                    {(() => {
+                                                        const selectedDoc = advancedSelectedDocuments.length > 0
+                                                            ? documents.find(doc => doc.knowledge_id === advancedSelectedDocuments[0])
+                                                            : null;
+                                                        return selectedDoc ? getDisplayName(selectedDoc.name) : '파일 없음';
+                                                    })()}
+                                                </span>
                                             </div>
                                             <div className="summary-item">
                                                 <span className="summary-item__label">총 크기</span>
-                                                <span className="summary-item__value">4.2 MB</span>
+                                                <span className="summary-item__value">
+                                                    {(() => {
+                                                        const selectedDoc = advancedSelectedDocuments.length > 0
+                                                            ? documents.find(doc => doc.knowledge_id === advancedSelectedDocuments[0])
+                                                            : null;
+                                                        return selectedDoc ? formatFileSize(selectedDoc.file_size_bytes) : '파일 없음';
+                                                    })()}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1680,15 +1807,21 @@ export default function UserKnowledge2026() {
                                         <div className="summary-list">
                                             <div className="summary-item">
                                                 <span className="summary-item__label">청킹 방식</span>
-                                                <span className="summary-item__value">일반</span>
+                                                <span className="summary-item__value">
+                                                    {chunkingConfig.chunk_strategy}
+                                                </span>
                                             </div>
                                             <div className="summary-item">
                                                 <span className="summary-item__label">최대 청크 길이</span>
-                                                <span className="summary-item__value">1024자</span>
+                                                <span className="summary-item__value">
+                                                    {chunkingConfig.chunk_size}자
+                                                </span>
                                             </div>
                                             <div className="summary-item">
                                                 <span className="summary-item__label">청크 중첩</span>
-                                                <span className="summary-item__value">50자</span>
+                                                <span className="summary-item__value">
+                                                    {chunkingConfig.chunk_overlap}자
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1704,19 +1837,27 @@ export default function UserKnowledge2026() {
                                         <div className="summary-list">
                                             <div className="summary-item">
                                                 <span className="summary-item__label">인덱스 모드</span>
-                                                <span className="summary-item__value">고품질</span>
+                                                <span className="summary-item__value">
+                                                    {searchConfig.index_mode}
+                                                </span>
                                             </div>
                                             <div className="summary-item">
                                                 <span className="summary-item__label">재순위 모드</span>
-                                                <span className="summary-item__value">재랭크 모델</span>
+                                                <span className="summary-item__value">
+                                                    {searchConfig.reranker_enabled ? '재랭크 모델' : '재랭크 미사용'}
+                                                </span>
                                             </div>
                                             <div className="summary-item">
                                                 <span className="summary-item__label">Top K</span>
-                                                <span className="summary-item__value">5개</span>
+                                                <span className="summary-item__value">
+                                                    {searchConfig.top_k}개
+                                                </span>
                                             </div>
                                             <div className="summary-item">
                                                 <span className="summary-item__label">유사도 임계값</span>
-                                                <span className="summary-item__value">70%</span>
+                                                <span className="summary-item__value">
+                                                    {searchConfig.min_score * 100}%
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
