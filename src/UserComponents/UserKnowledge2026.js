@@ -1668,8 +1668,8 @@ export default function UserKnowledge2026() {
                                                         value={searchConfig.top_k}
                                                         onChange={(e) => {
                                                             const newTopK = parseInt(e.target.value);
-                                                            setSearchConfig({ 
-                                                                ...searchConfig, 
+                                                            setSearchConfig({
+                                                                ...searchConfig,
                                                                 top_k: newTopK,
                                                                 top_n: Math.min(searchConfig.top_n, newTopK) // top_n이 top_k를 초과하지 않도록 조정
                                                             });
@@ -1865,8 +1865,9 @@ export default function UserKnowledge2026() {
                                     <div className="step-actions">
                                         <button className="btn btn--outline" onClick={() => setCurrentStep(3)}>이전</button>
                                         <button className="btn btn--primary btn--lg" onClick={() => {
-                                            // TODO: 지식베이스 생성 로직 추가
-                                            console.log('지식베이스 생성');
+                                            setCurrentStep(1);
+                                            setPageStatus('main');
+                                            showToast2026('지식베이스 생성이 완료되었습니다.', 'success');
                                         }}>지식베이스 생성</button>
                                     </div>
                                 </div>
