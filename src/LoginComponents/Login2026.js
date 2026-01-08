@@ -1,10 +1,19 @@
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { showToast2026 } from '../utill/utill';
 
 export default function Login() {
+    const accessToken = sessionStorage.getItem("access_token");
+
     const navigate = useNavigate();
+
+    // accessToken이 있으면 자동으로 /user/practice로 리다이렉트
+    useEffect(() => {
+        if (accessToken) {
+            navigate('/user/practice');
+        }
+    }, [accessToken, navigate]);
     const [selectedRole, setSelectedRole] = useState('student');
     const [formData, setFormData] = useState({
         email: '',

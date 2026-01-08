@@ -448,6 +448,27 @@ export default function UserKnowledge2026() {
     const [splitActive, setSplitActive] = useState(false);
 
 
+    const fetchChnunkingSet = async () => {
+        setSplitActive(false);
+        let knowledgeId = advancedSelectedDocuments[0];
+        try {
+            await axios.patch(`${process.env.REACT_APP_API_URL}/user/document/${knowledgeId}/settings/ingestion`,
+                {
+                    "chunk_overlap": chunkingConfig.chunk_overlap,
+                    "chunk_size": chunkingConfig.chunk_size,
+                    "chunk_strategy": chunkingConfig.chunk_strategy,
+                    "chunking_mode": chunkingConfig.chunking_mode,
+                    "max_chunks": chunkingConfig.max_chunks,
+                    "segment_separator": chunkingConfig.segment_separator
+                },
+                { headers: { Authorization: `Bearer ${accessToken}`, }, }
+            ).then(response => {
+                showToast2026('청킹 설정이 성공적으로 적용되었습니다.', 'success');
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
 
     return (
         <>
@@ -1225,6 +1246,14 @@ export default function UserKnowledge2026() {
                                         )}
                                     </div>
 
+                                    <div style={{ marginTop: '20px', textAlign: 'center', backgroundColor: 'var(--primary-600)', padding: '10px', borderRadius: '8px', color: 'white', cursor: 'pointer' }}
+                                        onClick={() => {
+                                            setMainPageStatus('simple');
+                                        }}
+                                    >
+                                        파일 업로드
+                                    </div>
+
                                     <div className="step-actions">
                                         <button className="btn btn--outline" onClick={() => {
                                             setPageStatus('main');
@@ -1242,6 +1271,7 @@ export default function UserKnowledge2026() {
                                             }}
                                         >다음 단계</button>
                                     </div>
+
                                 </div>
                             </div>
 
@@ -1374,7 +1404,13 @@ export default function UserKnowledge2026() {
 
                                         <div className="step-actions">
                                             <button className="btn btn--outline" onClick={() => setCurrentStep(1)}>이전</button>
-                                            <button className="btn btn--primary" onClick={() => setCurrentStep(3)}>다음 단계</button>
+                                            <button className="btn btn--primary"
+                                                onClick={() => {
+                                                    setCurrentStep(3);
+                                                    fetchChnunkingSet();
+                                                }}
+
+                                            >다음 단계</button>
                                         </div>
                                     </div>
 
@@ -1456,6 +1492,8 @@ export default function UserKnowledge2026() {
                                             </button>
                                         </div>
                                     </div>
+
+
                                 </div>
                             </div>
 
