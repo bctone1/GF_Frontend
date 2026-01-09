@@ -72,21 +72,45 @@ export default function UserKnowledge2026() {
         }
     }, [accessToken]);
 
+    const [Assistant, setAssistant] = useState([]);
+    const fetchAssistant = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/models`);
+        setAssistant(response.data.items);
+    }
+
+    const [allowedModelIds, setAllowedModelIds] = useState(() => {
+        const stored = sessionStorage.getItem("allowed_model_ids");
+        if (!stored) return [0];
+        try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+                return parsed;
+            }
+            if (typeof parsed === 'number') {
+                return [parsed];
+            }
+            if (typeof parsed === 'string') {
+                if (parsed.includes(',')) {
+                    return parsed.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+                }
+                const num = parseInt(parsed, 10);
+                return isNaN(num) ? [1] : [num];
+            }
+            return [1];
+        } catch {
+            if (typeof stored === 'string' && stored.includes(',')) {
+                return stored.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+            }
+            const num = parseInt(stored, 10);
+            return isNaN(num) ? [1] : [num];
+        }
+    });
+
+
     useEffect(() => {
+        fetchAssistant();
         fetchDocuments();
-    }, [fetchDocuments]);
-
-
-    // progress가 100이 아닌 항목이 있으면 2초마다 자동 갱신
-    // useEffect(() => {
-    //     const hasInProgress = documents.some(doc => doc.progress < 100);
-    //     if (!hasInProgress) return;
-    //     const intervalId = setInterval(() => {
-    //         fetchDocuments();
-    //     }, 2000);
-    //     return () => clearInterval(intervalId);
-    // }, [documents, fetchDocuments]);
-
+    }, []);
 
     // status가 ready 또는 failed가 아닌 항목이 있으면 2초마다 자동 갱신
     const hasInProgress = useMemo(
@@ -437,8 +461,10 @@ export default function UserKnowledge2026() {
         }
     };
 
+    const [previewResult, setPreviewResult] = useState([]);
+
     const preViewChunkResult = async () => {
-        console.log(chunkingConfig);
+        // console.log(chunkingConfig);
         let knowledgeId = advancedSelectedDocuments[0];
         try {
             await axios.post(
@@ -453,8 +479,10 @@ export default function UserKnowledge2026() {
                 },
                 { headers: { Authorization: `Bearer ${accessToken}`, }, }
             ).then(response => {
-                setSplitActive(true);
                 console.log(response.data);
+
+                setPreviewResult(response.data.items);
+                setSplitActive(true);
             });
         } catch (error) {
             console.log(error);
@@ -521,6 +549,91 @@ export default function UserKnowledge2026() {
             showToast2026('검색 설정 적용 중 오류가 발생했습니다.', 'error');
         }
     };
+
+    const [selectedModel, setSelectedModel] = useState('');
+    const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+    const modelDropdownRef = useRef(null);
+
+    // 선택된 모델 정보 찾기
+    const selectedModelInfo = useMemo(() => {
+        if (!selectedModel || Assistant.length === 0) return null;
+        return Assistant.find(model => model.model_name === selectedModel);
+    }, [selectedModel, Assistant]);
+
+    // 초기 모델 선택 (allowedModelIds에 포함된 첫 번째 모델)
+    useEffect(() => {
+        if (Assistant.length > 0 && !selectedModel) {
+            const allowedModel = Assistant.find(model =>
+                Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id)
+            );
+            if (allowedModel) {
+                setSelectedModel(allowedModel.model_name);
+            } else if (Assistant.length > 0) {
+                // allowedModelIds에 포함된 모델이 없으면 첫 번째 모델 선택
+                setSelectedModel(Assistant[0].model_name);
+            }
+        }
+    }, [Assistant, allowedModelIds, selectedModel]);
+
+    // 드롭다운 외부 클릭 시 닫기
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target)) {
+                setIsModelDropdownOpen(false);
+            }
+        };
+
+        if (isModelDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isModelDropdownOpen]);
+
+
+
+    const [pannelAStatus, setPannelAStatus] = useState('llm');
+    const [docSelectedDocA, setDocSelectedDocA] = useState({
+        status: false,
+        name: '',
+        chunk_count: 0,
+        file_size_bytes: 0,
+    });
+    const [pannelAQuery, setPannelAQuery] = useState('');
+
+    const filteredPannelADocuments = documents.filter((document) => {
+        if (pannelAQuery.trim() && !document.name.toLowerCase().includes(pannelAQuery.toLowerCase())) {
+            return false;
+        }
+        return true;
+    });
+
+    const [pannelAParams, setPannelAParams] = useState({
+        top_k: 3,
+        chunk_size: 500,
+        threshold: 0.7,
+    });
+
+    const [pannelARequestStatus, setPannelARequestStatus] = useState('ready');
+
+    const pannelARequest = () => {
+        setPannelARequestStatus('running');
+
+        setTimeout(() => {
+            setPannelARequestStatus('done');
+        }, 3000);
+    }
+
+
+
+
+    const [pannelBStatus, setPannelBStatus] = useState('doc');
+
+
+
+
 
     return (
         <>
@@ -627,8 +740,8 @@ export default function UserKnowledge2026() {
                                 </div>
 
                                 <div className="mode-card" id="compareCard"
-                                    // onClick={() => setPageStatus('compare')}
-                                    onClick={() => showToast2026('비교 모드는 현재 개발중입니다.')}
+                                    onClick={() => setPageStatus('compare')}
+                                // onClick={() => showToast2026('비교 모드는 현재 개발중입니다.')}
                                 >
                                     <div className="mode-card__check">
                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -1214,7 +1327,7 @@ export default function UserKnowledge2026() {
                                             const readyDocuments = documents.filter(doc => doc.status === 'ready');
                                             const displayDocuments = showAllAdvancedDocuments ? readyDocuments : readyDocuments.slice(0, 4);
                                             const hasMore = readyDocuments.length > 4;
-                                            
+
                                             return (
                                                 <div>
                                                     <div style={{
@@ -1527,8 +1640,11 @@ export default function UserKnowledge2026() {
                                                 </svg>
                                                 청크 미리보기
                                             </div>
-                                            <button className="step-card__preview-close"
-                                                title="미리보기 닫기">
+                                            <button
+                                                className="step-card__preview-close"
+                                                title="미리보기 닫기"
+                                                onClick={() => setSplitActive(!splitActive)}
+                                            >
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <line x1="18" y1="6" x2="6" y2="18" />
                                                     <line x1="6" y1="6" x2="18" y2="18" />
@@ -1539,11 +1655,20 @@ export default function UserKnowledge2026() {
                                             {/* Stats */}
                                             <div className="step-card__preview-stats">
                                                 <div className="preview-stat">
-                                                    <div className="preview-stat__value" id="previewChunkCount">12</div>
+                                                    <div className="preview-stat__value" id="previewChunkCount">{previewResult.length}</div>
                                                     <div className="preview-stat__label">총 청크 수</div>
                                                 </div>
                                                 <div className="preview-stat">
-                                                    <div className="preview-stat__value" id="previewAvgLength">856</div>
+                                                    <div className="preview-stat__value" id="previewAvgLength">
+                                                        {previewResult.length > 0
+                                                            ? Math.round(
+                                                                previewResult.reduce(
+                                                                    (acc, item) => acc + (Number(item.char_count) || 0),
+                                                                    0
+                                                                ) / previewResult.length
+                                                            )
+                                                            : 0}
+                                                    </div>
                                                     <div className="preview-stat__label">평균 길이</div>
                                                 </div>
                                             </div>
@@ -1551,34 +1676,90 @@ export default function UserKnowledge2026() {
                                             {/* Chunk List */}
                                             <div className="step-card__preview-list" id="chunkPreviewList" style={{ display: chunkingConfig.chunking_mode === 'general' ? 'block' : 'none' }}>
                                                 <div className="doc-preview">
-                                                    <div className="doc-preview__chunk " data-label="청크 #1 · 863자">
-                                                        인공지능(AI)은 인간의 학습능력, 추론능력, 지각능력, 자연언어의 이해능력 등을 컴퓨터 프로그램으로 실현한 기술입니다. 머신러닝은 인공지능의 한 분야로, 컴퓨터가 데이터를 분석하고 패턴을 학습하여 스스로 성능을 개선하는 기술입니다. 지도학습, 비지도학습, 강화학습 등 다양한 방식이 있습니다. 딥러닝은 인공신경망을 기반으로 한 머신러닝의 한 종류입니다. 여러 층의 신경망을 통해 복잡한 패턴을 학습할 수 있으며, 이미지 인식, 음성 인식, 자연어 처리 등에서 뛰어난 성능을 보입니다. 자연어 처리(NLP)는 컴퓨터가 인간의 언어를 이해하고 처리하는 기술입니다. 텍스트 분석, 감정 분석, 기계 번역, 챗봇 등 다양한 응용 분야가 있습니다. 대규모 언어 모델(LLM)은 방대한 텍스트 데이터로 학습된 딥러닝 모델입니다. GPT, Claude, Gemini 등이 대표적이며, 다양한 자연어 작업을 수행할 수 있습니다. RAG(Retrieval-Augmented Generation)는 검색과 생성을 결합한 기술입니다. 외부 지식베이스에서 관련 정보를 검색하여 LLM의 응답 품질을 향상시킵니다. 청킹은 긴 문서를 작은 조각으로 나누는 과정입니다. 적절한 청킹 전략은 RAG 시스템의 검색 정확도와 응답 품질에 큰 영향을 미칩니다. 벡터 임베딩은 텍스트를 수치 벡터로 변환하는 기술입니다. 의미적으로 유사한 텍스트는 벡터 공간에서 가까운 거리에 위치하게 됩니다. 벡터 데이터베이스는 벡터 임베딩을 저장하고 유사도 검색을 수행하는 데이터베이스입니다. Pinecone, Weaviate, Chroma 등이 대표적입니다. 프롬프트 엔지니어링은 AI 모델에 효과적인 입력을 설계하는 기술입니다. 좋은 프롬프트는 모델의 성능을 크게 향상시킬 수 있습니다.
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="step-card__preview-list" id="chunkPreviewList" style={{ display: chunkingConfig.chunking_mode === 'parent_child' ? 'block' : 'none' }}>
-                                                <div className="doc-preview">
-                                                    <div className="doc-preview__chunk doc-preview__parent" data-label="📁 부모 P1 · 863자">
-                                                        <div style={{ marginBottom: "12px", color: "var(--text-secondary)" }}>인공지능(AI)은 인간의 학습능력, 추론능력, 지각능력, 자연언어의 이해능력 등을 컴퓨터 프로그램으로 실현한 기술입니다. 머신러닝은 인공지능의 한 분야로, 컴퓨터가 데이터를 분석하고 패턴을 학습하여 스스로 성능을 개선하는 기술입니다. 지도학습, 비지도학습, 강화학습 등 다양한 방식이 있습니다. 딥러닝은 인공신경망을 기반으로 한 머신러닝의 한 종류입니다. 여러 층의 신경망을 통해 복잡한 패턴을 학습할 수 있으며, 이미지 인식, 음성 인식, 자연어 처리 등에서 뛰어난 성능을 보입니다. 자연어 처리(NLP)는 컴퓨터가 인간의 언어를 이해하고 처리하는 기술입니다. 텍스트 분석, 감정 분석, 기계 번역, 챗봇 등 다양한 응용 분야가 있습니다. 대규모 언어 모델(LLM)은 방대한 텍스트 데이터로 학습된 딥러닝 모델입니다. GPT, Claude, Gemini 등이 대표적이며, 다양한 자연어 작업을 수행할 수 있습니다. RAG(Retrieval-Augmented Generation)는 검색과 생성을 결합한 기술입니다. 외부 지식베이스에서 관련 정보를 검색하여 LLM의 응답 품질을 향상시킵니다. 청킹은 긴 문서를 작은 조각으로 나누는 과정입니다. 적절한 청킹 전략은 RAG 시스템의 검색 정확도와 응답 품질에 큰 영향을 미칩니다. 벡터 임베딩은 텍스트를 수치 벡터로 변환하는 기술입니다. 의미적으로 유사한 텍스트는 벡터 공간에서 가까운 거리에 위치하게 됩니다. 벡터 데이터베이스는 벡터 임베딩을 저장하고 유사도 검색을 수행하는 데이터베이스입니다. Pinecone, Weaviate, Chroma 등이 대표적입니다. 프롬프트 엔지니어링은 AI 모델에 효과적인 입력을 설계하는 기술입니다. 좋은 프롬프트는 모델의 성능을 크게 향상시킬 수 있습니다.</div>
-
-                                                        <div className="doc-preview__child-section">
-                                                            <div style={{ fontSize: '11px', color: '#2563eb', fontWeight: '600', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '14px', height: '14px' }}>
-                                                                    <circle cx="11" cy="11" r="8"></circle>
-                                                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                                                </svg>
-                                                                자식 청크 (검색 단위)
-                                                            </div>
-
-                                                            <div className="doc-preview__child" data-label="🔍 C1">
-                                                                인공지능(AI)은 인간의 학습능력, 추론능력, 지각능력, 자연언어의 이해능력 등을 컴퓨터 프로그램으로 실현한 기술입니다. 머신러닝은 인공지능의 한 분야로, 컴퓨터가 데이터를 분석하고 패턴을 학습하여 스스로 성능을 개선하는 기술입니다. 지도학습, 비지도학습, 강화학습 등 다양한 방식이 있습니다. 딥러닝은 인공신경망을 기반으로 한 머신러닝의 한 종류입니다. 여러 층의 신경망을 통해 복잡한 패턴을 학습할 수 있으며, 이미지 인식, 음성 인식, 자연어 처리 등에서 뛰어난 성능을 보입니다. 자연어 처리(NLP)는 컴퓨터가 인간의 언어를 이해하고 처리하는 기술입니다. 텍스트 분석, 감정 분석, 기계 번역, 챗봇 등 다양한 응용 분야가 있습니다. 대규모 언어 모델(LLM)은 방대한 텍스트 데이터로 학습된 딥러닝 모델입니다. GPT, Claude, Gemini 등이 대표적이며, 다양한 자연어 작업을 수행할 수 있습니다. RAG(Retrieval-Augmented Generation)는 검색과 생성을 결합한 기술입니다. 외부 지식베이스에서 관련 정보를 검색하여 LLM의 응답 품질을 향상시킵니다. 청킹은 긴 문서를 작은 조각으로 나누는 과정입니다. 적절한 청킹 전략은 RAG 시스템의 검색 정확도와 응답 품질에 큰 영향을 미칩니다. 벡터 임베딩은 텍스트를 수치 벡터로 변환하는 기술입니다. 의미적으로 유사한 텍스트는 벡터 공간에서 가까운 거리에 위치하게 됩니다. 벡터 데이터베이스는 벡터 임베딩을 저장하고 유사도 검색을 수행하는 데이터베이스입니다. Pinecone, Weaviate, Chroma 등이 대표적입니다. 프롬프트 엔지니어링은 AI 모델에 효과적인 입력을 설계하는 기술입니다. 좋은 프롬프트는 모델의 성능을 크게 향상시킬 수 있습니다.
-                                                            </div>
-
+                                                    {previewResult.map((item, index) => (
+                                                        <div
+                                                            key={'preview-chunk-' + item.chunk_index}
+                                                            className="doc-preview__chunk"
+                                                            data-label={`청크 #${item.chunk_index} · ${item.char_count}자`}
+                                                        >
+                                                            {item.text}
                                                         </div>
-                                                    </div>
+                                                    ))}
                                                 </div>
                                             </div>
+
+                                            <div
+                                                className="step-card__preview-list"
+                                                id="chunkPreviewList"
+                                                style={{ display: chunkingConfig.chunking_mode === 'parent_child' ? 'block' : 'none' }}
+                                            >
+                                                <div className="doc-preview">
+                                                    {previewResult.map((item, index) => {
+                                                        // 부모 청크
+                                                        if (item.text.startsWith('[PARENT]')) {
+                                                            const text = item.text.replace('[PARENT]', '').trim();
+
+                                                            return (
+                                                                <div
+                                                                    key={`parent-${index}`}
+                                                                    className="doc-preview__chunk doc-preview__parent"
+                                                                    data-label={`P${index + 1} · ${item.char_count}자`}
+                                                                >
+                                                                    <div
+                                                                        style={{
+                                                                            marginBottom: '12px',
+                                                                            color: 'var(--text-secondary)',
+                                                                        }}
+                                                                    >
+                                                                        {text}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        // 자식 청크
+                                                        if (item.text.startsWith('[CHILD]')) {
+                                                            const text = item.text.replace('[CHILD]', '').trim();
+
+                                                            return (
+                                                                <div key={`child-${index}`} className="doc-preview__child-section">
+                                                                    <div
+                                                                        style={{
+                                                                            fontSize: '11px',
+                                                                            color: '#2563eb',
+                                                                            fontWeight: '600',
+                                                                            marginBottom: '8px',
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            gap: '6px',
+                                                                        }}
+                                                                    >
+                                                                        <svg
+                                                                            viewBox="0 0 24 24"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            strokeWidth="2"
+                                                                            style={{ width: '14px', height: '14px' }}
+                                                                        >
+                                                                            <circle cx="11" cy="11" r="8" />
+                                                                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                                                                        </svg>
+                                                                        자식 청크 (검색 단위)
+                                                                    </div>
+
+                                                                    <div className="doc-preview__child" data-label={`C${index + 1}`}>
+                                                                        {text}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
+
+                                                        // 예외 케이스 (접두어 없음)
+                                                        return null;
+                                                    })}
+                                                </div>
+                                            </div>
+
 
 
 
@@ -1950,27 +2131,68 @@ export default function UserKnowledge2026() {
                             {/* Model Selector */}
                             <div className="model-selector">
                                 <span className="model-selector__label">사용 모델</span>
-                                <div className="model-selector__dropdown">
-                                    <button className="model-selector__button" id="modelButton" >
-                                        <span className="model-selector__dot model-selector__dot--gpt" id="selectedModelDot"></span>
-                                        <span className="model-selector__name" id="selectedModelName">GPT-4</span>
+                                <div className="model-selector__dropdown" ref={modelDropdownRef}>
+                                    <button
+                                        className="model-selector__button"
+                                        id="modelButton"
+                                        onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                                    >
+                                        {selectedModelInfo ? (
+                                            <>
+                                                <span
+                                                    className={`model-selector__dot model-selector__dot--${selectedModelInfo.provider === 'anthropic' ? 'claude' :
+                                                        selectedModelInfo.provider === 'google' ? 'gemini' :
+                                                            selectedModelInfo.provider === 'openai' ? 'gpt' : ''
+                                                        }`}
+                                                    id="selectedModelDot"
+                                                ></span>
+                                                <span className="model-selector__name" id="selectedModelName">
+                                                    {selectedModelInfo.model_name}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="model-selector__dot model-selector__dot--gpt" id="selectedModelDot"></span>
+                                                <span className="model-selector__name" id="selectedModelName">모델 선택</span>
+                                            </>
+                                        )}
                                         <svg className="icon icon--sm model-selector__arrow" viewBox="0 0 24 24">
                                             <path d="M6 9l6 6 6-6" />
                                         </svg>
                                     </button>
-                                    <div className="model-dropdown" id="modelDropdown">
-                                        <div className="model-dropdown__item selected" data-model="gpt">
-                                            <span className="model-selector__dot model-selector__dot--gpt"></span>
-                                            <span>GPT-4</span>
-                                        </div>
-                                        <div className="model-dropdown__item" data-model="claude">
-                                            <span className="model-selector__dot model-selector__dot--claude"></span>
-                                            <span>Claude 3.5</span>
-                                        </div>
-                                        <div className="model-dropdown__item" data-model="gemini">
-                                            <span className="model-selector__dot model-selector__dot--gemini"></span>
-                                            <span>Gemini Pro</span>
-                                        </div>
+                                    <div
+                                        className={`model-dropdown ${isModelDropdownOpen ? 'show' : ''}`}
+                                        id="modelDropdown"
+                                    >
+                                        {Assistant.map((model) => {
+                                            const isAllowed = Array.isArray(allowedModelIds) && allowedModelIds.includes(model.id);
+                                            const providerDatColor = model.provider === 'anthropic' ? 'claude' : model.provider === 'google' ? 'gemini' : model.provider === 'openai' ? 'gpt' : '';
+                                            const isSelected = selectedModel === model.model_name;
+                                            return (
+                                                <div
+                                                    key={model.id}
+                                                    className={`model-dropdown__item ${isSelected ? 'selected' : ''} ${!isAllowed ? 'disabled' : ''}`}
+                                                    onClick={() => {
+                                                        if (isAllowed) {
+                                                            setSelectedModel(model.model_name);
+                                                            setIsModelDropdownOpen(false);
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        cursor: isAllowed ? 'pointer' : 'not-allowed',
+                                                        opacity: isAllowed ? 1 : 0.5
+                                                    }}
+                                                >
+                                                    <span className={`model-selector__dot model-selector__dot--${providerDatColor}`}></span>
+                                                    <span>{model.model_name}</span>
+                                                    {!isAllowed && (
+                                                        <span style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#999' }}>
+                                                            (권한 없음)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -1992,13 +2214,15 @@ export default function UserKnowledge2026() {
                                                 <path d="M3 3v5h5" />
                                             </svg>
                                         </button>
-                                        <span className="mode-status mode-status--llm" id="modeStatusA">순수 LLM</span>
+                                        <span className={`mode-status mode-status--${pannelAStatus}`}>{pannelAStatus === 'llm' ? '순수 LLM' : pannelAStatus === 'doc' ? '문서 참조' : 'RAG 설정'}</span>
                                     </div>
                                 </div>
                                 <div className="compare-panel__body">
                                     {/* Mode Selector */}
                                     <div className="mode-selector">
-                                        <div className="mode-selector__item active" data-mode="llm">
+
+
+                                        <div className={`mode-selector__item ${pannelAStatus === 'llm' ? 'active' : ''}`} onClick={() => setPannelAStatus('llm')}>
                                             <div className="mode-selector__icon mode-selector__icon--llm">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -2009,7 +2233,9 @@ export default function UserKnowledge2026() {
                                             <div className="mode-selector__label">순수 LLM</div>
                                             <div className="mode-selector__desc">파일 없이<br />기본 지식만</div>
                                         </div>
-                                        <div className="mode-selector__item" data-mode="doc" >
+
+
+                                        <div className={`mode-selector__item ${pannelAStatus === 'doc' ? 'active' : ''}`} onClick={() => setPannelAStatus('doc')}>
                                             <div className="mode-selector__icon mode-selector__icon--doc">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -2019,7 +2245,9 @@ export default function UserKnowledge2026() {
                                             <div className="mode-selector__label">문서 참조</div>
                                             <div className="mode-selector__desc">기본 설정으로<br />문서 활용</div>
                                         </div>
-                                        <div className="mode-selector__item" data-mode="rag" >
+
+
+                                        <div className={`mode-selector__item ${pannelAStatus === 'rag' ? 'active' : ''}`} onClick={() => setPannelAStatus('rag')}>
                                             <div className="mode-selector__icon mode-selector__icon--rag">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <path
@@ -2032,8 +2260,12 @@ export default function UserKnowledge2026() {
                                         </div>
                                     </div>
 
+
+
+
+
                                     {/* LLM Only Content */}
-                                    <div className="mode-content show" id="llmContentA">
+                                    <div className={`mode-content ${pannelAStatus === 'llm' ? 'show' : ''}`}>
                                         <div className="llm-state">
                                             <div className="llm-state__icon">
                                                 <svg className="icon icon--lg" viewBox="0 0 24 24">
@@ -2048,7 +2280,7 @@ export default function UserKnowledge2026() {
                                     </div>
 
                                     {/* Doc Reference Content */}
-                                    <div className="mode-content show" id="docContentA">
+                                    <div className={`mode-content ${pannelAStatus === 'doc' ? 'show' : ''}`}>
                                         <div className="doc-selector">
                                             <div className="doc-selector__label">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -2057,8 +2289,11 @@ export default function UserKnowledge2026() {
                                                 </svg>
                                                 문서 선택
                                             </div>
+
                                             <div className="doc-selector__dropdown">
-                                                <button className="doc-selector__button" id="docButtonDocA">
+                                                <button className="doc-selector__button"
+                                                    onClick={() => setDocSelectedDocA({ ...docSelectedDocA, status: !docSelectedDocA.status })}
+                                                >
                                                     <div className="doc-selector__icon">
                                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                             <path
@@ -2066,22 +2301,65 @@ export default function UserKnowledge2026() {
                                                             <polyline points="14 2 14 8 20 8" />
                                                         </svg>
                                                     </div>
+
                                                     <div className="doc-selector__info">
-                                                        <span className="doc-selector__placeholder" id="docPlaceholderDocA">문서를
-                                                            선택하세요</span>
-                                                        <div id="docSelectedDocA" style={{ display: 'none' }}>
-                                                            <div className="doc-selector__name"></div>
-                                                            <div className="doc-selector__meta"></div>
+                                                        <span className="doc-selector__placeholder" style={{ display: docSelectedDocA.name ? 'none' : 'block' }}>문서를 선택하세요</span>
+
+                                                        <div id="docSelectedDocA" style={{ display: docSelectedDocA.name ? 'block' : 'none' }}>
+                                                            <div className="doc-selector__name">{getDisplayName(docSelectedDocA.name)}</div>
+                                                            <div className="doc-selector__meta">{docSelectedDocA.chunk_count}개 청크 · {formatFileSize(docSelectedDocA.file_size_bytes)}</div>
                                                         </div>
                                                     </div>
+
+
                                                     <svg className="icon icon--sm doc-selector__arrow" viewBox="0 0 24 24">
                                                         <path d="M6 9l6 6 6-6" />
                                                     </svg>
                                                 </button>
-                                                <div className="doc-dropdown" id="docDropdownDocA"></div>
+
+                                                <div className={`doc-dropdown ${docSelectedDocA.status ? 'show' : ''}`}>
+
+                                                    <div className="doc-dropdown__search">
+                                                        <input
+                                                            type="text"
+                                                            className="doc-dropdown__search-input"
+                                                            placeholder="문서 검색..."
+                                                            value={pannelAQuery}
+                                                            onChange={(e) => setPannelAQuery(e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="doc-dropdown__list">
+                                                        {filteredPannelADocuments.map((doc) => (
+                                                            <div
+                                                                key={'pannelA-' + doc.knowledge_id}
+                                                                className="doc-dropdown__item"
+                                                                onClick={() => {
+                                                                    setDocSelectedDocA({ ...docSelectedDocA, name: doc.name, chunk_count: doc.chunk_count, file_size_bytes: doc.file_size_bytes, status: false });
+                                                                    showToast2026(`${getDisplayName(doc.name)} 문서가 선택되었습니다`, 'success');
+                                                                }}
+                                                            >
+                                                                <div className="doc-dropdown__item-icon doc-dropdown__item-icon--pdf">
+                                                                    <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="doc-dropdown__item-info">
+                                                                    <div className="doc-dropdown__item-name">{getDisplayName(doc.name)}</div>
+                                                                    <div className="doc-dropdown__item-meta">{doc.chunk_count}개 청크 · {formatFileSize(doc.file_size_bytes)}</div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="default-settings" id="defaultSettingsDocA" style={{ display: 'none' }}>
+
+
+                                        <div className="default-settings" id="defaultSettingsDocA"
+                                            style={{ display: docSelectedDocA.name ? 'block' : 'none' }}
+                                        >
                                             <div className="default-settings__title">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <circle cx="12" cy="12" r="10" />
@@ -2105,10 +2383,17 @@ export default function UserKnowledge2026() {
                                                 </div>
                                             </div>
                                         </div>
+
+
                                     </div>
 
+
+
+
+
+
                                     {/* RAG Settings Content */}
-                                    <div className="mode-content show" id="ragContentA">
+                                    <div className={`mode-content ${pannelAStatus === 'rag' ? 'show' : ''}`}>
                                         <div className="doc-selector">
                                             <div className="doc-selector__label">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -2118,30 +2403,73 @@ export default function UserKnowledge2026() {
                                                 문서 선택
                                             </div>
                                             <div className="doc-selector__dropdown">
-                                                <button className="doc-selector__button" id="docButtonRagA">
+                                                <button className="doc-selector__button"
+                                                    onClick={() => setDocSelectedDocA({ ...docSelectedDocA, status: !docSelectedDocA.status })}
+                                                >
                                                     <div className="doc-selector__icon">
                                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
-                                                            <path
-                                                                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                                             <polyline points="14 2 14 8 20 8" />
                                                         </svg>
                                                     </div>
+
                                                     <div className="doc-selector__info">
-                                                        <span className="doc-selector__placeholder" id="docPlaceholderRagA">문서를
-                                                            선택하세요</span>
-                                                        <div id="docSelectedRagA" style={{ display: 'none' }}>
-                                                            <div className="doc-selector__name"></div>
-                                                            <div className="doc-selector__meta"></div>
+                                                        <span className="doc-selector__placeholder" style={{ display: docSelectedDocA.name ? 'none' : 'block' }}>문서를 선택하세요</span>
+
+                                                        <div id="docSelectedDocA" style={{ display: docSelectedDocA.name ? 'block' : 'none' }}>
+                                                            <div className="doc-selector__name">{getDisplayName(docSelectedDocA.name)}</div>
+                                                            <div className="doc-selector__meta">{docSelectedDocA.chunk_count}개 청크 · {formatFileSize(docSelectedDocA.file_size_bytes)}</div>
                                                         </div>
                                                     </div>
+
+
                                                     <svg className="icon icon--sm doc-selector__arrow" viewBox="0 0 24 24">
                                                         <path d="M6 9l6 6 6-6" />
                                                     </svg>
                                                 </button>
-                                                <div className="doc-dropdown" id="docDropdownRagA"></div>
+
+                                                <div className={`doc-dropdown ${docSelectedDocA.status ? 'show' : ''}`}>
+
+                                                    <div className="doc-dropdown__search">
+                                                        <input
+                                                            type="text"
+                                                            className="doc-dropdown__search-input"
+                                                            placeholder="문서 검색..."
+                                                            value={pannelAQuery}
+                                                            onChange={(e) => setPannelAQuery(e.target.value)}
+                                                        />
+                                                    </div>
+
+                                                    <div className="doc-dropdown__list">
+                                                        {filteredPannelADocuments.map((doc) => (
+                                                            <div
+                                                                key={'pannelA-' + doc.knowledge_id}
+                                                                className="doc-dropdown__item"
+                                                                onClick={() => {
+                                                                    setDocSelectedDocA({ ...docSelectedDocA, name: doc.name, chunk_count: doc.chunk_count, file_size_bytes: doc.file_size_bytes, status: false });
+                                                                    showToast2026(`${getDisplayName(doc.name)} 문서가 선택되었습니다`, 'success');
+                                                                }}
+                                                            >
+                                                                <div className="doc-dropdown__item-icon doc-dropdown__item-icon--pdf">
+                                                                    <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="doc-dropdown__item-info">
+                                                                    <div className="doc-dropdown__item-name">{getDisplayName(doc.name)}</div>
+                                                                    <div className="doc-dropdown__item-meta">{doc.chunk_count}개 청크 · {formatFileSize(doc.file_size_bytes)}</div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="settings-section" id="settingsSectionRagA" style={{ display: 'none' }}>
+
+                                        <div className="settings-section"
+                                            style={{ display: docSelectedDocA.name ? 'block' : 'none' }}
+                                        >
                                             <div className="settings-section__title">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <path
@@ -2150,34 +2478,39 @@ export default function UserKnowledge2026() {
                                                 </svg>
                                                 RAG 파라미터 설정
                                             </div>
+
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Top-K</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="1" max="10" id="topKA" />
-                                                    <span className="setting-row__value" id="topKAValue">3개</span>
+                                                    <input type="range" min="1" max="10" value={pannelAParams.top_k} onChange={(e) => setPannelAParams({ ...pannelAParams, top_k: parseInt(e.target.value) })} />
+                                                    <span className="setting-row__value">{pannelAParams.top_k}개</span>
                                                 </div>
                                             </div>
+
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Chunk Size</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="200" max="1000" step="100" id="chunkSizeA" />
-                                                    <span className="setting-row__value" id="chunkSizeAValue">500자</span>
+                                                    <input type="range" min="200" max="1000" step="100" value={pannelAParams.chunk_size} onChange={(e) => setPannelAParams({ ...pannelAParams, chunk_size: parseInt(e.target.value) })} />
+                                                    <span className="setting-row__value">{pannelAParams.chunk_size}자</span>
                                                 </div>
                                             </div>
+
                                             <div className="setting-row">
                                                 <span className="setting-row__label">유사도 임계값</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="0.5" max="0.9" step="0.1" id="thresholdA" />
-                                                    <span className="setting-row__value" id="thresholdAValue">0.7</span>
+                                                    <input type="range" min="0.5" max="0.9" step="0.1" value={pannelAParams.threshold} onChange={(e) => setPannelAParams({ ...pannelAParams, threshold: parseFloat(e.target.value) })} />
+                                                    <span className="setting-row__value">{pannelAParams.threshold}</span>
                                                 </div>
                                             </div>
                                         </div>
+
                                     </div>
 
                                     <div className="section-divider"></div>
 
                                     {/* Test Section */}
                                     <div className="test-section">
+
                                         <div className="test-section__label">
                                             <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                 <circle cx="12" cy="12" r="10" />
@@ -2186,19 +2519,39 @@ export default function UserKnowledge2026() {
                                             </svg>
                                             질문 입력
                                         </div>
+
                                         <textarea className="test-input" id="questionA" rows="2" placeholder="질문을 입력하세요..." />
+
                                         <div className="test-actions">
-                                            <button className="btn btn--primary" id="testBtnA" >
+
+                                            <button
+                                                style={{ display: pannelARequestStatus === 'running' ? 'none' : 'block' }}
+                                                className="btn btn--primary"
+                                                onClick={pannelARequest}
+                                            >
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <polygon points="5 3 19 12 5 21 5 3" />
                                                 </svg>
                                                 실행
                                             </button>
+
+                                            <button
+                                                style={{ display: pannelARequestStatus === 'running' ? 'block' : 'none' }}
+                                                className="btn btn--primary"
+                                                disabled={true}
+                                            >
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24" style={{ animation: 'spin 1s linear infinite' }}>
+                                                    <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                                                </svg>
+                                                분석 중...
+                                            </button>
+
                                         </div>
+
                                     </div>
 
                                     {/* Result Box */}
-                                    <div className="result-box" id="resultBoxA">
+                                    <div className={`result-box ${pannelARequestStatus === 'done' ? 'show' : ''}`}>
                                         <div className="result-card">
                                             <div className="result-card__header">
                                                 <span className="result-card__label" id="resultLabelA">AI 응답</span>
@@ -2208,7 +2561,8 @@ export default function UserKnowledge2026() {
                                                 </span>
                                             </div>
                                             <div className="result-card__body">
-                                                <div className="result-card__text" id="resultContentA">
+                                                <div className="result-card__text">
+                                                    (예시 응답입니다.) <br />
                                                     Python은 1991년 귀도 반 로섬이 개발한 고수준 프로그래밍 언어입니다. 간결하고 읽기 쉬운 문법이 특징이며, 웹 개발, 데이터
                                                     분석, 인공지능 등 다양한 분야에서 널리 사용됩니다.
 
@@ -2513,8 +2867,14 @@ export default function UserKnowledge2026() {
                                     </div>
                                 </div>
                             </div>
+
                         </div>
+
+
+
                     </div>
+
+
                 </main >
             </div >
 
