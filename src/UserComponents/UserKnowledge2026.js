@@ -222,6 +222,7 @@ export default function UserKnowledge2026() {
     const [mainPageStatus, setMainPageStatus] = useState('modeSelection');
     const [currentStep, setCurrentStep] = useState(1); // Advanced mode 단계 관리 (1-4)
     const [advancedSelectedDocuments, setAdvancedSelectedDocuments] = useState([]); // Advanced mode에서 선택된 문서 ID 목록
+    const [showAllAdvancedDocuments, setShowAllAdvancedDocuments] = useState(false); // Advanced mode 파일 목록 더보기 상태
 
     // 청킹 설정 state (백엔드 필드명 기준)
     const [chunkingConfig, setChunkingConfig] = useState({
@@ -1209,92 +1210,126 @@ export default function UserKnowledge2026() {
                                                 </svg>
                                                 <div style={{ fontSize: '14px' }}>업로드된 파일이 없습니다</div>
                                             </div>
-                                        ) : (
-                                            <div style={{
-                                                maxHeight: '400px',
-                                                overflowY: 'auto',
-                                                border: '1px solid #e2e8f0',
-                                                borderRadius: '12px',
-                                                padding: '12px'
-                                            }}>
-                                                {documents
-                                                    .filter(doc => doc.status === 'ready')
-                                                    .map((document) => {
-                                                        const isSelected = advancedSelectedDocuments.includes(document.knowledge_id);
-                                                        return (
-                                                            <div
-                                                                key={`advanced-${document.knowledge_id}`}
-                                                                onClick={() => {
-                                                                    if (isSelected) {
-                                                                        // 선택 해제
-                                                                        setAdvancedSelectedDocuments([]);
-                                                                    } else {
-                                                                        // 단일 선택: 기존 선택을 해제하고 새 항목만 선택
-                                                                        setAdvancedSelectedDocuments([document.knowledge_id]);
-                                                                    }
-                                                                }}
-                                                                style={{
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    padding: '12px',
-                                                                    marginBottom: '8px',
-                                                                    borderRadius: '8px',
-                                                                    border: `2px solid ${isSelected ? '#9333ea' : '#e2e8f0'}`,
-                                                                    background: isSelected ? '#faf5ff' : 'white',
-                                                                    cursor: 'pointer',
-                                                                    transition: 'all 0.2s'
-                                                                }}
-                                                            >
-                                                                <div style={{
-                                                                    width: '20px',
-                                                                    height: '20px',
-                                                                    borderRadius: '50%',
-                                                                    border: `2px solid ${isSelected ? '#9333ea' : '#cbd5e1'}`,
-                                                                    background: isSelected ? '#9333ea' : 'white',
-                                                                    display: 'flex',
-                                                                    alignItems: 'center',
-                                                                    justifyContent: 'center',
-                                                                    marginRight: '12px',
-                                                                    flexShrink: 0,
-                                                                    position: 'relative'
-                                                                }}>
-                                                                    {isSelected && (
-                                                                        <div style={{
-                                                                            width: '10px',
-                                                                            height: '10px',
-                                                                            borderRadius: '50%',
-                                                                            background: 'white'
-                                                                        }}></div>
-                                                                    )}
-                                                                </div>
-                                                                <div style={{ flex: 1, minWidth: 0 }}>
-                                                                    <div style={{
-                                                                        fontSize: '14px',
-                                                                        fontWeight: 600,
-                                                                        color: '#1e293b',
-                                                                        marginBottom: '4px',
-                                                                        overflow: 'hidden',
-                                                                        textOverflow: 'ellipsis',
-                                                                        whiteSpace: 'nowrap'
-                                                                    }}>
-                                                                        {getDisplayName(document.name)}
-                                                                    </div>
-                                                                    <div style={{
-                                                                        fontSize: '12px',
-                                                                        color: '#64748b',
+                                        ) : (() => {
+                                            const readyDocuments = documents.filter(doc => doc.status === 'ready');
+                                            const displayDocuments = showAllAdvancedDocuments ? readyDocuments : readyDocuments.slice(0, 4);
+                                            const hasMore = readyDocuments.length > 4;
+                                            
+                                            return (
+                                                <div>
+                                                    <div style={{
+                                                        maxHeight: '400px',
+                                                        overflowY: 'auto',
+                                                        border: '1px solid #e2e8f0',
+                                                        borderRadius: '12px',
+                                                        padding: '12px'
+                                                    }}>
+                                                        {displayDocuments.map((document) => {
+                                                            const isSelected = advancedSelectedDocuments.includes(document.knowledge_id);
+                                                            return (
+                                                                <div
+                                                                    key={`advanced-${document.knowledge_id}`}
+                                                                    onClick={() => {
+                                                                        if (isSelected) {
+                                                                            // 선택 해제
+                                                                            setAdvancedSelectedDocuments([]);
+                                                                        } else {
+                                                                            // 단일 선택: 기존 선택을 해제하고 새 항목만 선택
+                                                                            setAdvancedSelectedDocuments([document.knowledge_id]);
+                                                                        }
+                                                                    }}
+                                                                    style={{
                                                                         display: 'flex',
-                                                                        gap: '12px'
+                                                                        alignItems: 'center',
+                                                                        padding: '12px',
+                                                                        marginBottom: '8px',
+                                                                        borderRadius: '8px',
+                                                                        border: `2px solid ${isSelected ? '#9333ea' : '#e2e8f0'}`,
+                                                                        background: isSelected ? '#faf5ff' : 'white',
+                                                                        cursor: 'pointer',
+                                                                        transition: 'all 0.2s'
+                                                                    }}
+                                                                >
+                                                                    <div style={{
+                                                                        width: '20px',
+                                                                        height: '20px',
+                                                                        borderRadius: '50%',
+                                                                        border: `2px solid ${isSelected ? '#9333ea' : '#cbd5e1'}`,
+                                                                        background: isSelected ? '#9333ea' : 'white',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        marginRight: '12px',
+                                                                        flexShrink: 0,
+                                                                        position: 'relative'
                                                                     }}>
-                                                                        <span>{formatFileSize(document.file_size_bytes)}</span>
-                                                                        <span>•</span>
-                                                                        <span>{formatDate_YY_MM_DD(document.updated_at)}</span>
+                                                                        {isSelected && (
+                                                                            <div style={{
+                                                                                width: '10px',
+                                                                                height: '10px',
+                                                                                borderRadius: '50%',
+                                                                                background: 'white'
+                                                                            }}></div>
+                                                                        )}
+                                                                    </div>
+                                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                                        <div style={{
+                                                                            fontSize: '14px',
+                                                                            fontWeight: 600,
+                                                                            color: '#1e293b',
+                                                                            marginBottom: '4px',
+                                                                            overflow: 'hidden',
+                                                                            textOverflow: 'ellipsis',
+                                                                            whiteSpace: 'nowrap'
+                                                                        }}>
+                                                                            {getDisplayName(document.name)}
+                                                                        </div>
+                                                                        <div style={{
+                                                                            fontSize: '12px',
+                                                                            color: '#64748b',
+                                                                            display: 'flex',
+                                                                            gap: '12px'
+                                                                        }}>
+                                                                            <span>{formatFileSize(document.file_size_bytes)}</span>
+                                                                            <span>•</span>
+                                                                            <span>{formatDate_YY_MM_DD(document.updated_at)}</span>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                            </div>
-                                        )}
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {hasMore && !showAllAdvancedDocuments && (
+                                                        <button
+                                                            onClick={() => setShowAllAdvancedDocuments(true)}
+                                                            style={{
+                                                                width: '100%',
+                                                                marginTop: '12px',
+                                                                padding: '10px',
+                                                                border: '1px solid #e2e8f0',
+                                                                borderRadius: '8px',
+                                                                background: 'white',
+                                                                color: '#9333ea',
+                                                                fontSize: '14px',
+                                                                fontWeight: 600,
+                                                                cursor: 'pointer',
+                                                                transition: 'all 0.2s'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                e.target.style.background = '#faf5ff';
+                                                                e.target.style.borderColor = '#9333ea';
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.target.style.background = 'white';
+                                                                e.target.style.borderColor = '#e2e8f0';
+                                                            }}
+                                                        >
+                                                            더보기 ({readyDocuments.length - 4}개 더)
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
 
                                     <div style={{ marginTop: '20px', textAlign: 'center', backgroundColor: 'var(--primary-600)', padding: '10px', borderRadius: '8px', color: 'white', cursor: 'pointer' }}
