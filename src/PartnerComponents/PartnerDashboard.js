@@ -1,605 +1,277 @@
-import PartnerHeader from './PartnerHeader';
 import PartnerSidebar from './PartnerSidebar';
 
 
 export default function PartnerDashboard() {
     return (
         <>
-            <div id="app">
-                <PartnerHeader />
-                <div className="container">
-                    <PartnerSidebar />
-
-                    <main className="main">
-                        <div className="dashboard-header">
-                            <h1>🏠 대시보드</h1>
-                            <p>전체 프로젝트 및 교육 현황을 한눈에 확인하세요</p>
-                        </div>
-
-
-                        <div className="alert-banner">
-                            <div className="alert-banner__content">
-                                <div className="alert-item">
-                                    <div>
-                                        <span style={{ fontWeight: 'var(--font-semibold)' }}>💰 정산 완료</span>
-                                        <span style={{ color: 'var(--text-secondary)', marginLeft: 'var(--space-2)' }}>
-                                            지난 달 39,000,000원이 입금되었습니다
-                                        </span>
-                                    </div>
-                                    <button className="btn btn--sm btn--outline" onClick={() => window.location.href = 'revenue-settlement.html'}>
-                                        확인
-                                    </button>
-                                </div>
-                                <div className="alert-item">
-                                    <div>
-                                        <span style={{ fontWeight: 'var(--font-semibold)' }}>📊 신규 학생 등록</span>
-                                        <span style={{ color: 'var(--text-secondary)', marginLeft: 'var(--space-2)' }}>
-                                            현대자동차 프로젝트 학생 25명 추가
-                                        </span>
-                                    </div>
-                                    <button className="btn btn--sm btn--outline" onClick={() => window.location.href = 'student-management.html'}>
-                                        확인
-                                    </button>
-                                </div>
-                                <div className="alert-item">
-                                    <div>
-                                        <span style={{ fontWeight: 'var(--font-semibold)' }}>⚠️ API 비용 증가</span>
-                                        <span style={{ color: 'var(--text-secondary)', marginLeft: 'var(--space-2)' }}>
-                                            학생당 평균 비용이 지난 달 대비 12% 증가
-                                        </span>
-                                    </div>
-                                    <button className="btn btn--sm btn--outline" onClick={() => window.location.href = 'ai-practice-management.html'}>
-                                        최적화
-                                    </button>
-                                </div>
+            <div className="app">
+                <PartnerSidebar />
+                <main className="main">
+                    <header className="main-header">
+                        <div className="main-header__left">
+                            <div>
+                                <h1 className="main-header__title">대시보드</h1>
+                                <div className="main-header__subtitle">2025년 1월 10일 금요일</div>
                             </div>
                         </div>
+                        <div className="main-header__right">
+                            <button className="main-header__btn" title="새로고침"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
 
-
-                        <div className="kpi-grid">
-
-                            <div className="kpi-card">
-                                <div className="kpi-card__header">
-                                    <div className="kpi-icon kpi-icon--primary">📁</div>
-                                    <div className="kpi-trend kpi-trend--up">
-                                        <span>↑</span>
-                                        <span>50%</span>
+                            {/* 알림 버튼 */}
+                            <div style={{ position: 'relative' }}>
+                                <button className="main-header__btn" title="알림" >
+                                    <svg className="icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                                    <span className="main-header__badge">3</span>
+                                </button>
+                                <div className="notification-dropdown" id="notificationDropdown">
+                                    <div className="notification-dropdown__header">
+                                        <span className="notification-dropdown__title">알림</span>
+                                        <span className="notification-dropdown__action" >모두 읽음</span>
                                     </div>
-                                </div>
-                                <div className="kpi-card__body">
-                                    <div className="kpi-label">진행 중 프로젝트</div>
-                                    <div className="kpi-value">3</div>
-                                    <div className="kpi-detail">
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">총 계약금</span>
-                                            <span className="kpi-detail__value">64,100,000원</span>
+                                    <div className="notification-dropdown__list">
+                                        <div className="notification-group">오늘</div>
+                                        <div className="notification-item notification-item--unread">
+                                            <div className="notification-item__text"><strong>김민수</strong>님이 프롬프트 엔지니어링 강의에 등록했습니다.</div>
+                                            <div className="notification-item__time">10분 전</div>
                                         </div>
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">파트너 수익</span>
-                                            <span className="kpi-detail__value">48,075,000원</span>
+                                        <div className="notification-item notification-item--unread">
+                                            <div className="notification-item__text">이번 달 API 사용량이 <strong>$200</strong>을 초과했습니다.</div>
+                                            <div className="notification-item__time">2시간 전</div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            <div className="kpi-card">
-                                <div className="kpi-card__header">
-                                    <div className="kpi-icon kpi-icon--secondary">👥</div>
-                                    <div className="kpi-trend kpi-trend--up">
-                                        <span>↑</span>
-                                        <span>24%</span>
-                                    </div>
-                                </div>
-                                <div className="kpi-card__body">
-                                    <div className="kpi-label">총 학생 수</div>
-                                    <div className="kpi-value">127</div>
-                                    <div className="kpi-detail">
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">활성 학생</span>
-                                            <span className="kpi-detail__value">123</span>
+                                        <div className="notification-group">어제</div>
+                                        <div className="notification-item notification-item--unread">
+                                            <div className="notification-item__text"><strong>이지은</strong>님이 2025 AI 기초과정 강의에 등록했습니다.</div>
+                                            <div className="notification-item__time">어제 오후 3:24</div>
                                         </div>
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">이번 달 신규</span>
-                                            <span className="kpi-detail__value">+25</span>
+                                        <div className="notification-group">이번 주</div>
+                                        <div className="notification-item">
+                                            <div className="notification-item__text">주간 사용량 리포트가 준비되었습니다.</div>
+                                            <div className="notification-item__time">3일 전</div>
+                                        </div>
+                                        <div className="notification-item">
+                                            <div className="notification-item__text"><strong>박서준</strong>님이 프롬프트 엔지니어링 강의에 등록했습니다.</div>
+                                            <div className="notification-item__time">4일 전</div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-
-                            <div className="kpi-card">
-                                <div className="kpi-card__header">
-                                    <div className="kpi-icon kpi-icon--success">💬</div>
-                                    <div className="kpi-trend kpi-trend--up">
-                                        <span>↑</span>
-                                        <span>18%</span>
-                                    </div>
-                                </div>
-                                <div className="kpi-card__body">
-                                    <div className="kpi-label">총 대화 수</div>
-                                    <div className="kpi-value">31,234</div>
-                                    <div className="kpi-detail">
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">학생당 평균</span>
-                                            <span className="kpi-detail__value">246</span>
-                                        </div>
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">일 평균</span>
-                                            <span className="kpi-detail__value">1,038</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            <div className="kpi-card">
-                                <div className="kpi-card__header">
-                                    <div className="kpi-icon kpi-icon--warning">💰</div>
-                                    <div className="kpi-trend kpi-trend--up">
-                                        <span>↑</span>
-                                        <span>24%</span>
-                                    </div>
-                                </div>
-                                <div className="kpi-card__body">
-                                    <div className="kpi-label">이번 달 예상 수익</div>
-                                    <div className="kpi-value">45.0M</div>
-                                    <div className="kpi-detail">
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">파트너 수익률</span>
-                                            <span className="kpi-detail__value">75%</span>
-                                        </div>
-                                        <div className="kpi-detail__item">
-                                            <span className="kpi-detail__label">GrowFit 수수료</span>
-                                            <span className="kpi-detail__value">25%</span>
-                                        </div>
+                                    <div className="notification-dropdown__footer">
+                                        <a href="#">모든 알림 보기</a>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </header>
 
-
-                        <div className="charts-section">
-
-                            <div className="chart-card">
-                                <div className="chart-card__header">
-                                    <div>
-                                        <h2 className="chart-card__title">📊 주간 활동 추이</h2>
-                                        <p className="chart-card__subtitle">일별 대화 수 및 사용 시간</p>
-                                    </div>
-                                    <div className="chart-controls">
-                                        <button className="chart-control-btn chart-control-btn--active">주간</button>
-                                        <button className="chart-control-btn">월간</button>
-                                    </div>
+                    <div className="main-content">
+                        {/* Welcome Banner */}
+                        <div className="welcome-banner">
+                            <div className="welcome-banner__content">
+                                <div className="welcome-banner__title">안녕하세요, 박강사님! 👋</div>
+                                <div className="welcome-banner__desc">오늘도 AI 교육에 힘써주셔서 감사합니다. 현재 5개의 강의가 진행 중입니다.</div>
+                            </div>
+                            <div className="welcome-banner__stats">
+                                <div className="welcome-banner__stat">
+                                    <div className="welcome-banner__stat-value">127</div>
+                                    <div className="welcome-banner__stat-label">총 학생</div>
                                 </div>
-                                <div className="chart-canvas">
-                                    <div className="chart-bar-group">
-                                        <div className="chart-bars">
-                                            <div className="chart-bar" style={{ height: '82%', background: 'linear-gradient(to top, #0ea5e9, #38bdf8)' }}></div>
-                                            <div className="chart-bar" style={{ height: '75%', background: 'linear-gradient(to top, #8b5cf6, #a78bfa)' }}></div>
-                                        </div>
-                                        <div className="chart-bar-label">월</div>
-                                    </div>
-                                    <div className="chart-bar-group">
-                                        <div className="chart-bars">
-                                            <div className="chart-bar" style={{ height: '88%', background: 'linear-gradient(to top, #0ea5e9, #38bdf8)' }}></div>
-                                            <div className="chart-bar" style={{ height: '82%', background: 'linear-gradient(to top, #8b5cf6, #a78bfa)' }}></div>
-                                        </div>
-                                        <div className="chart-bar-label">화</div>
-                                    </div>
-                                    <div className="chart-bar-group">
-                                        <div className="chart-bars">
-                                            <div className="chart-bar" style={{ height: '95%', background: 'linear-gradient(to top, #0ea5e9, #38bdf8)' }}></div>
-                                            <div className="chart-bar" style={{ height: '90%', background: 'linear-gradient(to top, #8b5cf6, #a78bfa)' }}></div>
-                                        </div>
-                                        <div className="chart-bar-label">수</div>
-                                    </div>
-                                    <div className="chart-bar-group">
-                                        <div className="chart-bars">
-                                            <div className="chart-bar" style={{ height: '78%', background: 'linear-gradient(to top, #0ea5e9, #38bdf8)' }}></div>
-                                            <div className="chart-bar" style={{ height: '72%', background: 'linear-gradient(to top, #8b5cf6, #a78bfa)' }}></div>
-                                        </div>
-                                        <div className="chart-bar-label">목</div>
-                                    </div>
-                                    <div className="chart-bar-group">
-                                        <div className="chart-bars">
-                                            <div className="chart-bar" style={{ height: '92%', background: 'linear-gradient(to top, #0ea5e9, #38bdf8)' }}></div>
-                                            <div className="chart-bar" style={{ height: '85%', background: 'linear-gradient(to top, #8b5cf6, #a78bfa)' }}></div>
-                                        </div>
-                                        <div className="chart-bar-label">금</div>
-                                    </div>
-                                    <div className="chart-bar-group">
-                                        <div className="chart-bars">
-                                            <div className="chart-bar" style={{ height: '25%', background: 'linear-gradient(to top, #0ea5e9, #38bdf8)' }}></div>
-                                            <div className="chart-bar" style={{ height: '20%', background: 'linear-gradient(to top, #8b5cf6, #a78bfa)' }}></div>
-                                        </div>
-                                        <div className="chart-bar-label">토</div>
-                                    </div>
-                                    <div className="chart-bar-group">
-                                        <div className="chart-bars">
-                                            <div className="chart-bar" style={{ height: '15%', background: 'linear-gradient(to top, #0ea5e9, #38bdf8)' }}></div>
-                                            <div className="chart-bar" style={{ height: '10%', background: 'linear-gradient(to top, #8b5cf6, #a78bfa)' }}></div>
-                                        </div>
-                                        <div className="chart-bar-label">일</div>
-                                    </div>
+                                <div className="welcome-banner__stat">
+                                    <div className="welcome-banner__stat-value">15.8k</div>
+                                    <div className="welcome-banner__stat-label">총 대화</div>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-4)', marginTop: 'var(--space-4)' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                                        <div style={{ width: '16px', height: '16px', background: 'linear-gradient(to right, #0ea5e9, #38bdf8)', borderRadius: '4px' }}></div>
-                                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>대화 수</span>
-                                    </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                                        <div style={{ width: '16px', height: '16px', background: 'linear-gradient(to right, #8b5cf6, #a78bfa)', borderRadius: '4px' }}></div>
-                                        <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>사용 시간</span>
+                                <div className="welcome-banner__stat">
+                                    <div className="welcome-banner__stat-value">$406</div>
+                                    <div className="welcome-banner__stat-label">사용 비용</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="stats-grid">
+                            <div className="stat-card" >
+                                <div className="stat-card__header">
+                                    <div className="stat-card__icon stat-card__icon--primary"><svg className="icon" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
+                                    <span className="stat-card__trend stat-card__trend--up"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>+2</span>
+                                </div>
+                                <div className="stat-card__label">진행 중인 강의</div>
+                                <div className="stat-card__value">5개</div>
+                                <div className="stat-card__sub">1개 강의 예정</div>
+                            </div>
+                            <div className="stat-card" >
+                                <div className="stat-card__header">
+                                    <div className="stat-card__icon stat-card__icon--success"><svg className="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
+                                    <span className="stat-card__trend stat-card__trend--up"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>+12</span>
+                                </div>
+                                <div className="stat-card__label">활성 학생</div>
+                                <div className="stat-card__value">89명</div>
+                                <div className="stat-card__sub">최근 7일 기준</div>
+                            </div>
+                            <div className="stat-card" >
+                                <div className="stat-card__header">
+                                    <div className="stat-card__icon stat-card__icon--warning"><svg className="icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
+                                    <span className="stat-card__trend stat-card__trend--up"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>+1.8k</span>
+                                </div>
+                                <div className="stat-card__label">오늘의 대화</div>
+                                <div className="stat-card__value">342</div>
+                                <div className="stat-card__sub">어제 대비 +15%</div>
+                            </div>
+                            <div className="stat-card" >
+                                <div className="stat-card__header">
+                                    <div className="stat-card__icon stat-card__icon--purple"><svg className="icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></div>
+                                    <span className="stat-card__trend stat-card__trend--up"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline></svg>+$52</span>
+                                </div>
+                                <div className="stat-card__label">이번 주 비용</div>
+                                <div className="stat-card__value">$52.30</div>
+                                <div className="stat-card__sub">예산 내 정상 운영</div>
+                            </div>
+                        </div>
+
+                        {/* Grid */}
+                        <div className="grid-2">
+                            {/* Activity */}
+                            <div className="card">
+                                <div className="card__header">
+                                    <h2 className="card__title"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>최근 활동</h2>
+                                    <span className="card__action">전체보기 <svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+                                </div>
+                                <div className="card__body">
+                                    <div className="activity-list">
+                                        <div className="activity-item">
+                                            <div className="activity-item__icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>김</div>
+                                            <div className="activity-item__content">
+                                                <div className="activity-item__text"><strong>김민수</strong>님이 <strong>AI 기초과정</strong>에서 GPT-4와 23회 대화했습니다</div>
+                                                <div className="activity-item__time">5분 전</div>
+                                            </div>
+                                        </div>
+                                        <div className="activity-item">
+                                            <div className="activity-item__icon" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>이</div>
+                                            <div className="activity-item__content">
+                                                <div className="activity-item__text"><strong>이지은</strong>님이 <strong>프롬프트 엔지니어링</strong> 강의에 새로 등록했습니다</div>
+                                                <div className="activity-item__time">15분 전</div>
+                                            </div>
+                                        </div>
+                                        <div className="activity-item">
+                                            <div className="activity-item__icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>⚠</div>
+                                            <div className="activity-item__content">
+                                                <div className="activity-item__text"><strong>프롬프트 엔지니어링</strong> 강의 예산이 80%에 도달했습니다</div>
+                                                <div className="activity-item__time">1시간 전</div>
+                                            </div>
+                                        </div>
+                                        <div className="activity-item">
+                                            <div className="activity-item__icon" style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)' }}>정</div>
+                                            <div className="activity-item__content">
+                                                <div className="activity-item__text"><strong>정하나</strong>님이 Claude와 비교 모드로 45분간 학습했습니다</div>
+                                                <div className="activity-item__time">2시간 전</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-
-                            <div className="chart-card">
-                                <div className="chart-card__header">
-                                    <div>
-                                        <h2 className="chart-card__title">🤖 모델별 사용 분포</h2>
-                                        <p className="chart-card__subtitle">전체 대화 중 비율</p>
-                                    </div>
+                            {/* Top Students */}
+                            <div className="card">
+                                <div className="card__header">
+                                    <h2 className="card__title"><svg className="icon icon--sm" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>활발한 학생 TOP 5</h2>
+                                    <span className="card__action">전체보기 <svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
                                 </div>
-                                <div className="donut-chart">
-                                    <svg className="donut-svg" viewBox="0 0 200 200">
-
-                                        <circle cx="100" cy="100" r="80" fill="none" stroke="#f3f4f6" strokeWidth="40" />
-
-
-                                        <circle cx="100" cy="100" r="80" fill="none"
-                                            stroke="#10a37f" strokeWidth="40"
-                                            strokeDasharray="201 502"
-                                            strokeDashoffset="0"
-                                            transform="rotate(-90 100 100)" />
-
-
-                                        <circle cx="100" cy="100" r="80" fill="none"
-                                            stroke="#d97757" strokeWidth="40"
-                                            strokeDasharray="226 502"
-                                            strokeDashoffset="-201"
-                                            transform="rotate(-90 100 100)" />
-
-
-                                        <circle cx="100" cy="100" r="80" fill="none"
-                                            stroke="#4285f4" strokeWidth="40"
-                                            strokeDasharray="75 502"
-                                            strokeDashoffset="-427"
-                                            transform="rotate(-90 100 100)" />
-
-
-                                        <text x="100" y="95" textAnchor="middle" fontSize="24" fontWeight="bold" fill="#1f2937">
-                                            31,234
-                                        </text>
-                                        <text x="100" y="115" textAnchor="middle" fontSize="12" fill="#6b7280">
-                                            총 대화
-                                        </text>
-                                    </svg>
-
-                                    <div className="donut-legend">
-                                        <div className="donut-legend-item">
-                                            <div className="donut-legend-item__left">
-                                                <div className="donut-legend-color" style={{ background: '#d97757' }}></div>
-                                                <span className="donut-legend-label">Claude</span>
+                                <div className="card__body">
+                                    <div className="top-students">
+                                        <div className="top-student-item">
+                                            <div className="top-student-item__rank top-student-item__rank--1">1</div>
+                                            <div className="top-student-item__avatar" style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)' }}>정</div>
+                                            <div className="top-student-item__info">
+                                                <div className="top-student-item__name">정하나</div>
+                                                <div className="top-student-item__course">프롬프트 엔지니어링</div>
                                             </div>
-                                            <span className="donut-legend-value">45% (14,055)</span>
+                                            <div className="top-student-item__count">342회</div>
                                         </div>
-                                        <div className="donut-legend-item">
-                                            <div className="donut-legend-item__left">
-                                                <div className="donut-legend-color" style={{ background: '#10a37f' }}></div>
-                                                <span className="donut-legend-label">GPT-4</span>
+                                        <div className="top-student-item">
+                                            <div className="top-student-item__rank top-student-item__rank--2">2</div>
+                                            <div className="top-student-item__avatar" style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>이</div>
+                                            <div className="top-student-item__info">
+                                                <div className="top-student-item__name">이지은</div>
+                                                <div className="top-student-item__course">프롬프트 엔지니어링</div>
                                             </div>
-                                            <span className="donut-legend-value">40% (12,494)</span>
+                                            <div className="top-student-item__count">287회</div>
                                         </div>
-                                        <div className="donut-legend-item">
-                                            <div className="donut-legend-item__left">
-                                                <div className="donut-legend-color" style={{ background: '#4285f4' }}></div>
-                                                <span className="donut-legend-label">Gemini</span>
+                                        <div className="top-student-item">
+                                            <div className="top-student-item__rank top-student-item__rank--3">3</div>
+                                            <div className="top-student-item__avatar" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>김</div>
+                                            <div className="top-student-item__info">
+                                                <div className="top-student-item__name">김민수</div>
+                                                <div className="top-student-item__course">AI 기초과정</div>
                                             </div>
-                                            <span className="donut-legend-value">15% (4,685)</span>
+                                            <div className="top-student-item__count">156회</div>
+                                        </div>
+                                        <div className="top-student-item">
+                                            <div className="top-student-item__rank top-student-item__rank--other">4</div>
+                                            <div className="top-student-item__avatar" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>박</div>
+                                            <div className="top-student-item__info">
+                                                <div className="top-student-item__name">박서연</div>
+                                                <div className="top-student-item__course">AI 기초과정</div>
+                                            </div>
+                                            <div className="top-student-item__count">89회</div>
+                                        </div>
+                                        <div className="top-student-item">
+                                            <div className="top-student-item__rank top-student-item__rank--other">5</div>
+                                            <div className="top-student-item__avatar" style={{ background: 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>최</div>
+                                            <div className="top-student-item__info">
+                                                <div className="top-student-item__name">최준호</div>
+                                                <div className="top-student-item__course">AI 기초과정</div>
+                                            </div>
+                                            <div className="top-student-item__count">45회</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-
-                        <div style={{ background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.05), rgba(139, 92, 246, 0.05))', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-5)', marginBottom: 'var(--space-6)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 'var(--space-4)' }}>
-                                <div>
-                                    <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)', color: 'var(--text-primary)', marginBottom: 'var(--space-1)' }}>
-                                        💎 수익 구조 (투명성)
-                                    </h2>
-                                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>
-                                        하이브리드 25% 모델 - API 비용 포함, 추가 비용 없음
-                                    </p>
-                                </div>
-                                <div style={{ padding: '8px 16px', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: 'var(--radius-md)', color: 'white', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-bold)' }}>
-                                    파트너 75%
-                                </div>
+                        {/* Course Progress  */}
+                        <div className="card">
+                            <div className="card__header">
+                                <h2 className="card__title"><svg className="icon icon--sm" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>강의별 예산 현황</h2>
+                                <span className="card__action" >상세보기 <svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
                             </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-5)' }}>
-
-                                <div>
-                                    <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                                            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)' }}>총 계약금</span>
-                                            <span style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)', color: 'var(--text-primary)' }}>60,000,000원</span>
+                            <div className="card__body">
+                                <div className="course-progress">
+                                    <div className="course-progress-item">
+                                        <div className="course-progress-item__icon course-progress-item__icon--active"><svg className="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+                                        <div className="course-progress-item__info">
+                                            <div className="course-progress-item__name">프롬프트 엔지니어링</div>
+                                            <div className="course-progress-item__bar">
+                                                <div className="course-progress-item__bar-fill course-progress-item__bar-fill--warning" style={{ width: '80%' }}></div>
+                                            </div>
                                         </div>
-
-                                        <div style={{ height: '2px', background: 'var(--border)', margin: 'var(--space-3) 0' }}></div>
-
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-2)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                                                <div style={{ width: '12px', height: '12px', background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: '50%' }}></div>
-                                                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>파트너 수익 (75%)</span>
-                                            </div>
-                                            <span style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: '#10b981' }}>45,000,000원</span>
-                                        </div>
-
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-                                                <div style={{ width: '12px', height: '12px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '50%' }}></div>
-                                                <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)' }}>GrowFit 수수료 (25%)</span>
-                                            </div>
-                                            <span style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: '#6366f1' }}>15,000,000원</span>
-                                        </div>
-
-
-                                        <div style={{ height: '24px', background: 'var(--surface)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-3)', overflow: 'hidden', display: 'flex' }}>
-                                            <div style={{ width: '75%', background: 'linear-gradient(90deg, #10b981, #059669)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)' }}>
-                                                75%
-                                            </div>
-                                            <div style={{ width: '25%', background: 'linear-gradient(90deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)' }}>
-                                                25%
-                                            </div>
+                                        <div className="course-progress-item__stats">
+                                            <div className="course-progress-item__percent" style={{ color: 'var(--warning)' }}>80%</div>
+                                            <div className="course-progress-item__budget">$128 / $160</div>
                                         </div>
                                     </div>
-
-
-                                    <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>
-                                        <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-semibold)', marginBottom: 'var(--space-3)', color: 'var(--text-primary)' }}>
-                                            📊 GrowFit 수수료 구성 (참고)
+                                    <div className="course-progress-item">
+                                        <div className="course-progress-item__icon course-progress-item__icon--active"><svg className="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
+                                        <div className="course-progress-item__info">
+                                            <div className="course-progress-item__name">2025 AI 기초과정</div>
+                                            <div className="course-progress-item__bar"><div className="course-progress-item__bar-fill" style={{ width: '45%' }}></div></div>
                                         </div>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                                                <span style={{ color: 'var(--text-secondary)' }}>• API 비용 (예상)</span>
-                                                <span style={{ fontWeight: 'var(--font-semibold)' }}>6,000,000원</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                                                <span style={{ color: 'var(--text-secondary)' }}>• 플랫폼 운영</span>
-                                                <span style={{ fontWeight: 'var(--font-semibold)' }}>5,000,000원</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 'var(--text-sm)' }}>
-                                                <span style={{ color: 'var(--text-secondary)' }}>• 순이익</span>
-                                                <span style={{ fontWeight: 'var(--font-semibold)' }}>4,000,000원</span>
-                                            </div>
+                                        <div className="course-progress-item__stats">
+                                            <div className="course-progress-item__percent">45%</div>
+                                            <div className="course-progress-item__budget">$45 / $100</div>
                                         </div>
                                     </div>
-                                </div>
-
-
-                                <div>
-                                    <div style={{ background: 'linear-gradient(135deg, #10b981, #059669)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', color: 'white', height: '100%' }}>
-                                        <div style={{ fontSize: 'var(--text-2xl)', marginBottom: 'var(--space-3)' }}>✨</div>
-                                        <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', marginBottom: 'var(--space-3)' }}>
-                                            간단하고 명확한 수익 구조
+                                    <div className="course-progress-item">
+                                        <div className="course-progress-item__icon course-progress-item__icon--upcoming"><svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                                        <div className="course-progress-item__info">
+                                            <div className="course-progress-item__name">2025 LLM 활용 실무 <span style={{ color: 'var(--warning)', fontSize: '11px', marginLeft: '8px' }}>D-5</span></div>
+                                            <div className="course-progress-item__bar"><div className="course-progress-item__bar-fill" style={{ width: '0%' }}></div></div>
                                         </div>
-                                        <div style={{ fontSize: 'var(--text-sm)', lineHeight: 1.6, marginBottom: 'var(--space-4)', opacity: 0.95 }}>
-                                            프로젝트 수익의 75%를 가져가세요. API 비용, 시스템 비용 모두 포함. 추가 비용 전혀 없습니다.
-                                        </div>
-
-                                        <div style={{ background: 'rgba(255, 255, 255, 0.2)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', marginBottom: 'var(--space-3)' }}>
-                                            <div style={{ fontSize: 'var(--text-xs)', opacity: 0.9, marginBottom: 'var(--space-1)' }}>✓ API 무제한 사용</div>
-                                            <div style={{ fontSize: 'var(--text-xs)', opacity: 0.9, marginBottom: 'var(--space-1)' }}>✓ 예측 가능한 수익</div>
-                                            <div style={{ fontSize: 'var(--text-xs)', opacity: 0.9 }}>✓ 비용 걱정 없음</div>
-                                        </div>
-
-                                        <div style={{ background: 'rgba(255, 255, 255, 0.15)', borderRadius: 'var(--radius-md)', padding: 'var(--space-3)', border: '1px solid rgba(255, 255, 255, 0.3)' }}>
-                                            <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-bold)', marginBottom: 'var(--space-1)' }}>
-                                                💡 향후 개선 예정
-                                            </div>
-                                            <div style={{ fontSize: 'var(--text-xs)', opacity: 0.9, lineHeight: 1.5 }}>
-                                                API 비용 최적화 성공 시 파트너 수익률을 80%로 상향 조정 예정입니다!
-                                            </div>
+                                        <div className="course-progress-item__stats">
+                                            <div className="course-progress-item__percent">0%</div>
+                                            <div className="course-progress-item__budget">$0 / $150</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-
-
-                        <div style={{ marginBottom: 'var(--space-4)' }}>
-                            <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-bold)', color: 'var(--text-primary)' }}>
-                                📁 진행 중 프로젝트
-                            </h2>
-                        </div>
-
-                        <div className="projects-grid">
-
-                            <div className="project-card">
-                                <div className="project-card__header">
-                                    <div className="project-status project-status--active">진행 중</div>
-                                </div>
-                                <div className="project-name">Samsung 마케팅팀 AI 교육</div>
-                                <div className="project-client">삼성전자</div>
-                                <div className="project-stats">
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">계약금</span>
-                                        <span className="project-stat__value">21.0M</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">파트너 수익</span>
-                                        <span className="project-stat__value">15.8M</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">학생 수</span>
-                                        <span className="project-stat__value">42명</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">진행률</span>
-                                        <span className="project-stat__value">45%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card">
-                                <div className="project-card__header">
-                                    <div className="project-status project-status--active">진행 중</div>
-                                </div>
-                                <div className="project-name">LG 개발팀 AI 코딩 실습</div>
-                                <div className="project-client">LG전자</div>
-                                <div className="project-stats">
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">계약금</span>
-                                        <span className="project-stat__value">15.8M</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">파트너 수익</span>
-                                        <span className="project-stat__value">11.9M</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">학생 수</span>
-                                        <span className="project-stat__value">35명</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">진행률</span>
-                                        <span className="project-stat__value">30%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            <div className="project-card">
-                                <div className="project-card__header">
-                                    <div className="project-status project-status--active">진행 중</div>
-                                </div>
-                                <div className="project-name">현대자동차 AI 활용 교육</div>
-                                <div className="project-client">현대자동차</div>
-                                <div className="project-stats">
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">계약금</span>
-                                        <span className="project-stat__value">27.3M</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">파트너 수익</span>
-                                        <span className="project-stat__value">20.5M</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">학생 수</span>
-                                        <span className="project-stat__value">50명</span>
-                                    </div>
-                                    <div className="project-stat">
-                                        <span className="project-stat__label">진행률</span>
-                                        <span className="project-stat__value">15%</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        <div className="activity-section">
-
-                            <div className="activity-card">
-                                <div className="activity-card__header">
-                                    <h2 className="activity-card__title">🔔 최근 활동</h2>
-                                    <button className="btn btn--sm btn--outline" onClick={() => window.viewAllActivities?.()}>
-                                        전체 보기
-                                    </button>
-                                </div>
-                                <div className="activity-card__content">
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--success">✓</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">신규 학생 등록</div>
-                                            <div className="activity-description">현대자동차 프로젝트에 25명 추가</div>
-                                        </div>
-                                        <div className="activity-time">2시간 전</div>
-                                    </div>
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--primary">💰</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">정산 완료</div>
-                                            <div className="activity-description">지난 달 39,000,000원 입금</div>
-                                        </div>
-                                        <div className="activity-time">1일 전</div>
-                                    </div>
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--success">📊</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">프로젝트 진행률 업데이트</div>
-                                            <div className="activity-description">Samsung 프로젝트 45% 완료</div>
-                                        </div>
-                                        <div className="activity-time">2일 전</div>
-                                    </div>
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--warning">⚠️</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">API 사용량 증가</div>
-                                            <div className="activity-description">평균 비용 12% 상승</div>
-                                        </div>
-                                        <div className="activity-time">3일 전</div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            <div className="activity-card">
-                                <div className="activity-card__header">
-                                    <h2 className="activity-card__title">🏆 활동 Top 5 학생</h2>
-                                    <button className="btn btn--sm btn--outline" onClick={() => window.location.href = 'student-management.html'}>
-                                        전체 보기
-                                    </button>
-                                </div>
-                                <div className="activity-card__content">
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--success">1</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">박개발 (LG)</div>
-                                            <div className="activity-description">412대화 · 31.7시간</div>
-                                        </div>
-                                    </div>
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--success">2</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">정코더 (LG)</div>
-                                            <div className="activity-description">378대화 · 29.4시간</div>
-                                        </div>
-                                    </div>
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--success">3</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">김학생 (Samsung)</div>
-                                            <div className="activity-description">347대화 · 28.5시간</div>
-                                        </div>
-                                    </div>
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--primary">4</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">이사원 (Samsung)</div>
-                                            <div className="activity-description">289대화 · 23.2시간</div>
-                                        </div>
-                                    </div>
-                                    <div className="activity-item">
-                                        <div className="activity-icon activity-icon--primary">5</div>
-                                        <div className="activity-info">
-                                            <div className="activity-title">최직원 (현대)</div>
-                                            <div className="activity-description">156대화 · 12.8시간</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </main>
-
-
-
-
-                </div>
+                    </div>
+                </main>
             </div>
         </>
     )

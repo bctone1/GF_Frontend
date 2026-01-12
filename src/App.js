@@ -1,9 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 import Main from './Main';
-import Login from './LoginComponents/Login';
+
 import Login2026 from './LoginComponents/Login2026';
 
-import UserSignup from './LoginComponents/UserSignup';
 import UserSignup2026 from './LoginComponents/UserSignup2026';
 import OrganizationSignup from './LoginComponents/OrganizationSignup';
 
@@ -17,8 +16,9 @@ import UserHistory from './UserComponents/UserHistory';
 import PartnerDashboard from './PartnerComponents/PartnerDashboard';
 import PartnerProjectManagement from './PartnerComponents/PartnerProjectManagement';
 import PartnerStudentManagement from './PartnerComponents/PartnerStudentManagement';
-import PartnerCostAnalytics from './PartnerComponents/PartnerCostAnalytics';
-import PartnerSettings from './PartnerComponents/PartnerSettings';
+import PartnerInstructorMaterials from './PartnerComponents/PartnerInstructorMaterials';
+import PartnerInstructorAnalytics from './PartnerComponents/PartnerInstructorAnalytics';
+import PartnerInstructorSettings from './PartnerComponents/PartnerInstructorSettings';
 
 import ManagerDashboard from './ManagerComponents/ManagerDashboard';
 import ManagerInstructor from './ManagerComponents/ManagerInstructor';
@@ -55,8 +55,10 @@ export default function App() {
         <Route path="/partner/dashboard" element={<PartnerDashboard />} />
         <Route path="/partner/project-management" element={<PartnerProjectManagement />} />
         <Route path="/partner/student-management" element={<PartnerStudentManagement />} />
-        <Route path="/partner/cost-analytics" element={<PartnerCostAnalytics />} />
-        <Route path="/partner/settings" element={<PartnerSettings />} />
+        <Route path="/partner/instructor-materials" element={<PartnerInstructorMaterials />} />
+        <Route path="/partner/instructor-analytics" element={<PartnerInstructorAnalytics />} />
+        <Route path="/partner/instructor-settings" element={<PartnerInstructorSettings />} />
+
 
         {/* 조직(관리자) 컴포넌트 */}
         <Route path="/organization/dashboard" element={<OrganizationDashboard />} />

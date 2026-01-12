@@ -15,6 +15,14 @@ import './css/UserTemplate.css';
 import './css/UserHistory.css';
 
 
+import './css/PartnerDashboard.css';
+import './css/PartnerProjectManagement.css';
+import './css/PartnerStudentManagement.css';
+import './css/PartnerInstructorMaterials.css';
+import './css/PartnerInstructorAnalytics.css';
+import './css/PartnerInstructorSettings.css';
+
+
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 

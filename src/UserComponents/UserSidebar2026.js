@@ -1054,6 +1054,11 @@ export default function UserSidebar2026({
 
 
                 <div className="sidebar__footer">
+                    <Link to="/partner/dashboard" className="sidebar__footer-item">
+                        <svg className="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span>파트너 전환</span>
+                    </Link>
+
                     <div className="sidebar__footer-item"
                         //  onClick={() => setSettingsModalStatus(true)}
                         onClick={() => window.location.href = "/user/setting"}

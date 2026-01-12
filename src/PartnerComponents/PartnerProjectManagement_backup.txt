@@ -1,0 +1,1473 @@
+import { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
+import PartnerSidebar from './PartnerSidebar';
+import { showToast, showConfirm } from '../utill/utill';
+
+export default function PartnerProjectManagement() {
+    const [showModal, setShowModal] = useState(false);
+    const [showCourseCreatedModal, setShowCourseCreatedModal] = useState(false);
+    const [showInviteCodeModal, setShowInviteCodeModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [selectedClass, setSelectedClass] = useState(null);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [trainingDays, setTrainingDays] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [newClass, setNewClass] = useState(null);
+    const partnerId = sessionStorage.getItem("partner_id");
+    const accessToken = sessionStorage.getItem("access_token");
+    const [selectedCourseId, setSelectedCourseId] = useState(null);
+
+    // 수정 모달 관련 상태
+    const [editFormData, setEditFormData] = useState({
+        name: '',
+        start_at: '',
+        end_at: '',
+        capacity: 0,
+        description: '',
+        status: 'active',
+        course_id: 0,
+        allowed_model_ids: []
+    });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleCreateClass = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setIsLoading(true);
+
+        try {
+            // FormData로 폼 데이터 가져오기
+            const formData = new FormData(e.target);
+
+            // 단일 값 가져오기
+            const className = formData.get('ClassName')?.trim();
+            const courseName = formData.get('courseName')?.trim();
+            const studentCount = parseInt(formData.get('studentCount'), 10);
+            const startDateValue = formData.get('startDate');
+            const endDateValue = formData.get('endDate');
+            const classDescription = formData.get('ClassDescription')?.trim() || '';
+
+            // 다중 선택 값 가져오기 (LLM 체크박스) - 문자열 ID 배열
+            const selectedLLMs = formData.getAll('llm');
+
+            // 유효성 검사
+            if (!className) {
+                throw new Error('강의명을 입력해주세요.');
+            }
+
+            let courseIdToUse;
+
+            // 과정명이 비어있는 경우
+            if (!courseName) {
+                const confirmNoCourse = window.confirm('무소속으로 진행하시겠습니까?');
+                if (!confirmNoCourse) {
+                    // "아니오"를 누른 경우 중단
+                    setIsLoading(false);
+                    return;
+                }
+                // "예"를 누른 경우 course_id를 1로 설정
+                courseIdToUse = 1;
+            } else {
+                // 입력한 과정명이 courses에 존재하는지 확인
+                const foundCourse = courses.find(course =>
+                    course && course.title && course.title.trim() === courseName.trim()
+                );
+
+                if (!foundCourse) {
+                    // 과정이 없으면 알림창 표시 및 input 비우기
+                    alert('해당 과정이 존재하지 않습니다. 자동완성 목록에서 선택해주세요.');
+                    setCourseNameInput('');
+                    setSelectedCourseId(null);
+                    const form = document.getElementById('createClassForm');
+                    if (form) {
+                        const courseNameInput = form.querySelector('[name="courseName"]');
+                        if (courseNameInput) {
+                            courseNameInput.value = '';
+                        }
+                    }
+                    setIsLoading(false);
+                    return;
+                }
+
+                // 선택된 course_id 사용 (없으면 찾은 과정의 id 사용)
+                courseIdToUse = selectedCourseId || foundCourse.id;
+            }
+
+            if (!studentCount || studentCount < 1) {
+                throw new Error('수강 학생 수를 올바르게 입력해주세요.');
+            }
+            if (!startDateValue || !endDateValue) {
+                throw new Error('교육 시작일과 종료일을 모두 입력해주세요.');
+            }
+            if (selectedLLMs.length === 0) {
+                throw new Error('최소 하나의 LLM 모델을 선택해주세요.');
+            }
+
+            // allowed_model_ids: 문자열 ID들을 숫자 배열로 변환 (예: ["1","2"] → [1,2])
+            let allowedModelIds = selectedLLMs
+                .map(v => parseInt(v, 10))
+                .filter(v => !Number.isNaN(v));
+
+            // id가 4인 모델은 필수이므로 없으면 추가
+            if (!allowedModelIds.includes(4)) {
+                allowedModelIds.push(4);
+            }
+
+            // 백엔드로 전송할 데이터 구성
+            const requestData = {
+                name: className,
+                description: classDescription,
+                // status: "planned",
+                status: "active",
+                start_at: startDateValue,
+                end_at: endDateValue,
+                capacity: studentCount,
+                timezone: "UTC",
+                location: "string",
+                online_url: "string",
+                invite_only: false,
+                allowed_model_ids: allowedModelIds,
+                course_id: courseIdToUse
+            };
+
+            console.log('모델 결과', selectedLLMs, allowedModelIds);
+            console.log('전송할 데이터:', requestData);
+            console.log("선택한 코스 아이디", courseIdToUse);
+
+            // axios를 사용한 POST 요청
+            const response = await axios.post(
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes?course_id=${courseIdToUse}`,
+                requestData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+            console.log('응답 데이터:', response.data);
+
+            if (response.data.invite_codes[0].code) {
+                axios.post(`${process.env.REACT_APP_API_URL}/user/class/invites/redeem`, {
+                    code: response.data.invite_codes[0].code
+                }, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }).then(response => {
+                    console.log(response.data);
+                }).catch(error => {
+                    console.log(error);
+                });
+            }
+
+            setNewClass(response.data);
+
+            // 성공 시 모달 표시
+            setShowCourseCreatedModal(true);
+            setShowModal(false);
+
+            // 폼 초기화
+            e.target.reset();
+            setStartDate('');
+            setEndDate('');
+            setCourseNameInput('');
+            setShowSuggestions(false);
+            setSelectedCourseId(null);
+
+        } catch (error) {
+            console.error('에러 발생:', error);
+
+            // 에러 메시지 설정
+            if (error.response) {
+                // 서버에서 응답이 온 경우
+                const errorMessage = error.response.data?.message || error.response.data?.error || '서버 오류가 발생했습니다.';
+                setError(errorMessage);
+            } else if (error.request) {
+                // 요청은 보냈지만 응답을 받지 못한 경우
+                setError('서버에 연결할 수 없습니다. 네트워크를 확인해주세요.');
+            } else {
+                // 에러 메시지가 있는 경우
+                setError(error.message || '알 수 없는 오류가 발생했습니다.');
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    // 교육 기간 계산 함수
+    const calculateTrainingDays = (start, end) => {
+        if (!start || !end) {
+            return 0;
+        }
+
+        const startDateObj = new Date(start);
+        const endDateObj = new Date(end);
+
+        // 종료일이 시작일보다 이전이면 0 반환
+        if (endDateObj < startDateObj) {
+            return 0;
+        }
+
+        // 날짜 차이 계산 (밀리초를 일로 변환)
+        const diffTime = endDateObj - startDateObj;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // 시작일 포함
+
+        return diffDays;
+    };
+
+    useEffect(() => {
+        const days = calculateTrainingDays(startDate, endDate);
+        setTrainingDays(days);
+    }, [startDate, endDate]);
+
+    const fetchCourse = async () => {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/course`);
+        // console.log(response.data.items);
+        setCourses(response.data.items);
+    }
+    const [courses, setCourses] = useState([]);
+    const [filteredCourse, setFilteredCourse] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [courseNameInput, setCourseNameInput] = useState('');
+
+    const getInitialConsonant = (char) => {
+        // char가 유효하지 않은 경우 빈 문자열 반환
+        if (!char || typeof char !== 'string' || char.length === 0) {
+            return '';
+        }
+        const code = char.charCodeAt(0);
+        if (code >= 0xAC00 && code <= 0xD7A3) {
+            const initial = (code - 0xAC00) / 28 / 21;
+            const initials = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
+            return initials[Math.floor(initial)];
+        }
+        return char;
+    };
+
+    const getInitials = (str) => {
+        if (!str || typeof str !== 'string') {
+            return '';
+        }
+        return str.split('').map(char => getInitialConsonant(char)).join('');
+    };
+
+    const matchesSearch = (text, searchTerm) => {
+        // 입력값이 유효하지 않은 경우 false 반환
+        if (!text || typeof text !== 'string' || !searchTerm || typeof searchTerm !== 'string') {
+            return false;
+        }
+
+        const lowerText = text.toLowerCase();
+        const lowerSearch = searchTerm.toLowerCase();
+
+        // 1) 일반 문자열 검색(가장 정확)
+        if (lowerText.includes(lowerSearch)) {
+            return true;
+        }
+
+        // 2) 검색어가 "초성만"으로 이루어진 경우만 초성 검색 허용
+        const isSearchInitialsOnly = /^[ㄱ-ㅎ]+$/.test(searchTerm);
+
+        if (isSearchInitialsOnly) {
+            const textInitials = getInitials(text);
+
+            // 2-1) 전체 초성 매칭
+            if (textInitials.includes(searchTerm)) {
+                return true;
+            }
+
+            // 2-2) 첫 글자 초성만 매칭
+            if (text.length > 0) {
+                const firstInitial = getInitialConsonant(text[0]);
+                if (firstInitial === searchTerm[0]) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    const [myClasses, setMyClasses] = useState([]);
+    const fetchMyClasses = () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        }).then(response => {
+            console.log(response.data.items);
+            setMyClasses(response.data.items);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+    const fetchAssistant = async () => {
+        axios.get(`${process.env.REACT_APP_API_URL}/models`, {
+        }).then(response => {
+            console.log(response.data.items);
+            setAssistant(response.data.items);
+        }).catch(error => {
+            console.log(error);
+        });
+    }
+
+
+    useEffect(() => {
+        fetchMyClasses();
+        fetchCourse();
+        fetchAssistant();
+    }, []);
+
+    // 강의 생성 모달이 열릴 때 id가 4인 모델을 자동으로 체크
+    useEffect(() => {
+        if (showModal) {
+            // 모달이 열린 후 약간의 지연을 두고 체크박스를 체크
+            setTimeout(() => {
+                const form = document.getElementById('createClassForm');
+                if (form) {
+                    const checkbox = form.querySelector('input[name="llm"][value="4"]');
+                    if (checkbox && !checkbox.checked) {
+                        checkbox.checked = true;
+                    }
+                }
+            }, 100);
+        }
+    }, [showModal]);
+
+    // 예정, 진행 중, 종료됨 강의 개수 계산
+    const { scheduledCount, activeCount, completedCount } = useMemo(() => {
+        const now = new Date();
+        // 시간 정보를 제거하고 날짜만 비교하기 위해 시간을 00:00:00으로 설정
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        let scheduled = 0;
+        let active = 0;
+        let completed = 0;
+
+        myClasses.forEach((myclass) => {
+            if (!myclass.start_at || !myclass.end_at) return;
+
+            const startDate = new Date(myclass.start_at);
+            const endDate = new Date(myclass.end_at);
+
+            // 시간 정보를 제거하고 날짜만 비교
+            const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+            // 예정: 현재 날짜가 시작일보다 이전인 경우
+            if (today < startDateOnly) {
+                scheduled++;
+            }
+            // 진행 중: 현재 날짜가 시작일과 종료일 사이에 있는 경우 (시작일과 종료일 포함)
+            else if (today >= startDateOnly && today <= endDateOnly) {
+                active++;
+            }
+            // 종료됨: 현재 날짜가 종료일을 지난 경우 (종료일 다음 날부터)
+            else if (today > endDateOnly) {
+                completed++;
+            }
+        });
+
+        return { scheduledCount: scheduled, activeCount: active, completedCount: completed };
+    }, [myClasses]);
+
+    // 과정명 자동완성 필터링
+    useEffect(() => {
+        if (!courseNameInput || courseNameInput.trim() === '') {
+            setFilteredCourse([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        if (!courses || courses.length === 0) {
+            setFilteredCourse([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const filtered = courses.filter(course => {
+            if (!course || !course.title) return false;
+            return matchesSearch(course.title, courseNameInput);
+        });
+        setFilteredCourse(filtered);
+        setShowSuggestions(filtered.length > 0);
+        setSelectedIndex(-1);
+    }, [courseNameInput, courses]);
+
+    const handleCourseNameChange = (e) => {
+        const value = e.target.value;
+        setCourseNameInput(value);
+        // 입력값이 변경되면 선택된 course_id 초기화
+        setSelectedCourseId(null);
+    };
+
+    const handleCourseNameSelect = (course) => {
+        const courseName = course.title || course;
+        setCourseNameInput(courseName);
+        // course 객체인 경우 id 저장
+        if (course && course.id) {
+            setSelectedCourseId(course.id);
+        }
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+
+        // 폼의 courseName 필드도 업데이트
+        const form = document.getElementById('createClassForm');
+        if (form) {
+            const courseNameInput = form.querySelector('[name="courseName"]');
+            if (courseNameInput) {
+                courseNameInput.value = courseName;
+            }
+        }
+    };
+
+    const handleCourseNameKeyDown = (e) => {
+        if (!showSuggestions || filteredCourse.length === 0) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                setSelectedIndex(prev =>
+                    prev < filteredCourse.length - 1 ? prev + 1 : prev
+                );
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                setSelectedIndex(prev => prev > 0 ? prev - 1 : -1);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < filteredCourse.length) {
+                    handleCourseNameSelect(filteredCourse[selectedIndex]);
+                }
+                break;
+            case 'Escape':
+                setShowSuggestions(false);
+                setSelectedIndex(-1);
+                break;
+        }
+    };
+
+    const handleStartDateChange = (e) => {
+        setStartDate(e.target.value);
+    };
+
+    const handleEndDateChange = (e) => {
+        setEndDate(e.target.value);
+    };
+
+    const handleCopyInviteCode = async () => {
+        const inviteCode = newClass?.invite_codes?.[0]?.code;
+        if (!inviteCode) {
+            showToast('복사할 초대 코드가 없습니다.', 'error');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(inviteCode);
+            showToast('초대 코드가 복사되었습니다.', 'success');
+        } catch (err) {
+            // 클립보드 API가 지원되지 않는 경우 대체 방법 사용
+            const textArea = document.createElement('textarea');
+            textArea.value = inviteCode;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('초대 코드가 복사되었습니다.', 'success');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
+    const handleCopyInviteLink = async () => {
+        const inviteCode = newClass?.invite_codes?.[0]?.code;
+        if (!inviteCode) {
+            showToast('복사할 초대 링크가 없습니다.', 'error');
+            return;
+        }
+
+        const inviteLink = `https://growfit.com/join?code=${inviteCode}`;
+
+        try {
+            await navigator.clipboard.writeText(inviteLink);
+            showToast('초대 링크가 복사되었습니다.', 'success');
+        } catch (err) {
+            // 클립보드 API가 지원되지 않는 경우 대체 방법 사용
+            const textArea = document.createElement('textarea');
+            textArea.value = inviteLink;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('초대 링크가 복사되었습니다.', 'success');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
+    const handleShowInviteCode = (myclass) => {
+        setSelectedClass(myclass);
+        setShowInviteCodeModal(true);
+    };
+
+    const handleShowEditModal = (myclass) => {
+        setSelectedClass(myclass);
+        // 수정 폼 데이터 초기화
+        let allowedModelIds = Array.isArray(myclass.allowed_model_ids) ? myclass.allowed_model_ids : [];
+
+        // id가 4인 모델은 필수이므로 없으면 추가
+        if (!allowedModelIds.includes(4)) {
+            allowedModelIds.push(4);
+        }
+
+        setEditFormData({
+            name: myclass.name || '',
+            start_at: myclass.start_at ? myclass.start_at.split('T')[0] : '',
+            end_at: myclass.end_at ? myclass.end_at.split('T')[0] : '',
+            capacity: myclass.capacity || 0,
+            description: myclass.description || '',
+            status: myclass.status || 'active',
+            course_id: myclass.course_id || 0,
+            allowed_model_ids: allowedModelIds
+        });
+        setShowInviteCodeModal(false);
+        setShowEditModal(true);
+    };
+
+    const handleEditFormChange = (e) => {
+        const { name, value, type, checked } = e.target;
+
+        if (type === 'checkbox' && name === 'llm') {
+            // LLM 체크박스 처리
+            const modelId = parseInt(value, 10);
+
+            // id가 4인 모델은 체크 해제 불가
+            if (modelId === 4 && !checked) {
+                return;
+            }
+
+            setEditFormData(prev => {
+                const currentIds = prev.allowed_model_ids || [];
+
+                // id가 4인 모델은 항상 포함되도록 보장
+                let newIds;
+                if (checked) {
+                    // 체크된 경우: 배열에 추가 (중복 방지)
+                    newIds = [...new Set([...currentIds, modelId])];
+                } else {
+                    // 체크 해제된 경우: 배열에서 제거 (단, id 4는 제외)
+                    newIds = currentIds.filter(id => id !== modelId);
+                }
+
+                // id가 4인 모델이 없으면 추가
+                if (!newIds.includes(4)) {
+                    newIds.push(4);
+                }
+
+                return {
+                    ...prev,
+                    allowed_model_ids: newIds
+                };
+            });
+        } else {
+            // 일반 input 처리
+            setEditFormData(prev => ({
+                ...prev,
+                [name]: name === 'capacity' ? parseInt(value, 10) || 0 : value
+            }));
+        }
+    };
+
+    const handleSaveEdit = async (e) => {
+        e.preventDefault();
+        setError(null);
+        setIsSaving(true);
+
+        try {
+            // 유효성 검사
+            if (!editFormData.name || !editFormData.name.trim()) {
+                throw new Error('강의명을 입력해주세요.');
+            }
+            if (!editFormData.start_at || !editFormData.end_at) {
+                throw new Error('교육 시작일과 종료일을 모두 입력해주세요.');
+            }
+            if (!editFormData.capacity || editFormData.capacity < 1) {
+                throw new Error('수강 학생 수를 올바르게 입력해주세요.');
+            }
+
+            // LLM 모델 선택 확인
+            const form = document.getElementById('editClassForm');
+            let selectedLLMs = form ? Array.from(form.querySelectorAll('input[name="llm"]:checked')).map(cb => parseInt(cb.value, 10)) : editFormData.allowed_model_ids;
+
+            if (selectedLLMs.length === 0) {
+                throw new Error('최소 하나의 LLM 모델을 선택해주세요.');
+            }
+
+            // id가 4인 모델은 필수이므로 없으면 추가
+            if (!selectedLLMs.includes(4)) {
+                selectedLLMs.push(4);
+            }
+
+            // 날짜를 ISO 형식으로 변환
+            const startAtISO = new Date(editFormData.start_at + 'T00:00:00').toISOString();
+            const endAtISO = new Date(editFormData.end_at + 'T23:59:59').toISOString();
+
+            // PATCH 요청 데이터 구성
+            const requestData = {
+                name: editFormData.name.trim(),
+                status: editFormData.status,
+                description: editFormData.description.trim() || '',
+                start_at: startAtISO,
+                end_at: endAtISO,
+                capacity: editFormData.capacity,
+                timezone: selectedClass?.timezone || "UTC",
+                location: selectedClass?.location || "string",
+                online_url: selectedClass?.online_url || "string",
+                invite_only: selectedClass?.invite_only || false,
+                course_id: editFormData.course_id || selectedClass?.course_id || 0,
+                primary_model_id: 4,
+                allowed_model_ids: selectedLLMs
+            };
+
+            console.log('수정 요청 데이터:', requestData);
+
+            // PATCH 요청
+            const response = await axios.patch(
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes/${selectedClass.id}`,
+                requestData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            console.log('수정 응답 데이터:', response.data);
+
+            showToast('강의 정보가 성공적으로 수정되었습니다.', 'success');
+            setShowEditModal(false);
+            setSelectedClass(null);
+            fetchMyClasses(); // 목록 새로고침
+
+        } catch (error) {
+            console.error('수정 에러 발생:', error);
+
+            // 에러 메시지 설정
+            if (error.response) {
+                const errorMessage = error.response.data?.message || error.response.data?.error || '서버 오류가 발생했습니다.';
+                setError(errorMessage);
+                showToast(errorMessage, 'error');
+            } else if (error.request) {
+                setError('서버에 연결할 수 없습니다. 네트워크를 확인해주세요.');
+                showToast('서버에 연결할 수 없습니다.', 'error');
+            } else {
+                setError(error.message || '알 수 없는 오류가 발생했습니다.');
+                showToast(error.message || '알 수 없는 오류가 발생했습니다.', 'error');
+            }
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleCopyInviteCodeFromModal = async () => {
+        const inviteCode = selectedClass?.invite_codes?.[0]?.code;
+        if (!inviteCode) {
+            showToast('복사할 초대 코드가 없습니다.', 'error');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(inviteCode);
+            showToast('초대 코드가 복사되었습니다.', 'success');
+        } catch (err) {
+            // 클립보드 API가 지원되지 않는 경우 대체 방법 사용
+            const textArea = document.createElement('textarea');
+            textArea.value = inviteCode;
+            textArea.style.position = 'fixed';
+            textArea.style.opacity = '0';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('초대 코드가 복사되었습니다.', 'success');
+            } catch (err) {
+                showToast('복사에 실패했습니다.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+    };
+
+    const handleDeleteClass = async () => {
+        if (!selectedClass) return;
+        const confirmed = await showConfirm(`"${selectedClass.name}" 강의를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            await axios.delete(
+                `${process.env.REACT_APP_API_URL}/partner/${partnerId}/classes/${selectedClass.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    }
+                }
+            );
+
+            showToast('강의가 성공적으로 삭제되었습니다.', 'success');
+            setShowInviteCodeModal(false);
+            setSelectedClass(null);
+            fetchMyClasses(); // 목록 새로고침
+        } catch (error) {
+            console.error('강의 삭제 실패:', error);
+            const errorMessage = error.response?.data?.message || '강의 삭제 중 오류가 발생했습니다.';
+            showToast(errorMessage, 'error');
+        }
+    };
+
+    const [Assistant, setAssistant] = useState([
+        { id: 1, provider: "openai", modality: "chat", model_name: "gpt-4o-mini" },
+        { id: 2, provider: "google", modality: "chat", model_name: "gemini-2.5-flash" },
+        { id: 3, provider: "lg", modality: "chat", model_name: "exaone-4.0" },
+        { id: 4, provider: "anthropic", modality: "chat", model_name: "claude-3-haiku" },
+    ]);
+
+
+
+    return (
+        <>
+            {/* 초대 코드 확인 모달 */}
+            <div className={`modal ${showInviteCodeModal ? 'modal--active' : ''}`} id="inviteCodeModal">
+                <div className="modal__content" style={{ maxWidth: '600px' }}>
+                    <div className="modal__header">
+                        <h2 className="modal__title">초대 코드</h2>
+                        <button className="modal__close" onClick={() => {
+                            setShowInviteCodeModal(false);
+                            setSelectedClass(null);
+                        }}>✕</button>
+                    </div>
+
+                    <div className="modal__body">
+                        <div className="invite-code-info">
+                            <div className="invite-code-info__header">
+                                <div className="invite-code-info__label">강의명</div>
+                                <div className="invite-code-info__title">{selectedClass?.name}</div>
+                            </div>
+                            <div className="invite-code-info__details">
+                                <div className="invite-code-info__detail">
+                                    <span className="invite-code-info__detail-label">교육 기간</span>
+                                    <span className="invite-code-info__detail-value">
+                                        {selectedClass?.start_at && selectedClass?.end_at
+                                            ? `${selectedClass.start_at.split('T')[0]} ~ ${selectedClass.end_at.split('T')[0]}`
+                                            : '-'}
+                                    </span>
+                                </div>
+                                <div className="invite-code-info__detail">
+                                    <span className="invite-code-info__detail-label">정원</span>
+                                    <span className="invite-code-info__detail-value">
+                                        {selectedClass?.capacity}명
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="invite-code-section">
+                            <label className="invite-code-section__label">초대 코드</label>
+                            <div className="invite-code-section__input-group">
+                                <input
+                                    type="text"
+                                    className="invite-code-section__input"
+                                    value={selectedClass?.invite_codes?.[0]?.code ?? ""}
+                                    readOnly
+                                />
+                                <button
+                                    className="btn btn--primary invite-code-section__copy-btn"
+                                    onClick={handleCopyInviteCodeFromModal}
+                                >
+                                    복사
+                                </button>
+                            </div>
+                            <div className="invite-code-section__hint">
+                                위 초대 코드를 학생들에게 공유해주세요
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="modal__footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                            className="btn btn--outline"
+                            type="button"
+                            onClick={handleDeleteClass}
+                            style={{
+                                color: 'var(--error)',
+                                borderColor: 'var(--error)'
+                            }}
+                        >
+                            삭제
+                        </button>
+                        <button
+                            className="btn btn--outline"
+                            type="button"
+                            onClick={() => handleShowEditModal(selectedClass)}
+                        >
+                            수정
+                        </button>
+                        <button
+                            className="btn btn--primary"
+                            type="button"
+                            onClick={() => {
+                                setShowInviteCodeModal(false);
+                                setSelectedClass(null);
+                            }}
+                        >
+                            확인
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div className={`modal ${showCourseCreatedModal ? 'modal--active' : ''}`} id="courseCreatedModal">
+                <div className="modal__content" style={{ maxWidth: '600px' }}>
+                    <div className="modal__header">
+                        <h2 className="modal__title">🎉 강의가 성공적으로 생성되었습니다!</h2>
+                        <button className="modal__close" onClick={() => setShowCourseCreatedModal(false)}>✕</button>
+                    </div>
+
+                    <div className="modal__body">
+                        <div className="alert alert--success" style={{ marginBottom: '24px' }}>
+                            <div className="alert__content">
+                                <div className="alert__title">학생 초대 준비 완료</div>
+                                <div className="alert__message">아래 정보를 학생들에게 공유해주세요</div>
+                            </div>
+                        </div>
+
+
+                        <div
+                            style={{ background: 'var(--surface)', borderRadius: 'var(--radius-lg)', padding: '16px', marginBottom: '20px' }}>
+                            <div style={{ fontSize: 'var(--text-sm)', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                                생성된 강의
+                            </div>
+                            <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)', color: 'var(--text-primary)', marginBottom: '12px' }}
+                                id="createdCourseName">
+                                {newClass?.name}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: 'var(--text-sm)' }}>
+                                <div>
+                                    <span style={{ color: 'var(--text-secondary)' }}>📅 교육 기간:</span>
+                                    <span style={{ fontWeight: 'var(--font-semibold)', marginLeft: '4px' }}
+                                        id="createdCourseDates">
+                                        {newClass?.start_at && newClass?.end_at
+                                            ? calculateTrainingDays(newClass.start_at, newClass.end_at)
+                                            : trainingDays}일
+                                    </span>
+                                </div>
+                                <div>
+                                    <span style={{ color: 'var(--text-secondary)' }}>👥 예상 학생:</span>
+                                    <span style={{ fontWeight: 'var(--font-semibold)', marginLeft: '4px' }}
+                                        id="createdStudentCount">{newClass?.capacity}명</span>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
+                                📋 초대 코드
+                            </label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <input type="text" id="generatedInviteCode" value={newClass?.invite_codes?.[0]?.code ?? ""} readOnly style={{
+                                    flex: 1, padding: '12px 16px', border: '2px solid var(--primary-300)',
+                                    borderRadius: 'var(--radius-md)', fontSize: '18px', fontWeight: 'bold',
+                                    textAlign: 'center', background: 'var(--primary-50)', color: 'var(--primary-700)',
+                                    fontFamily: 'var(--font-mono)', letterSpacing: '2px'
+                                }} />
+                                <button className="btn btn--primary" style={{ minWidth: '80px' }} onClick={handleCopyInviteCode}>
+                                    복사
+                                </button>
+                            </div>
+                        </div>
+
+
+                        {/* <div style={{ marginBottom: '24px' }}>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'var(--font-semibold)', fontSize: 'var(--text-sm)' }}>
+                                🔗 초대 링크
+                            </label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <input type="text" id="generatedInviteUrl" value={newClass?.invite_codes?.[0]?.code ? `https://growfit.com/join?code=${newClass.invite_codes[0].code}` : ""} readOnly
+                                    style={{
+                                        flex: 1, padding: '12px 16px', border: '1px solid var(--border)',
+                                        borderRadius: 'var(--radius-md)', fontSize: 'var(--text-sm)',
+                                        background: 'var(--gray-50)'
+                                    }} />
+                                <button className="btn btn--outline" style={{ minWidth: '80px' }} onClick={handleCopyInviteLink}>
+                                    복사
+                                </button>
+                            </div>
+                        </div> */}
+
+                    </div>
+
+                    <div className="modal__footer">
+                        <button className="btn btn--primary" type="button" onClick={() => {
+                            setShowCourseCreatedModal(false);
+                            fetchMyClasses();
+                            setStartDate('');
+                            setEndDate('');
+                            setTrainingDays(0);
+                            setCourseNameInput('');
+                            setShowSuggestions(false);
+                            setError(null);
+                            setSelectedCourseId(null);
+                        }}>
+                            확인
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="createProjectModal" className={`modal ${showModal ? 'modal--active' : ''}`}>
+                <div className="modal__content modal__content--large">
+                    <div className="modal__header">
+                        <h2 className="modal__title">신규강의 정보</h2>
+                        <button className="modal__close" onClick={() => {
+                            setShowModal(false);
+                            setStartDate('');
+                            setEndDate('');
+                            setTrainingDays(0);
+                            setCourseNameInput('');
+                            setShowSuggestions(false);
+                            setError(null);
+                            setSelectedCourseId(null);
+                        }}>✕</button>
+                    </div>
+                    <div className="modal__body">
+                        <form id="createClassForm" onSubmit={handleCreateClass}>
+                            <div className="form-section">
+                                <h3 className="form-section-title">기본 정보</h3>
+                                <div className="form-group">
+                                    <label htmlFor="ClassName">강의명 <span className="required">*</span></label>
+                                    <input type="text" id="ClassName" name="ClassName" placeholder="Rag 구축" required />
+                                </div>
+                                <div className="form-group" style={{ position: 'relative' }}>
+                                    <label htmlFor="courseName">과정명 </label>
+                                    <input
+                                        type="text"
+                                        id="courseName"
+                                        name="courseName"
+                                        placeholder="소속이 없는 경우 '무소속 과정'으로 입력해주세요."
+                                        value={courseNameInput}
+                                        onChange={handleCourseNameChange}
+                                        onKeyDown={handleCourseNameKeyDown}
+                                        onFocus={() => {
+                                            if (filteredCourse.length > 0) {
+                                                setShowSuggestions(true);
+                                            }
+                                        }}
+                                        onBlur={() => {
+                                            setTimeout(() => {
+                                                setShowSuggestions(false);
+                                            }, 200);
+                                        }}
+                                    />
+                                    {showSuggestions && filteredCourse.length > 0 && (
+                                        <div className="autocomplete-dropdown">
+                                            {filteredCourse.map((course, index) => (
+                                                <div
+                                                    key={course.id || index}
+                                                    className={`autocomplete-item ${index === selectedIndex ? 'autocomplete-item--selected' : ''}`}
+                                                    onClick={() => handleCourseNameSelect(course)}
+                                                    onMouseEnter={() => setSelectedIndex(index)}
+                                                >
+                                                    {course.title}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">사용할 LLM 모델 <span className="required">*</span></h3>
+                                <div className="llm-selection">
+                                    {Assistant?.map((assistant) => {
+                                        const isRequired = assistant.id === 4;
+                                        const isChecked = isRequired || (() => {
+                                            const form = document.getElementById('createClassForm');
+                                            if (form) {
+                                                const checkbox = form.querySelector(`input[name="llm"][value="${assistant.id}"]`);
+                                                return checkbox?.checked || false;
+                                            }
+                                            return false;
+                                        })();
+
+                                        return (
+                                            <label className="llm-checkbox" key={assistant.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    name="llm"
+                                                    value={assistant.id}
+                                                    defaultChecked={isRequired}
+                                                    disabled={isRequired}
+                                                />
+                                                <div className="llm-card" style={isRequired ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>
+                                                    <div className="llm-info">
+                                                        <div className="llm-name">
+                                                            {assistant.model_name}
+                                                            {isRequired && <span className="required" style={{ marginLeft: '4px', fontSize: '12px' }}>(필수)</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="llm-checkmark">✓</div>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">교육 설정</h3>
+                                <div className="form-group">
+                                    <label htmlFor="studentCount">수강 학생 수 <span className="required">*</span></label>
+                                    <input type="number" id="studentCount" name="studentCount" placeholder="20" min="1" required />
+                                </div>
+                                <div className="form-group form-group--inline">
+                                    <div>
+                                        <label htmlFor="startDate">교육 시작일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="startDate"
+                                            name="startDate"
+                                            value={startDate}
+                                            onChange={handleStartDateChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="endDate">교육 종료일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="endDate"
+                                            name="endDate"
+                                            value={endDate}
+                                            onChange={handleEndDateChange}
+                                            min={startDate || ''}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                {trainingDays > 0 && (
+                                    <div className="training-days-info" id="trainingDaysInfo">
+                                        <span className="training-days-text">총 교육 기간: <strong id="trainingDays">{trainingDays}</strong>일</span>
+                                    </div>
+                                )}
+                            </div>
+
+
+                            <div className="form-section">
+                                <h3 className="form-section-title"> 강의 설명 (선택)</h3>
+                                <div className="form-group">
+                                    <textarea id="ClassDescription" name="ClassDescription" placeholder="강의에 대한 간단한 설명을 입력하세요..." rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            {/* 에러 메시지 표시 */}
+                            {error && (
+                                <div className="alert alert--error" style={{ marginTop: '16px' }}>
+                                    <div className="alert__content">
+                                        <div className="alert__title">오류</div>
+                                        <div className="alert__message">{error}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </form>
+                    </div>
+                    <div className="modal__footer">
+                        <button
+                            className="btn btn--outline"
+                            onClick={() => {
+                                setShowModal(false);
+                                setStartDate('');
+                                setEndDate('');
+                                setTrainingDays(0);
+                                setCourseNameInput('');
+                                setShowSuggestions(false);
+                                setError(null);
+                                setSelectedCourseId(null);
+                            }}
+                            disabled={isLoading}
+                        >
+                            취소
+                        </button>
+                        <button
+                            className="btn btn--primary"
+                            type="submit"
+                            form="createClassForm"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? '생성 중...' : '강의 생성'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* 수정 모달 */}
+            <div className={`modal ${showEditModal ? 'modal--active' : ''}`} id="editClassModal">
+                <div className="modal__content" style={{ maxWidth: '600px' }}>
+                    <div className="modal__header">
+                        <h2 className="modal__title">강의 정보 수정</h2>
+                        <button className="modal__close" onClick={() => {
+                            setShowEditModal(false);
+                            setSelectedClass(null);
+                            setError(null);
+                        }}>✕</button>
+                    </div>
+
+                    <div className="modal__body">
+                        <form id="editClassForm" onSubmit={handleSaveEdit}>
+                            <div className="form-section">
+                                <h3 className="form-section-title">기본 정보</h3>
+                                <div className="form-group">
+                                    <label htmlFor="editClassName">강의명 <span className="required">*</span></label>
+                                    <input
+                                        type="text"
+                                        id="editClassName"
+                                        name="name"
+                                        value={editFormData.name}
+                                        onChange={handleEditFormChange}
+                                        placeholder="강의명을 입력하세요"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">사용할 LLM 모델 <span className="required">*</span></h3>
+                                <div className="llm-selection">
+                                    {Assistant?.map((assistant) => {
+                                        const isRequired = assistant.id === 4;
+                                        const isChecked = editFormData.allowed_model_ids?.includes(assistant.id) || isRequired;
+
+                                        return (
+                                            <label className="llm-checkbox" key={assistant.id}>
+                                                <input
+                                                    type="checkbox"
+                                                    name="llm"
+                                                    value={assistant.id}
+                                                    checked={isChecked}
+                                                    onChange={handleEditFormChange}
+                                                    disabled={isRequired}
+                                                />
+                                                <div className="llm-card" style={isRequired ? { opacity: 0.7, cursor: 'not-allowed' } : {}}>
+                                                    <div className="llm-info">
+                                                        <div className="llm-name">
+                                                            {assistant.model_name}
+                                                            {isRequired && <span className="required" style={{ marginLeft: '4px', fontSize: '12px' }}>(필수)</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="llm-checkmark">✓</div>
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">교육 설정</h3>
+                                <div className="form-group">
+                                    <label htmlFor="editStudentCount">수강 학생 수 <span className="required">*</span></label>
+                                    <input
+                                        type="number"
+                                        id="editStudentCount"
+                                        name="capacity"
+                                        value={editFormData.capacity}
+                                        onChange={handleEditFormChange}
+                                        placeholder="20"
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                                <div className="form-group form-group--inline">
+                                    <div>
+                                        <label htmlFor="editStartDate">교육 시작일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="editStartDate"
+                                            name="start_at"
+                                            value={editFormData.start_at}
+                                            onChange={handleEditFormChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="editEndDate">교육 종료일 <span className="required">*</span></label>
+                                        <input
+                                            type="date"
+                                            id="editEndDate"
+                                            name="end_at"
+                                            value={editFormData.end_at}
+                                            onChange={handleEditFormChange}
+                                            min={editFormData.start_at || ''}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-section">
+                                <h3 className="form-section-title">강의 설명 (선택)</h3>
+                                <div className="form-group">
+                                    <textarea
+                                        id="editClassDescription"
+                                        name="description"
+                                        value={editFormData.description}
+                                        onChange={handleEditFormChange}
+                                        placeholder="강의에 대한 간단한 설명을 입력하세요..."
+                                        rows="3"
+                                    ></textarea>
+                                </div>
+                            </div>
+
+                            {/* 에러 메시지 표시 */}
+                            {error && (
+                                <div className="alert alert--error" style={{ marginTop: '16px' }}>
+                                    <div className="alert__content">
+                                        <div className="alert__title">오류</div>
+                                        <div className="alert__message">{error}</div>
+                                    </div>
+                                </div>
+                            )}
+                        </form>
+                    </div>
+
+                    <div className="modal__footer" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button
+                            className="btn btn--outline"
+                            type="button"
+                            onClick={() => {
+                                setShowEditModal(false);
+                                setSelectedClass(null);
+                                setError(null);
+                            }}
+                            disabled={isSaving}
+                        >
+                            취소
+                        </button>
+                        <button
+                            className="btn btn--primary"
+                            type="submit"
+                            form="editClassForm"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? '저장 중...' : '저장'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="app">
+                <div className="container">
+                    <PartnerSidebar />
+
+                    <main className="main">
+                        <div className="main__content">
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-6)' }}>
+                                <button className="btn btn--primary" onClick={() => setShowModal(true)}>
+                                    <span>신규 강의 생성</span>
+                                </button>
+                            </div>
+
+
+                            <div className="partner-stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-card__header">
+                                        <div className="stat-icon stat-icon--primary">📁</div>
+                                    </div>
+                                    <div className="stat-card__label">전체 강의</div>
+                                    <div className="stat-card__value">{myClasses.length}개</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-card__header">
+                                        <div className="stat-icon stat-icon--warning">📅</div>
+                                    </div>
+                                    <div className="stat-card__label">예정</div>
+                                    <div className="stat-card__value">{scheduledCount}개</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-card__header">
+                                        <div className="stat-icon stat-icon--success">🚀</div>
+                                    </div>
+                                    <div className="stat-card__label">진행 중</div>
+                                    <div className="stat-card__value">{activeCount}개</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-card__header">
+                                        <div className="stat-icon stat-icon--secondary">✅</div>
+                                    </div>
+                                    <div className="stat-card__label">종료됨</div>
+                                    <div className="stat-card__value">{completedCount}개</div>
+                                </div>
+                            </div>
+
+
+                            {myClasses.length === 0 ? (
+                                <div className="partner-enrollment-guide">
+                                    <div className="partner-enrollment-guide__header">
+                                        <div className="partner-enrollment-guide__icon">📚</div>
+                                        <h3 className="partner-enrollment-guide__title">등록된 강의가 없습니다</h3>
+                                        <p className="partner-enrollment-guide__subtitle">아래 단계를 따라 첫 강의를 생성해보세요</p>
+                                    </div>
+
+                                    <div className="partner-enrollment-steps">
+                                        <div className="partner-enrollment-step partner-enrollment-step--highlight">
+                                            <div className="partner-enrollment-step__number">1</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">신규 강의 생성 버튼 클릭</div>
+                                                <div className="partner-enrollment-step__desc">오른쪽 상단의 "신규 강의 생성" 버튼을 클릭하세요</div>
+                                            </div>
+                                            <div className="partner-enrollment-step__arrow">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <div className="partner-enrollment-step">
+                                            <div className="partner-enrollment-step__number">2</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">강의 정보 입력</div>
+                                                <div className="partner-enrollment-step__desc">강의명, 과정명, LLM 모델, 교육 기간 등을 입력하세요</div>
+                                            </div>
+                                            <div className="partner-enrollment-step__arrow">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <div className="partner-enrollment-step">
+                                            <div className="partner-enrollment-step__number">3</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">초대 코드 생성</div>
+                                                <div className="partner-enrollment-step__desc">강의 생성 후 초대 코드가 자동으로 생성됩니다</div>
+                                            </div>
+                                            <div className="partner-enrollment-step__arrow">
+                                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 13L12 18L17 13M7 6L12 11L17 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        <div className="partner-enrollment-step">
+                                            <div className="partner-enrollment-step__number">4</div>
+                                            <div className="partner-enrollment-step__content">
+                                                <div className="partner-enrollment-step__title">학생 초대</div>
+                                                <div className="partner-enrollment-step__desc">생성된 초대 코드를 학생들에게 공유하세요</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="partner-enrollment-guide__button-wrapper">
+                                        <button className="btn btn--primary btn--guide" onClick={() => setShowModal(true)}>
+                                            신규 강의 생성
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="projects-grid">
+                                    {myClasses.map((myclass) => {
+                                        const now = new Date();
+                                        const startDate = new Date(myclass.start_at);
+                                        const endDate = new Date(myclass.end_at);
+
+                                        const daysUntilStart = Math.floor(
+                                            (startDate - now) / (1000 * 60 * 60 * 24) + 1
+                                        );
+                                        const daysLeft = Math.floor(
+                                            (endDate - now) / (1000 * 60 * 60 * 24) + 1
+                                        );
+
+                                        let statusClass = 'active';
+                                        let statusText = `D-${daysLeft} 남음`;
+
+                                        if (daysUntilStart > 0) {
+                                            // 시작일 전: 예정
+                                            statusClass = 'scheduled';
+                                            statusText = `D-${daysUntilStart} 예정`;
+                                        } else if (daysLeft < 0) {
+                                            // 종료일 지남: 종료
+                                            statusClass = 'end';
+                                            statusText = '종료';
+                                        } else {
+                                            // 진행 중
+                                            statusClass = 'active';
+                                            statusText = `D-${daysLeft} 남음`;
+                                        }
+
+                                        return (
+                                            <div className="project-card" data-project-id="proj-1" data-status="active" key={myclass.id}>
+                                                <div className="project-card__header">
+                                                    <div className={`project-card__status project-card__status--${statusClass}`}>
+                                                        <span className="status-dot"></span>
+                                                        {statusText}
+                                                    </div>
+                                                </div>
+
+                                                <h3 className="project-card__title">{myclass.name}</h3>
+
+                                                <div className="project-card__meta">
+                                                    <div className="project-card__meta-item">
+                                                        <span>정원 : </span>
+                                                        <span>{myclass.capacity}명</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="project-card__meta">
+                                                    <div className="project-card__meta-item">
+                                                        <span>📅</span>
+                                                        <span>{myclass.start_at.split('T')[0]} ~ {myclass.end_at.split('T')[0]}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="project-card__actions">
+                                                    <button
+                                                        className="project-action-btn project-action-btn--primary"
+                                                        onClick={() => handleShowInviteCode(myclass)}
+                                                    >
+                                                        코드확인
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+
+                        </div>
+                    </main>
+
+
+
+                </div>
+            </div>
+
+        </>
+    )
+}

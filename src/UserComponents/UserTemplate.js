@@ -14,7 +14,7 @@ export default function UserAgent() {
     const fetchTemplates = useCallback(async () => {
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL}/agents/shared?class_id=${savedClassId}&active_only=true`,
+                `${process.env.REACT_APP_API_URL}/prompts/shared?class_id=${savedClassId}&active_only=true`,
                 {
                     headers: {
                         Authorization: `Bearer ${accessToken}`,
