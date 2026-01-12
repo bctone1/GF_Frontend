@@ -72,40 +72,217 @@ export default function PartnerProjectManagement() {
                         </div>
                         <div className="card">
                             <div className="card__header">
-                                <h2 className="card__title"><svg className="icon icon--sm" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>강의 목록</h2>
+                                <h2 className="card__title">
+                                    <svg className="icon icon--sm" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                    강의 목록
+                                </h2>
                                 <div className="filters">
-                                    <select className="filter-select" id="statusFilter" onchange="filterCourses()"><option value="">전체 상태</option><option value="active">진행중</option><option value="upcoming">예정</option><option value="ended">종료</option></select>
-                                    <div className="filter-search"><svg className="icon icon--sm filter-search__icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><input type="text" className="filter-search__input" placeholder="강의 검색..." id="searchInput" oninput="filterCourses()" />/</div>
+                                    <select className="filter-select" id="statusFilter" >
+                                        <option value="">전체 상태</option>
+                                        <option value="active">진행중</option>
+                                        <option value="upcoming">예정</option>
+                                        <option value="ended">종료</option>
+                                    </select>
+                                    <div className="filter-search">
+                                        <svg className="icon icon--sm filter-search__icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                        <input type="text" className="filter-search__input" placeholder="강의 검색..." id="searchInput" />
+                                    </div>
                                 </div>
                             </div>
                             <div className="course-list" id="courseList">
                                 <div className="course-item" data-status="active" data-name="2025 AI 기초과정">
-                                    <div className="course-item__icon course-item__icon--active"><svg className="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
-                                    <div className="course-item__info"><div className="course-item__name">2025 AI 기초과정</div><div className="course-item__meta"><span className="course-item__meta-item"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2025.01.08 ~ 01.10</span><span className="course-item__code">GF7X3K</span></div></div>
-                                    <div className="course-item__stats"><div className="course-item__stat"><div className="course-item__stat-value">20</div><div className="course-item__stat-label">학생</div></div><div className="course-item__stat"><div className="course-item__stat-value">1.2k</div><div className="course-item__stat-label">대화</div></div><div className="course-item__stat"><div className="course-item__stat-value">$45</div><div className="course-item__stat-label">비용</div></div></div>
+                                    <div className="course-item__icon course-item__icon--active">
+                                        <svg className="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                    </div>
+
+                                    <div className="course-item__info">
+                                        <div className="course-item__name">2025 AI 기초과정</div>
+                                        <div className="course-item__meta">
+                                            <span className="course-item__meta-item">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                                2025.01.08 ~ 01.10
+                                            </span>
+                                            <span className="course-item__code">GF7X3K</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="course-item__stats">
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">20</div>
+                                            <div className="course-item__stat-label">학생</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">1.2k</div>
+                                            <div className="course-item__stat-label">대화</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">$45</div>
+                                            <div className="course-item__stat-label">비용</div>
+                                        </div>
+                                    </div>
+
                                     <span className="course-item__status course-item__status--active"><span className="course-item__status-dot"></span>진행중</span>
-                                    <div className="course-item__actions"><button className="course-item__action" onclick="event.stopPropagation();copyInviteCode('GF7X3K')" title="초대코드 복사"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button><button className="course-item__action" onclick="event.stopPropagation();editCourse('2025 AI 기초과정')" title="강의 수정"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button><button className="course-item__action" onclick="event.stopPropagation();showCourseMenu(event, '2025 AI 기초과정')" title="더보기"><svg className="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button></div>
+
+                                    <div className="course-item__actions">
+                                        <button className="course-item__action" title="초대코드 복사">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button><button className="course-item__action" title="강의 수정"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                        </button>
+                                        <button className="course-item__action" title="더보기">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                                        </button>
+                                    </div>
                                 </div>
+
                                 <div className="course-item" data-status="active" data-name="프롬프트 엔지니어링">
-                                    <div className="course-item__icon course-item__icon--active"><svg className="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
-                                    <div className="course-item__info"><div className="course-item__name">프롬프트 엔지니어링</div><div className="course-item__meta"><span className="course-item__meta-item"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2024.09.01 ~ 2025.01.15</span><span className="course-item__code">GF2K4M</span></div></div>
-                                    <div className="course-item__stats"><div className="course-item__stat"><div className="course-item__stat-value">30</div><div className="course-item__stat-label">학생</div></div><div className="course-item__stat"><div className="course-item__stat-value">8.7k</div><div className="course-item__stat-label">대화</div></div><div className="course-item__stat"><div className="course-item__stat-value">$128</div><div className="course-item__stat-label">비용</div></div></div>
+                                    <div className="course-item__icon course-item__icon--active">
+                                        <svg className="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                                    </div>
+                                    <div className="course-item__info">
+                                        <div className="course-item__name">프롬프트 엔지니어링</div>
+                                        <div className="course-item__meta">
+                                            <span className="course-item__meta-item"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                                2024.09.01 ~ 2025.01.15
+                                            </span>
+                                            <span className="course-item__code">GF2K4M</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="course-item__stats">
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">30</div>
+                                            <div className="course-item__stat-label">학생</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">8.7k</div>
+                                            <div className="course-item__stat-label">대화</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">$128</div>
+                                            <div className="course-item__stat-label">비용</div>
+                                        </div>
+                                    </div>
                                     <span className="course-item__status course-item__status--active"><span className="course-item__status-dot"></span>진행중</span>
-                                    <div className="course-item__actions"><button className="course-item__action" onclick="event.stopPropagation();copyInviteCode('GF2K4M')" title="초대코드 복사"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button><button className="course-item__action" onclick="event.stopPropagation();editCourse('프롬프트 엔지니어링')" title="강의 수정"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button><button className="course-item__action" onclick="event.stopPropagation();showCourseMenu(event, '프롬프트 엔지니어링')" title="더보기"><svg className="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button></div>
+                                    <div className="course-item__actions">
+                                        <button className="course-item__action"
+                                            title="초대코드 복사">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                            </svg>
+                                        </button>
+                                        <button className="course-item__action" title="강의 수정">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+                                        <button className="course-item__action" title="더보기">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="1"></circle>
+                                                <circle cx="19" cy="12" r="1"></circle>
+                                                <circle cx="5" cy="12" r="1"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
+
                                 <div className="course-item" data-status="upcoming" data-name="2025 LLM 활용 실무">
-                                    <div className="course-item__icon course-item__icon--upcoming"><svg className="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
-                                    <div className="course-item__info"><div className="course-item__name">2025 LLM 활용 실무</div><div className="course-item__meta"><span className="course-item__meta-item"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2025.01.15 ~ 01.20</span><span className="course-item__code">GF5N8R</span></div></div>
-                                    <div className="course-item__stats"><div className="course-item__stat"><div className="course-item__stat-value">0</div><div className="course-item__stat-label">학생</div></div><div className="course-item__stat"><div className="course-item__stat-value">-</div><div className="course-item__stat-label">대화</div></div><div className="course-item__stat"><div className="course-item__stat-value">-</div><div className="course-item__stat-label">비용</div></div></div>
+                                    <div className="course-item__icon course-item__icon--upcoming">
+                                        <svg className="icon" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    </div>
+
+                                    <div className="course-item__info">
+                                        <div className="course-item__name">2025 LLM 활용 실무</div>
+                                        <div className="course-item__meta"><span className="course-item__meta-item">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                            2025.01.15 ~ 01.20
+                                        </span>
+                                            <span className="course-item__code">GF5N8R</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="course-item__stats">
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">0</div>
+                                            <div className="course-item__stat-label">학생</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">-</div>
+                                            <div className="course-item__stat-label">대화</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">-</div>
+                                            <div className="course-item__stat-label">비용</div>
+                                        </div>
+                                    </div>
+
                                     <span className="course-item__status course-item__status--upcoming">D-5</span>
-                                    <div className="course-item__actions"><button className="course-item__action" onclick="event.stopPropagation();copyInviteCode('GF5N8R')" title="초대코드 복사"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button><button className="course-item__action" onclick="event.stopPropagation();editCourse('2025 LLM 활용 실무')" title="강의 수정"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button><button className="course-item__action" onclick="event.stopPropagation();showCourseMenu(event, '2025 LLM 활용 실무')" title="더보기"><svg className="icon icon--sm" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button></div>
+                                    <div className="course-item__actions">
+                                        <button className="course-item__action" title="초대코드 복사">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                        </button>
+
+                                        <button className="course-item__action" title="강의 수정">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </button>
+
+                                        <button className="course-item__action" title="더보기">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="course-item" data-status="ended" data-name="2024 AI 기초과정" style={{ opacity: 0.7 }}>
-                                    <div className="course-item__icon course-item__icon--ended"><svg className="icon" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
-                                    <div className="course-item__info"><div className="course-item__name">2024 AI 기초과정</div><div className="course-item__meta"><span className="course-item__meta-item"><svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2024.10.15 ~ 10.18</span></div></div>
-                                    <div className="course-item__stats"><div className="course-item__stat"><div className="course-item__stat-value">25</div><div className="course-item__stat-label">학생</div></div><div className="course-item__stat"><div className="course-item__stat-value">3.2k</div><div className="course-item__stat-label">대화</div></div><div className="course-item__stat"><div className="course-item__stat-value">$89</div><div className="course-item__stat-label">비용</div></div></div>
+                                    <div className="course-item__icon course-item__icon--ended">
+                                        <svg className="icon" viewBox="0 0 24 24">
+                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                            <polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    </div>
+                                    <div className="course-item__info">
+                                        <div className="course-item__name">2024 AI 기초과정</div>
+                                        <div className="course-item__meta">
+                                            <span className="course-item__meta-item">
+                                                <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                    <line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line>
+                                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                                </svg>2024.10.15 ~ 10.18</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="course-item__stats">
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">25</div>
+                                            <div className="course-item__stat-label">학생</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">3.2k</div>
+                                            <div className="course-item__stat-label">대화</div>
+                                        </div>
+                                        <div className="course-item__stat">
+                                            <div className="course-item__stat-value">$89</div>
+                                            <div className="course-item__stat-label">비용</div>
+                                        </div>
+                                    </div>
+
                                     <span className="course-item__status course-item__status--ended">종료</span>
-                                    <div className="course-item__actions"><button className="course-item__action" onclick="event.stopPropagation();viewCourseStats('2024 AI 기초과정')" title="통계 보기"><svg className="icon icon--sm" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></button></div>
+
+                                    <div className="course-item__actions">
+                                        <button className="course-item__action" title="통계 보기">
+                                            <svg className="icon icon--sm" viewBox="0 0 24 24">
+                                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+
                                 </div>
                             </div>
                         </div>

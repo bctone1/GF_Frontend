@@ -12,14 +12,14 @@ export default function PartnerSettings() {
                         <h1 className="main-header__title">설정</h1>
                         <div className="main-header__right">
                             <div style={{ position: 'relative' }}>
-                                <button className="main-header__btn" title="알림" onclick="toggleNotification()">
+                                <button className="main-header__btn" title="알림" >
                                     <svg className="icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                                     <span className="main-header__badge">3</span>
                                 </button>
                                 <div className="notification-dropdown" id="notificationDropdown">
                                     <div className="notification-dropdown__header">
                                         <span className="notification-dropdown__title">알림</span>
-                                        <span className="notification-dropdown__action" onclick="markAllRead()">모두 읽음</span>
+                                        <span className="notification-dropdown__action" >모두 읽음</span>
                                     </div>
                                     <div className="notification-dropdown__list">
                                         <div className="notification-group">오늘</div>
@@ -57,23 +57,23 @@ export default function PartnerSettings() {
                         <div className="partner-settings-layout">
                             {/* Settings Nav */}
                             <nav className="settings-nav">
-                                <div className="settings-nav__item settings-nav__item--active" onclick="showSection('profile')">
+                                <div className="settings-nav__item settings-nav__item--active" >
                                     <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                                     프로필
                                 </div>
-                                <div className="settings-nav__item" onclick="showSection('ai-models')">
+                                <div className="settings-nav__item" >
                                     <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M12 2a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V6a4 4 0 0 0-4-4z"></path><circle cx="12" cy="14" r="2"></circle></svg>
                                     AI 모델 설정
                                 </div>
-                                <div className="settings-nav__item" onclick="showSection('notifications')">
+                                <div className="settings-nav__item" >
                                     <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                                     알림
                                 </div>
-                                <div className="settings-nav__item" onclick="showSection('pricing')">
+                                <div className="settings-nav__item" >
                                     <svg className="icon icon--sm" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                                     요금 안내
                                 </div>
-                                <div className="settings-nav__item" onclick="showSection('security')">
+                                <div className="settings-nav__item" >
                                     <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                                     보안
                                 </div>
@@ -104,24 +104,24 @@ export default function PartnerSettings() {
                                         <div className="form-row">
                                             <div className="form-group">
                                                 <label className="form-label">이름 <span>*</span></label>
-                                                <input type="text" className="form-input" value="박강사" />
+                                                <input type="text" className="form-input" value="박강사" readOnly />
                                             </div>
                                             <div className="form-group">
                                                 <label className="form-label">소속</label>
-                                                <input type="text" className="form-input" value="AI 교육센터" placeholder="소속 기관" />
+                                                <input type="text" className="form-input" value="AI 교육센터" placeholder="소속 기관" readOnly />
                                             </div>
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">이메일</label>
-                                            <input type="email" className="form-input form-input--readonly" value="instructor.park@growfit.com" readonly="" />
+                                            <input type="email" className="form-input form-input--readOnly" value="instructor.park@growfit.com" readOnly />
                                             <div className="form-hint">이메일은 변경할 수 없습니다</div>
                                         </div>
                                         <div className="form-group">
                                             <label className="form-label">전화번호</label>
-                                            <input type="tel" className="form-input" value="010-1234-5678" placeholder="010-0000-0000" />
+                                            <input type="tel" className="form-input" value="010-1234-5678" placeholder="010-0000-0000" readOnly />
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                            <button className="btn btn--primary" onclick="saveProfile()"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
+                                            <button className="btn btn--primary" ><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
                                         </div>
                                     </div>
                                 </div>
@@ -141,7 +141,7 @@ export default function PartnerSettings() {
                                             {/* GPT-5-mini */}
                                             <div className="ai-model-item">
                                                 <div className="ai-model-item__toggle">
-                                                    <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                    <div className="toggle-switch toggle-switch--active" ></div>
                                                 </div>
                                                 <div className="ai-model-item__color" style={{ background: '#10a37f' }}></div>
                                                 <div className="ai-model-item__info">
@@ -152,14 +152,14 @@ export default function PartnerSettings() {
                                                     <span className="ai-model-item__cost-badge ai-model-item__cost-badge--high">고비용</span>
                                                 </div>
                                                 <div className="ai-model-item__limit">
-                                                    <input type="number" className="ai-model-item__input" value="20" min="0" />
+                                                    <input type="number" className="ai-model-item__input" value="20" min="0" readOnly />
                                                     <span className="ai-model-item__unit">회/일</span>
                                                 </div>
                                             </div>
                                             {/* GPT-4o-mini */}
                                             <div className="ai-model-item">
                                                 <div className="ai-model-item__toggle">
-                                                    <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                    <div className="toggle-switch toggle-switch--active" ></div>
                                                 </div>
                                                 <div className="ai-model-item__color" style={{ background: '#10a37f' }}></div>
                                                 <div className="ai-model-item__info">
@@ -170,14 +170,14 @@ export default function PartnerSettings() {
                                                     <span className="ai-model-item__cost-badge ai-model-item__cost-badge--medium">중간</span>
                                                 </div>
                                                 <div className="ai-model-item__limit">
-                                                    <input type="number" className="ai-model-item__input" value="50" min="0" />
+                                                    <input type="number" className="ai-model-item__input" value="50" min="0" readOnly />
                                                     <span className="ai-model-item__unit">회/일</span>
                                                 </div>
                                             </div>
                                             {/* Claude-3-haiku */}
                                             <div className="ai-model-item">
                                                 <div className="ai-model-item__toggle">
-                                                    <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                    <div className="toggle-switch toggle-switch--active" ></div>
                                                 </div>
                                                 <div className="ai-model-item__color" style={{ background: '#d4a574' }}></div>
                                                 <div className="ai-model-item__info">
@@ -188,14 +188,14 @@ export default function PartnerSettings() {
                                                     <span className="ai-model-item__cost-badge ai-model-item__cost-badge--low">저비용</span>
                                                 </div>
                                                 <div className="ai-model-item__limit">
-                                                    <input type="number" className="ai-model-item__input" value="100" min="0" />
+                                                    <input type="number" className="ai-model-item__input" value="100" min="0" readOnly />
                                                     <span className="ai-model-item__unit">회/일</span>
                                                 </div>
                                             </div>
                                             {/* Gemini-2.5-flash */}
                                             <div className="ai-model-item">
                                                 <div className="ai-model-item__toggle">
-                                                    <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                    <div className="toggle-switch toggle-switch--active" ></div>
                                                 </div>
                                                 <div className="ai-model-item__color" style={{ background: '#4285f4' }}></div>
                                                 <div className="ai-model-item__info">
@@ -206,14 +206,14 @@ export default function PartnerSettings() {
                                                     <span className="ai-model-item__cost-badge ai-model-item__cost-badge--low">저비용</span>
                                                 </div>
                                                 <div className="ai-model-item__limit">
-                                                    <input type="number" className="ai-model-item__input" value="100" min="0" />
+                                                    <input type="number" className="ai-model-item__input" value="100" min="0" readOnly />
                                                     <span className="ai-model-item__unit">회/일</span>
                                                 </div>
                                             </div>
                                             {/* GPT-3.5-turbo */}
                                             <div className="ai-model-item">
                                                 <div className="ai-model-item__toggle">
-                                                    <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                    <div className="toggle-switch toggle-switch--active" ></div>
                                                 </div>
                                                 <div className="ai-model-item__color" style={{ background: '#10a37f' }}></div>
                                                 <div className="ai-model-item__info">
@@ -224,14 +224,14 @@ export default function PartnerSettings() {
                                                     <span className="ai-model-item__cost-badge ai-model-item__cost-badge--low">저비용</span>
                                                 </div>
                                                 <div className="ai-model-item__limit">
-                                                    <input type="number" className="ai-model-item__input" value="0" min="0" placeholder="무제한" />
+                                                    <input type="number" className="ai-model-item__input" value="0" min="0" placeholder="무제한" readOnly />
                                                     <span className="ai-model-item__unit">회/일</span>
                                                 </div>
                                             </div>
                                             {/* EXAONE */}
                                             <div className="ai-model-item">
                                                 <div className="ai-model-item__toggle">
-                                                    <div className="toggle-switch" onclick="toggleSwitch(this)"></div>
+                                                    <div className="toggle-switch" ></div>
                                                 </div>
                                                 <div className="ai-model-item__color" style={{ background: '#a50034' }}></div>
                                                 <div className="ai-model-item__info">
@@ -242,13 +242,13 @@ export default function PartnerSettings() {
                                                     <span className="ai-model-item__cost-badge ai-model-item__cost-badge--medium">중간</span>
                                                 </div>
                                                 <div className="ai-model-item__limit">
-                                                    <input type="number" className="ai-model-item__input" value="50" min="0" disabled="" />
+                                                    <input type="number" className="ai-model-item__input" value="50" min="0" disabled="" readOnly />
                                                     <span className="ai-model-item__unit">회/일</span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                            <button className="btn btn--primary" onclick="saveAIModels()"><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
+                                            <button className="btn btn--primary" ><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
                                         </div>
                                     </div>
                                 </div>
@@ -266,35 +266,35 @@ export default function PartnerSettings() {
                                                     <div className="toggle-item__label">이메일 알림</div>
                                                     <div className="toggle-item__desc">중요한 알림을 이메일로 받습니다</div>
                                                 </div>
-                                                <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                <div className="toggle-switch toggle-switch--active" ></div>
                                             </div>
                                             <div className="toggle-item">
                                                 <div className="toggle-item__info">
                                                     <div className="toggle-item__label">비용 알림</div>
                                                     <div className="toggle-item__desc">일정 금액 이상 사용 시 알림</div>
                                                 </div>
-                                                <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                <div className="toggle-switch toggle-switch--active" ></div>
                                             </div>
                                             <div className="toggle-item">
                                                 <div className="toggle-item__info">
                                                     <div className="toggle-item__label">학생 가입 알림</div>
                                                     <div className="toggle-item__desc">새 학생이 강의에 등록하면 알림</div>
                                                 </div>
-                                                <div className="toggle-switch toggle-switch--active" onclick="toggleSwitch(this)"></div>
+                                                <div className="toggle-switch toggle-switch--active" ></div>
                                             </div>
                                             <div className="toggle-item">
                                                 <div className="toggle-item__info">
                                                     <div className="toggle-item__label">주간 리포트</div>
                                                     <div className="toggle-item__desc">매주 사용량 요약 리포트 수신</div>
                                                 </div>
-                                                <div className="toggle-switch" onclick="toggleSwitch(this)"></div>
+                                                <div className="toggle-switch" ></div>
                                             </div>
                                             <div className="toggle-item">
                                                 <div className="toggle-item__info">
                                                     <div className="toggle-item__label">마케팅 알림</div>
                                                     <div className="toggle-item__desc">새로운 기능 및 업데이트 소식</div>
                                                 </div>
-                                                <div className="toggle-switch" onclick="toggleSwitch(this)"></div>
+                                                <div className="toggle-switch" ></div>
                                             </div>
                                         </div>
                                     </div>
@@ -385,21 +385,21 @@ export default function PartnerSettings() {
                                     <div className="settings-card__body">
                                         <div className="form-group">
                                             <label className="form-label">현재 비밀번호</label>
-                                            <input type="password" className="form-input" placeholder="현재 비밀번호 입력" />
+                                            <input type="password" className="form-input" placeholder="현재 비밀번호 입력" readOnly />
                                         </div>
                                         <div className="form-row">
                                             <div className="form-group">
                                                 <label className="form-label">새 비밀번호</label>
-                                                <input type="password" className="form-input" placeholder="새 비밀번호" />
+                                                <input type="password" className="form-input" placeholder="새 비밀번호" readOnly />
                                             </div>
                                             <div className="form-group">
                                                 <label className="form-label">비밀번호 확인</label>
-                                                <input type="password" className="form-input" placeholder="비밀번호 확인" />
+                                                <input type="password" className="form-input" placeholder="비밀번호 확인" readOnly />
                                             </div>
                                         </div>
                                         <div className="form-hint" style={{ marginBottom: '20px' }}>비밀번호는 8자 이상, 영문/숫자/특수문자를 포함해야 합니다</div>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                            <button className="btn btn--primary" onclick="changePassword()">비밀번호 변경</button>
+                                            <button className="btn btn--primary" >비밀번호 변경</button>
                                         </div>
                                     </div>
                                 </div>
@@ -412,14 +412,14 @@ export default function PartnerSettings() {
                                             <div className="danger-zone__label">모든 데이터 내보내기</div>
                                             <div className="danger-zone__desc">계정의 모든 데이터를 다운로드합니다</div>
                                         </div>
-                                        <button className="btn btn--secondary" onclick="exportData()">내보내기</button>
+                                        <button className="btn btn--secondary" >내보내기</button>
                                     </div>
                                     <div className="danger-zone__item">
                                         <div className="danger-zone__info">
                                             <div className="danger-zone__label">계정 삭제</div>
                                             <div className="danger-zone__desc">계정과 모든 데이터가 영구적으로 삭제됩니다</div>
                                         </div>
-                                        <button className="btn btn--danger" onclick="deleteAccount()">계정 삭제</button>
+                                        <button className="btn btn--danger" >계정 삭제</button>
                                     </div>
                                 </div>
                             </div>

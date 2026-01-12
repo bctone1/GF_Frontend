@@ -11,26 +11,26 @@ export default function PartnerInstructorAnalytics() {
                         <div className="main-header__left">
                             <h1 className="main-header__title">사용량 통계</h1>
                             <div className="period-selector">
-                                <button className="period-btn" onclick="setPeriod('day')">일간</button>
-                                <button className="period-btn period-btn--active" onclick="setPeriod('week')">주간</button>
-                                <button className="period-btn" onclick="setPeriod('month')">월간</button>
-                                <button className="period-btn" onclick="setPeriod('all')">전체</button>
+                                <button className="period-btn" >일간</button>
+                                <button className="period-btn period-btn--active" >주간</button>
+                                <button className="period-btn" >월간</button>
+                                <button className="period-btn" >전체</button>
                             </div>
                         </div>
                         <div className="main-header__right">
                             {/* Course Filter */}
                             <div className="course-filter" id="courseFilter">
-                                <button className="course-filter__button" onclick="toggleCourseDropdown()">
-                                    <svg className="course-filter__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <button className="course-filter__button" >
+                                    <svg className="course-filter__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                                     </svg>
                                     <span className="course-filter__text" id="selectedCourseName">전체 강의</span>
-                                    <svg className="course-filter__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg className="course-filter__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <polyline points="6,9 12,15 18,9"></polyline>
                                     </svg>
                                 </button>
                                 <div className="course-filter__dropdown" id="courseDropdown">
-                                    <div className="course-filter__option course-filter__option--active" data-course="all" onclick="selectCourse('all', '전체 강의')">
+                                    <div className="course-filter__option course-filter__option--active" data-course="all" >
                                         <div className="course-filter__option-icon course-filter__option-icon--all">
                                             <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                                         </div>
@@ -38,11 +38,11 @@ export default function PartnerInstructorAnalytics() {
                                             <div className="course-filter__option-name">전체 강의</div>
                                             <div className="course-filter__option-meta">3개 강의 · 75명</div>
                                         </div>
-                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <polyline points="20,6 9,17 4,12"></polyline>
                                         </svg>
                                     </div>
-                                    <div className="course-filter__option" data-course="prompt" onclick="selectCourse('prompt', '프롬프트 엔지니어링')">
+                                    <div className="course-filter__option" data-course="prompt" >
                                         <div className="course-filter__option-icon course-filter__option-icon--course">
                                             <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                                         </div>
@@ -50,11 +50,11 @@ export default function PartnerInstructorAnalytics() {
                                             <div className="course-filter__option-name">프롬프트 엔지니어링</div>
                                             <div className="course-filter__option-meta">30명 · 8,742 대화</div>
                                         </div>
-                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <polyline points="20,6 9,17 4,12"></polyline>
                                         </svg>
                                     </div>
-                                    <div className="course-filter__option" data-course="ai2025" onclick="selectCourse('ai2025', '2025 AI 기초과정')">
+                                    <div className="course-filter__option" data-course="ai2025" >
                                         <div className="course-filter__option-icon course-filter__option-icon--course">
                                             <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                                         </div>
@@ -62,11 +62,11 @@ export default function PartnerInstructorAnalytics() {
                                             <div className="course-filter__option-name">2025 AI 기초과정</div>
                                             <div className="course-filter__option-meta">20명 · 1,245 대화</div>
                                         </div>
-                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <polyline points="20,6 9,17 4,12"></polyline>
                                         </svg>
                                     </div>
-                                    <div className="course-filter__option" data-course="ai2024" onclick="selectCourse('ai2024', '2024 AI 기초과정')">
+                                    <div className="course-filter__option" data-course="ai2024" >
                                         <div className="course-filter__option-icon course-filter__option-icon--ended">
                                             <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                                         </div>
@@ -74,7 +74,7 @@ export default function PartnerInstructorAnalytics() {
                                             <div className="course-filter__option-name">2024 AI 기초과정</div>
                                             <div className="course-filter__option-meta">25명 · 종료됨</div>
                                         </div>
-                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <svg className="course-filter__option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <polyline points="20,6 9,17 4,12"></polyline>
                                         </svg>
                                     </div>
@@ -84,20 +84,20 @@ export default function PartnerInstructorAnalytics() {
                             <button className="main-header__btn" title="새로고침">
                                 <svg className="icon" viewBox="0 0 24 24"><polyline points="23,4 23,10 17,10"></polyline><polyline points="1,20 1,14 7,14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
                             </button>
-                            <button className="btn btn--secondary" onclick="exportData()">
+                            <button className="btn btn--secondary" >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7,10 12,15 17,10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                                 내보내기
                             </button>
                             {/* 알림 버튼 */}
                             <div style={{ position: 'relative' }}>
-                                <button className="main-header__btn" title="알림" onclick="toggleNotification()">
+                                <button className="main-header__btn" title="알림" >
                                     <svg className="icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                                     <span className="main-header__badge">3</span>
                                 </button>
                                 <div className="notification-dropdown" id="notificationDropdown">
                                     <div className="notification-dropdown__header">
                                         <span className="notification-dropdown__title">알림</span>
-                                        <span className="notification-dropdown__action" onclick="markAllRead()">모두 읽음</span>
+                                        <span className="notification-dropdown__action" >모두 읽음</span>
                                     </div>
                                     <div className="notification-dropdown__list">
                                         <div className="notification-group">오늘</div>
@@ -520,7 +520,7 @@ export default function PartnerInstructorAnalytics() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr onclick="selectCourse('prompt', '프롬프트 엔지니어링')">
+                                        <tr >
                                             <td>
                                                 <div className="course-cell">
                                                     <div className="course-cell__icon course-cell__icon--active"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
@@ -542,7 +542,7 @@ export default function PartnerInstructorAnalytics() {
                                             <td><span style={{ color: 'var(--success)', fontWeight: '500' }}>진행 중</span></td>
                                             <td><button className="view-btn">상세 보기</button></td>
                                         </tr>
-                                        <tr onclick="selectCourse('ai2025', '2025 AI 기초과정')">
+                                        <tr >
                                             <td>
                                                 <div className="course-cell">
                                                     <div className="course-cell__icon course-cell__icon--active"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>
@@ -564,7 +564,7 @@ export default function PartnerInstructorAnalytics() {
                                             <td><span style={{ color: 'var(--success)', fontWeight: '500' }}>진행 중</span></td>
                                             <td><button className="view-btn">상세 보기</button></td>
                                         </tr>
-                                        <tr onclick="selectCourse('ai2024', '2024 AI 기초과정')">
+                                        <tr >
                                             <td>
                                                 <div className="course-cell">
                                                     <div className="course-cell__icon course-cell__icon--ended"><svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg></div>

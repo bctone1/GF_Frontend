@@ -99,7 +99,7 @@
       width: fit-content;
   }
 
-  .tab {
+  .partner-tab {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -114,17 +114,17 @@
       transition: all 0.2s;
   }
 
-  .tab:hover {
+  .partner-tab:hover {
       color: var(--text-primary);
   }
 
-  .tab--active {
+  .partner-tab--active {
       background: var(--background);
       color: var(--partner-primary-600);
       box-shadow: var(--shadow-sm);
   }
 
-  .tab__badge {
+  .partner-tab__badge {
       min-width: 20px;
       height: 20px;
       display: flex;
@@ -138,16 +138,16 @@
       padding: 0 6px;
   }
 
-  .tab--active .tab__badge {
+  .partner-tab--active .partner-tab__badge {
       background: var(--partner-primary-600);
       color: white;
   }
 
-  .tab-content {
+  .partner-tab-content {
       display: none;
   }
 
-  .tab-content--active {
+  .partner-tab-content--active {
       display: block;
   }
 

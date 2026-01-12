@@ -17,7 +17,7 @@ export default function PartnerInstructorMaterials() {
                                 새로 만들기
                             </button>
                             {/* 알림 버튼  */}
-                            <div style={{ position: "relative;" }}>
+                            <div style={{ position: "relative" }}>
                                 <button className="main-header__btn" title="알림" >
                                     <svg className="icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                                     <span className="main-header__badge">3</span>
@@ -62,25 +62,25 @@ export default function PartnerInstructorMaterials() {
                     <div className="main-content">
                         {/* Tabs */}
                         <div className="partner-tabs">
-                            <button className="tab tab--active" >
+                            <button className="partner-tab partner-tab--active" >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="3"></circle><path d="M12 8v3"></path></svg>
                                 공유 에이전트
-                                <span className="tab__badge">4</span>
+                                <span className="partner-tab__badge">4</span>
                             </button>
-                            <button className="tab" >
+                            <button className="partner-tab" >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                                 프롬프트 템플릿
-                                <span className="tab__badge">6</span>
+                                <span className="partner-tab__badge">6</span>
                             </button>
-                            <button className="tab" >
+                            <button className="partner-tab" >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path><path d="M8 9h8"></path><path d="M8 13h6"></path></svg>
                                 Few-shot 예시
-                                <span className="tab__badge">3</span>
+                                <span className="partner-tab__badge">3</span>
                             </button>
                         </div>
 
                         {/* Tab: Agents */}
-                        <div className="tab-content tab-content--active" id="tab-agents">
+                        <div className="partner-tab-content partner-tab-content--active" id="tab-agents">
                             <div className="stats-row">
                                 <div className="stat-mini">
                                     <div className="stat-mini__icon stat-mini__icon--blue"><svg className="icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="3"></circle></svg></div>

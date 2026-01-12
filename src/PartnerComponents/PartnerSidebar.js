@@ -30,7 +30,7 @@ export default function PartnerSidebar() {
                             </div>
                         </button>
                     </div>
-                    <button className="sidebar__new-btn" onclick="location.href='instructor-courses.html'">
+                    <button className="sidebar__new-btn">
                         <svg className="icon" viewBox="0 0 24 24"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
                         <span>새 강의 등록</span>
                     </button>
