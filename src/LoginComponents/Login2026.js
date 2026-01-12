@@ -252,6 +252,15 @@ export default function Login() {
 
                 {/* 우측 로그인 영역 */}
                 <div className="login-section">
+
+                    {/* 홈으로 돌아가기 링크 추가  */}
+                    <a href="/" target="_parent" className="back-to-home">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        홈으로
+                    </a>
+
                     <div className="login-header">
                         <h2 className="login-title">로그인</h2>
                         <p className="login-subtitle">GrowFit 계정으로 시작하세요</p>

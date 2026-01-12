@@ -602,34 +602,50 @@ export default function UserKnowledge2026() {
         file_size_bytes: 0,
     });
     const [pannelAQuery, setPannelAQuery] = useState('');
-
     const filteredPannelADocuments = documents.filter((document) => {
         if (pannelAQuery.trim() && !document.name.toLowerCase().includes(pannelAQuery.toLowerCase())) {
             return false;
         }
         return true;
     });
-
     const [pannelAParams, setPannelAParams] = useState({
         top_k: 3,
         chunk_size: 500,
         threshold: 0.7,
     });
-
     const [pannelARequestStatus, setPannelARequestStatus] = useState('ready');
-
     const pannelARequest = () => {
         setPannelARequestStatus('running');
-
-        setTimeout(() => {
-            setPannelARequestStatus('done');
-        }, 3000);
+        setTimeout(() => { setPannelARequestStatus('done'); }, 3000);
     }
 
 
 
 
     const [pannelBStatus, setPannelBStatus] = useState('doc');
+    const [docSelectedDocB, setDocSelectedDocB] = useState({
+        status: false,
+        name: '',
+        chunk_count: 0,
+        file_size_bytes: 0,
+    });
+    const [pannelBQuery, setPannelBQuery] = useState('');
+    const filteredPannelBDocuments = documents.filter((document) => {
+        if (pannelAQuery.trim() && !document.name.toLowerCase().includes(pannelBQuery.toLowerCase())) {
+            return false;
+        }
+        return true;
+    });
+    const [pannelBParams, setPannelBParams] = useState({
+        top_k: 3,
+        chunk_size: 500,
+        threshold: 0.7,
+    });
+    const [pannelBRequestStatus, setPannelBRequestStatus] = useState('ready');
+    const pannelBRequest = () => {
+        setPannelBRequestStatus('running');
+        setTimeout(() => { setPannelBRequestStatus('done'); }, 3000);
+    }
 
 
 
@@ -2578,15 +2594,15 @@ export default function UserKnowledge2026() {
                                             </div>
                                             <div className="result-card__footer">
                                                 <div className="result-card__stat">
-                                                    <div className="result-card__stat-value" id="resultTimeA">1.2초</div>
+                                                    <div className="result-card__stat-value">1.2초</div>
                                                     <div className="result-card__stat-label">응답 시간</div>
                                                 </div>
                                                 <div className="result-card__stat">
-                                                    <div className="result-card__stat-value" id="resultTokensA">127</div>
+                                                    <div className="result-card__stat-value">127</div>
                                                     <div className="result-card__stat-label">토큰</div>
                                                 </div>
                                                 <div className="result-card__stat">
-                                                    <div className="result-card__stat-value" id="resultChunksA">-</div>
+                                                    <div className="result-card__stat-value">-</div>
                                                     <div className="result-card__stat-label">청크</div>
                                                 </div>
                                             </div>
@@ -2595,8 +2611,11 @@ export default function UserKnowledge2026() {
                                 </div>
                             </div>
 
+
+
+
                             {/* Panel B */}
-                            <div className="compare-panel" id="panelB">
+                            <div className="compare-panel">
                                 <div className="compare-panel__header">
                                     <div className="compare-panel__title">
                                         <span className="compare-panel__badge compare-panel__badge--b">B</span>
@@ -2609,13 +2628,15 @@ export default function UserKnowledge2026() {
                                                 <path d="M3 3v5h5" />
                                             </svg>
                                         </button>
-                                        <span className="mode-status mode-status--doc" id="modeStatusB">문서 참조</span>
+                                        <span className="mode-status mode-status--doc" >문서 참조</span>
                                     </div>
                                 </div>
                                 <div className="compare-panel__body">
                                     {/* Mode Selector */}
                                     <div className="mode-selector">
-                                        <div className="mode-selector__item" data-mode="llm" >
+                                        <div className={`mode-selector__item ${pannelBStatus === 'llm' ? 'active' : ''}`}
+                                            onClick={() => setPannelBStatus('llm')}
+                                        >
                                             <div className="mode-selector__icon mode-selector__icon--llm">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
@@ -2626,7 +2647,9 @@ export default function UserKnowledge2026() {
                                             <div className="mode-selector__label">순수 LLM</div>
                                             <div className="mode-selector__desc">파일 없이<br />기본 지식만</div>
                                         </div>
-                                        <div className="mode-selector__item active" data-mode="doc">
+                                        <div className={`mode-selector__item ${pannelBStatus === 'doc' ? 'active' : ''}`}
+                                            onClick={() => setPannelBStatus('doc')}
+                                        >
                                             <div className="mode-selector__icon mode-selector__icon--doc">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -2636,7 +2659,9 @@ export default function UserKnowledge2026() {
                                             <div className="mode-selector__label">문서 참조</div>
                                             <div className="mode-selector__desc">기본 설정으로<br />문서 활용</div>
                                         </div>
-                                        <div className="mode-selector__item" data-mode="rag" >
+                                        <div className={`mode-selector__item ${pannelBStatus === 'rag' ? 'active' : ''}`}
+                                            onClick={() => setPannelBStatus('rag')}
+                                        >
                                             <div className="mode-selector__icon mode-selector__icon--rag">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <path
@@ -2650,7 +2675,7 @@ export default function UserKnowledge2026() {
                                     </div>
 
                                     {/* LLM Only Content */}
-                                    <div className="mode-content" id="llmContentB">
+                                    <div className={`mode-content ${pannelBStatus === 'llm' ? 'show' : ''}`}>
                                         <div className="llm-state">
                                             <div className="llm-state__icon">
                                                 <svg className="icon icon--lg" viewBox="0 0 24 24">
@@ -2665,7 +2690,7 @@ export default function UserKnowledge2026() {
                                     </div>
 
                                     {/* Doc Reference Content */}
-                                    <div className="mode-content show" id="docContentB">
+                                    <div className={`mode-content ${pannelBStatus === 'doc' ? 'show' : ''}`}>
                                         <div className="doc-selector">
                                             <div className="doc-selector__label">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -2675,7 +2700,7 @@ export default function UserKnowledge2026() {
                                                 문서 선택
                                             </div>
                                             <div className="doc-selector__dropdown">
-                                                <button className="doc-selector__button" id="docButtonDocB">
+                                                <button className="doc-selector__button">
                                                     <div className="doc-selector__icon">
                                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                             <path
@@ -2683,22 +2708,24 @@ export default function UserKnowledge2026() {
                                                             <polyline points="14 2 14 8 20 8" />
                                                         </svg>
                                                     </div>
+
                                                     <div className="doc-selector__info">
-                                                        <span className="doc-selector__placeholder" id="docPlaceholderDocB">문서를
-                                                            선택하세요</span>
-                                                        <div id="docSelectedDocB" style={{ display: 'none' }}>
+                                                        <span className="doc-selector__placeholder">문서를 선택하세요</span>
+                                                        <div>
                                                             <div className="doc-selector__name"></div>
                                                             <div className="doc-selector__meta"></div>
                                                         </div>
                                                     </div>
+
                                                     <svg className="icon icon--sm doc-selector__arrow" viewBox="0 0 24 24">
                                                         <path d="M6 9l6 6 6-6" />
                                                     </svg>
                                                 </button>
-                                                <div className="doc-dropdown" id="docDropdownDocB"></div>
+
+                                                <div className="doc-dropdown"></div>
                                             </div>
                                         </div>
-                                        <div className="default-settings" id="defaultSettingsDocB" style={{ display: 'none' }}>
+                                        <div className="default-settings">
                                             <div className="default-settings__title">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <circle cx="12" cy="12" r="10" />
@@ -2725,7 +2752,7 @@ export default function UserKnowledge2026() {
                                     </div>
 
                                     {/* RAG Settings Content */}
-                                    <div className="mode-content" id="ragContentB">
+                                    <div className={`mode-content ${pannelBStatus === 'rag' ? 'show' : ''}`}>
                                         <div className="doc-selector">
                                             <div className="doc-selector__label">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
@@ -2735,7 +2762,7 @@ export default function UserKnowledge2026() {
                                                 문서 선택
                                             </div>
                                             <div className="doc-selector__dropdown">
-                                                <button className="doc-selector__button" id="docButtonRagB">
+                                                <button className="doc-selector__button">
                                                     <div className="doc-selector__icon">
                                                         <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                             <path
@@ -2744,9 +2771,9 @@ export default function UserKnowledge2026() {
                                                         </svg>
                                                     </div>
                                                     <div className="doc-selector__info">
-                                                        <span className="doc-selector__placeholder" id="docPlaceholderRagB">문서를
-                                                            선택하세요</span>
-                                                        <div id="docSelectedRagB" style={{ display: 'none' }}>
+                                                        <span className="doc-selector__placeholder" >문서를 선택하세요</span>
+
+                                                        <div>
                                                             <div className="doc-selector__name"></div>
                                                             <div className="doc-selector__meta"></div>
                                                         </div>
@@ -2755,10 +2782,10 @@ export default function UserKnowledge2026() {
                                                         <path d="M6 9l6 6 6-6" />
                                                     </svg>
                                                 </button>
-                                                <div className="doc-dropdown" id="docDropdownRagB"></div>
+                                                <div className="doc-dropdown"></div>
                                             </div>
                                         </div>
-                                        <div className="settings-section" id="settingsSectionRagB" style={{ display: 'none' }}>
+                                        <div className="settings-section" >
                                             <div className="settings-section__title">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <path
@@ -2770,22 +2797,22 @@ export default function UserKnowledge2026() {
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Top-K</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="1" max="10" id="topKB" />
-                                                    <span className="setting-row__value" id="topKBValue">5개</span>
+                                                    <input type="range" min="1" max="10" />
+                                                    <span className="setting-row__value">5개</span>
                                                 </div>
                                             </div>
                                             <div className="setting-row">
                                                 <span className="setting-row__label">Chunk Size</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="200" max="1000" step="100" id="chunkSizeB" />
-                                                    <span className="setting-row__value" id="chunkSizeBValue">500자</span>
+                                                    <input type="range" min="200" max="1000" step="100" />
+                                                    <span className="setting-row__value" >500자</span>
                                                 </div>
                                             </div>
                                             <div className="setting-row">
                                                 <span className="setting-row__label">유사도 임계값</span>
                                                 <div className="setting-row__slider">
-                                                    <input type="range" min="0.5" max="0.9" step="0.1" id="thresholdB" />
-                                                    <span className="setting-row__value" id="thresholdBValue">0.7</span>
+                                                    <input type="range" min="0.5" max="0.9" step="0.1" />
+                                                    <span className="setting-row__value">0.7</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -2813,10 +2840,9 @@ export default function UserKnowledge2026() {
                                             </svg>
                                             질문 입력
                                         </div>
-                                        <textarea className="test-input" id="questionB" rows="2"
-                                            placeholder="질문을 입력하세요..."></textarea>
+                                        <textarea className="test-input" rows="2" placeholder="질문을 입력하세요..."></textarea>
                                         <div className="test-actions">
-                                            <button className="btn btn--primary" id="testBtnB" >
+                                            <button className="btn btn--primary">
                                                 <svg className="icon icon--sm" viewBox="0 0 24 24">
                                                     <polygon points="5 3 19 12 5 21 5 3" />
                                                 </svg>
@@ -2826,17 +2852,17 @@ export default function UserKnowledge2026() {
                                     </div>
 
                                     {/* Result Box */}
-                                    <div className="result-box" id="resultBoxB">
+                                    <div className="result-box">
                                         <div className="result-card">
                                             <div className="result-card__header">
-                                                <span className="result-card__label" id="resultLabelB">AI 응답 (문서 참조)</span>
-                                                <span className="result-card__model result-card__model--gpt" id="resultModelB">
+                                                <span className="result-card__label">AI 응답 (문서 참조)</span>
+                                                <span className="result-card__model result-card__model--gpt">
                                                     <span className="model-selector__dot model-selector__dot--gpt"></span>
                                                     GPT-4
                                                 </span>
                                             </div>
                                             <div className="result-card__body">
-                                                <div className="result-card__text" id="resultContentB">
+                                                <div className="result-card__text">
                                                     업로드하신 문서에 따르면, Python은 1991년 귀도 반 로섬이 개발한 프로그래밍 언어로, 귀사의 데이터 분석 프로젝트에서 주로
                                                     pandas와 numpy 라이브러리를 활용하고 있습니다.
 
@@ -2851,15 +2877,15 @@ export default function UserKnowledge2026() {
                                             </div>
                                             <div className="result-card__footer">
                                                 <div className="result-card__stat">
-                                                    <div className="result-card__stat-value" id="resultTimeB">1.8초</div>
+                                                    <div className="result-card__stat-value">1.8초</div>
                                                     <div className="result-card__stat-label">응답 시간</div>
                                                 </div>
                                                 <div className="result-card__stat">
-                                                    <div className="result-card__stat-value" id="resultTokensB">156</div>
+                                                    <div className="result-card__stat-value">156</div>
                                                     <div className="result-card__stat-label">토큰</div>
                                                 </div>
                                                 <div className="result-card__stat">
-                                                    <div className="result-card__stat-value" id="resultChunksB">3개</div>
+                                                    <div className="result-card__stat-value">3개</div>
                                                     <div className="result-card__stat-label">청크</div>
                                                 </div>
                                             </div>

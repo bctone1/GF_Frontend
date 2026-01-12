@@ -7,11 +7,11 @@ export default function UserAgent() {
             <div className="app">
                 <UserSidebar2026 />
                 <main className="main">
-                    <header className="page-header">
+                    {/* <header className="page-header">
                         <div className="page-header__left">
                             <h1 className="page-header__title">내 에이전트</h1>
                         </div>
-                    </header>
+                    </header> */}
 
                     <div className="agent-content">
                         {/* Main View  */}
@@ -36,7 +36,7 @@ export default function UserAgent() {
                                         <span className="agent-tab__count">2</span>
                                     </button>
                                 </div>
-                                <button className="btn btn--primary" id="newAgentBtn" style={{ display: 'none' }}>
+                                <button className="btn btn--primary" id="newAgentBtn" >
                                     <svg className="icon icon--sm" viewBox="0 0 24 24">
                                         <line x1="12" y1="5" x2="12" y2="19"></line>
                                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -86,16 +86,16 @@ export default function UserAgent() {
                             </div>
 
                             {/* Toolbar */}
-                            <div className="toolbar">
-                                <div className="search-box">
-                                    <svg className="icon icon--sm search-box__icon" viewBox="0 0 24 24">
+                            <div className="template-toolbar">
+                                <div className="template-search-box">
+                                    <svg className="icon icon--sm template-search-box__icon" viewBox="0 0 24 24">
                                         <circle cx="11" cy="11" r="8"></circle>
                                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                                     </svg>
-                                    <input type="text" className="search-box__input" placeholder="에이전트 검색..." />
+                                    <input type="text" className="template-search-box__input" placeholder="에이전트 검색..." />
                                 </div>
 
-                                <div className="filter-dropdown" id="statusFilter" style={{ display: 'none' }}>
+                                <div className="filter-dropdown" id="statusFilter" >
                                     <button className="filter-dropdown__btn" >
                                         <span id="statusLabel">전체 상태</span>
                                         <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"></path></svg>
@@ -242,7 +242,7 @@ export default function UserAgent() {
                             </div>
 
                             {/* My Agent Grid (Hidden by default) */}
-                            <div className="agent-grid" id="myAgentGrid" style={{ display: 'none' }}>
+                            <div className="agent-grid" id="myAgentGrid" >
                                 <div className="agent-card agent-card--purple">
                                     <div className="agent-card__toggle">
                                         <label className="toggle-switch">
@@ -309,7 +309,7 @@ export default function UserAgent() {
                             </div>
 
                             {/* Pagination */}
-                            <div className="pagination" id="pagination" style={{ display: 'none' }}>
+                            <div className="pagination" id="pagination" >
                                 <button className="pagination__btn" disabled="">
                                     <svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
                                     이전

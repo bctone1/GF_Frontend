@@ -181,20 +181,20 @@
 }
 
 /* Search & Filter */
-.toolbar {
+.template-toolbar {
     display: flex;
     align-items: center;
     gap: 12px;
     margin-bottom: 20px;
 }
 
-.search-box {
+.template-search-box {
     flex: 1;
     max-width: 280px;
     position: relative;
 }
 
-.search-box__input {
+.template-search-box__input {
     width: 100%;
     padding: 10px 14px 10px 40px;
     border: 1px solid var(--border);
@@ -204,17 +204,17 @@
     transition: all 0.2s;
 }
 
-.search-box__input:focus {
+.template-search-box__input:focus {
     outline: none;
     border-color: var(--primary-400);
     box-shadow: 0 0 0 3px var(--primary-100);
 }
 
-.search-box__input::placeholder {
+.template-search-box__input::placeholder {
     color: var(--text-tertiary);
 }
 
-.search-box__icon {
+.template-search-box__icon {
     position: absolute;
     left: 14px;
     top: 50%;

@@ -946,8 +946,8 @@ export default function UserSidebar2026({
                     </Link>
 
                     <Link
-                        to="/user/agent"
-                        className={`sidebar__nav-item ${currentMenu === 'agent' ? 'sidebar__nav-item--active' : ''}`}
+                        to="/user/template"
+                        className={`sidebar__nav-item ${currentMenu === 'template' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
                             <rect x="3" y="11" width="18" height="10" rx="2" />
@@ -956,7 +956,7 @@ export default function UserSidebar2026({
                             <circle cx="8" cy="16" r="1" />
                             <circle cx="16" cy="16" r="1" />
                         </svg></span>
-                        <span>에이전트</span>
+                        <span>템플릿</span>
                     </Link>
 
                     {/* <Link

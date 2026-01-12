@@ -4,6 +4,31 @@
     box-sizing: border-box;
 }
 
+/* 홈으로 돌아가기 링크 */
+.back-to-home {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 24px;
+    transition: all 0.2s ease;
+}
+
+.back-to-home:hover {
+    color: #7c3aed;
+}
+
+.back-to-home svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
 .Login_body {
     font-family: 'Noto Sans KR', 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     min-height: 100vh;
