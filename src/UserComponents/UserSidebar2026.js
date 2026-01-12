@@ -145,6 +145,7 @@ export default function UserSidebar2026({
                     setRoleModalOpen(true);
                 }, 500);
             }
+            // console.log(classes);
             setMyClasses(classes);
 
             // 부모 컴포넌트에 클래스 데이터 전달
@@ -975,8 +976,8 @@ export default function UserSidebar2026({
                     </Link> */}
 
                     <Link
-                        // onClick={() => showToast2026("준비중입니다.")}
-                        to="/user/history"
+                        onClick={() => showToast2026("준비중입니다.")}
+                        // to="/user/history"
                         className={`sidebar__nav-item ${currentMenu === 'history' ? 'sidebar__nav-item--active' : ''}`}
                     >
                         <span className="sidebar__nav-icon"><svg className="icon" viewBox="0 0 24 24">
