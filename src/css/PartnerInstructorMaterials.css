@@ -89,7 +89,7 @@
   }
 
   /* Tabs */
-  .tabs {
+  .partner-tabs {
       display: flex;
       gap: 4px;
       background: var(--gray-100);

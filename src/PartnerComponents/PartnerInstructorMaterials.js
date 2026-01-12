@@ -61,7 +61,7 @@ export default function PartnerInstructorMaterials() {
                     </header>
                     <div className="main-content">
                         {/* Tabs */}
-                        <div className="tabs">
+                        <div className="partner-tabs">
                             <button className="tab tab--active" >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"></rect><circle cx="12" cy="5" r="3"></circle><path d="M12 8v3"></path></svg>
                                 공유 에이전트
