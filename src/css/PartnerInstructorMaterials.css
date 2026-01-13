@@ -48,12 +48,12 @@
       transition: all 0.2s;
   }
 
-  .btn--primary {
+  .partner-btn--primary {
       background: linear-gradient(135deg, var(--partner-primary-500), var(--partner-primary-600));
       color: white;
   }
 
-  .btn--primary:hover {
+  .partner-btn--primary:hover {
       background: linear-gradient(135deg, var(--partner-primary-600), var(--partner-primary-700));
   }
 
@@ -570,7 +570,7 @@
   }
 
   /* Modal */
-  .modal-overlay {
+  /* .modal-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.5);
@@ -654,7 +654,7 @@
       padding: 16px 20px;
       border-top: 1px solid var(--border);
       background: var(--gray-50);
-  }
+  } */
 
   /* Form */
   .form-group {

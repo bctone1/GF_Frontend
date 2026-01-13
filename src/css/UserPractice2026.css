@@ -935,6 +935,7 @@ body {
     font-size: 12px;
     font-weight: 600;
     color: white;
+    line-height: 1;
 }
 
 .compare-panel__model--gpt {

@@ -66,7 +66,7 @@
     cursor: pointer;
 }
 
-.btn--primary {
+.partner-btn--primary {
     background: linear-gradient(135deg, var(--partner-primary-500), var(--partner-primary-600));
     color: white;
 }
@@ -771,7 +771,7 @@
 }
 
 /* Student Detail Modal */
-.modal-overlay {
+/* .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -841,7 +841,7 @@
     gap: 8px;
     padding: 16px 24px;
     border-top: 1px solid var(--border);
-}
+} */
 
 .detail-header {
     display: flex;

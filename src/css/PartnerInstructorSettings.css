@@ -35,7 +35,7 @@
      cursor: pointer;
  }
 
- .btn--primary {
+ .partner-btn--primary {
      background: linear-gradient(135deg, var(--partner-primary-500), var(--partner-primary-600));
      color: white;
  }

@@ -137,12 +137,12 @@
     transition: all 0.2s;
 }
 
-.btn--primary {
+.partner-btn--primary {
     background: linear-gradient(135deg, var(--partner-primary-500), var(--partner-primary-600));
     color: white;
 }
 
-.btn--primary:hover {
+.partner-btn--primary:hover {
     background: linear-gradient(135deg, var(--partner-primary-600), var(--partner-primary-700));
 }
 
@@ -459,7 +459,7 @@
 }
 
 /* Modal */
-.modal-overlay {
+.PT-STManagement-modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
@@ -472,12 +472,12 @@
     transition: all 0.3s;
 }
 
-.modal-overlay--open {
+.PT-STManagement-modal-overlay--open {
     opacity: 1;
     visibility: visible;
 }
 
-.modal {
+.PT-STManagement-modal {
     background: var(--background);
     border-radius: var(--radius-xl);
     width: 100%;
@@ -488,7 +488,7 @@
     transition: all 0.3s;
 }
 
-.modal-overlay--open .modal {
+.PT-STManagement-modal-overlay--open .PT-STManagement-modal {
     transform: scale(1);
 }
 
@@ -496,7 +496,7 @@
     max-width: 640px;
 }
 
-.modal__header {
+.PT-STManagement-modal__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -504,7 +504,7 @@
     border-bottom: 1px solid var(--border);
 }
 
-.modal__title {
+.PT-STManagement-modal__title {
     font-size: 16px;
     font-weight: 600;
     display: flex;
@@ -512,7 +512,7 @@
     gap: 8px;
 }
 
-.modal__close {
+.PT-STManagement-modal__close {
     width: 32px;
     height: 32px;
     border: none;
@@ -525,18 +525,18 @@
     color: var(--text-tertiary);
 }
 
-.modal__close:hover {
+.PT-STManagement-modal__close:hover {
     background: var(--gray-100);
     color: var(--text-primary);
 }
 
-.modal__body {
+.PT-STManagement-modal__body {
     padding: 20px;
     max-height: 70vh;
     overflow-y: auto;
 }
 
-.modal__footer {
+.PT-STManagement-modal__footer {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
@@ -642,11 +642,11 @@
     color: var(--text-primary);
 }
 
-.detail-section__content {
+/* .detail-section__content {
     background: var(--surface);
     border-radius: var(--radius-md);
     padding: 16px;
-}
+} */
 
 .detail-courses {
     display: flex;

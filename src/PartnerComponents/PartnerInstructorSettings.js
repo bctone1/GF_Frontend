@@ -121,7 +121,7 @@ export default function PartnerSettings() {
                                             <input type="tel" className="form-input" value="010-1234-5678" placeholder="010-0000-0000" readOnly />
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                            <button className="btn btn--primary" ><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
+                                            <button className="btn partner-btn--primary" ><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
                                         </div>
                                     </div>
                                 </div>
@@ -248,7 +248,7 @@ export default function PartnerSettings() {
                                             </div>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                                            <button className="btn btn--primary" ><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
+                                            <button className="btn partner-btn--primary" ><svg className="icon icon--sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>저장</button>
                                         </div>
                                     </div>
                                 </div>
@@ -399,7 +399,7 @@ export default function PartnerSettings() {
                                         </div>
                                         <div className="form-hint" style={{ marginBottom: '20px' }}>비밀번호는 8자 이상, 영문/숫자/특수문자를 포함해야 합니다</div>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                            <button className="btn btn--primary" >비밀번호 변경</button>
+                                            <button className="btn partner-btn--primary" >비밀번호 변경</button>
                                         </div>
                                     </div>
                                 </div>

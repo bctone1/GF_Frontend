@@ -256,7 +256,7 @@ export default function Login() {
                     {/* 홈으로 돌아가기 링크 추가  */}
                     <a href="/" target="_parent" className="back-to-home">
                         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M19 12H5M12 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         홈으로
                     </a>

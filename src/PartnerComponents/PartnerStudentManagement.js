@@ -1,9 +1,154 @@
 import PartnerSidebar from './PartnerSidebar';
-
+import { useState } from 'react';
 
 export default function PartnerStudentManagement() {
+
+    const [inviteStudentModalOpen, setInviteStudentModalOpen] = useState(false);
+    const [modalCodeShown, setModalCodeShown] = useState(false);
+    const [modalSelectedClass, setModalSelectedClass] = useState(null);
+
+    const handleSelectClass = (e) => {
+        if (e.target.value === '') {
+            setModalCodeShown(false);
+            setModalSelectedClass(null);
+            return;
+        }
+        
+        setModalSelectedClass(e.target.value);
+        setModalCodeShown(true);
+    }
+
     return (
         <>
+            <div class={`PT-STManagement-modal-overlay ${inviteStudentModalOpen ? 'PT-STManagement-modal-overlay--open' : ''}`}
+                onClick={() => setInviteStudentModalOpen(false)}
+            >
+                <div class="PT-STManagement-modal" onClick={(e) => e.stopPropagation()}>
+                    <div class="PT-STManagement-modal__header">
+                        <h2 class="PT-STManagement-modal__title">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="8.5" cy="7" r="4"></circle>
+                                <line x1="20" y1="8" x2="20" y2="14"></line>
+                                <line x1="23" y1="11" x2="17" y2="11"></line>
+                            </svg>
+                            학생 초대
+                        </h2>
+                        <button class="PT-STManagement-modal__close" onClick={() => setInviteStudentModalOpen(false)}>
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="PT-STManagement-modal__body">
+                        <div class="form-group">
+                            <label class="form-label">초대할 강의 선택</label>
+                            <select class="form-input"
+                                onChange={(e) => handleSelectClass(e)}
+                            >
+                                <option value="">강의를 선택하세요</option>
+                                <option value="ai-basic" data-code="GF7X3K">2025 AI 기초과정</option>
+                                <option value="prompt" data-code="GF2K4M">프롬프트 엔지니어링</option>
+                                <option value="llm" data-code="GF5N8R">2025 LLM 활용 실무</option>
+                            </select>
+                        </div>
+
+                        {/* 초대 정보 영역 (강의 선택 후 표시) */}
+                        <div class="invite-info" style={{ display: modalCodeShown ? 'block' : 'none' }}>
+                            {/* 초대 코드 */}
+                            <div class="form-group">
+                                <label class="form-label">초대 코드</label>
+                                <div class="invite-code-box">
+                                    <div class="invite-code-box__code" id="inviteCode">GF7X3K</div>
+                                    <button class="invite-code-box__btn" title="코드 복사">
+                                        <svg class="icon icon--sm" viewBox="0 0 24 24">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="form-hint">학생이 회원가입 시 입력하는 코드입니다</div>
+                            </div>
+
+                            {/* 초대 링크 */}
+                            <div class="form-group">
+                                <label class="form-label">초대 링크</label>
+                                <div class="invite-link-box">
+                                    <input type="text" class="invite-link-box__input" value="https://growfit.ai/join?code=GF7X3K" readOnly />
+                                    <button class="invite-link-box__btn" title="링크 복사">
+                                        <svg class="icon icon--sm" viewBox="0 0 24 24">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="form-hint">이 링크를 학생들에게 공유하세요</div>
+                            </div>
+
+                            {/* 공유 방법 안내 */}
+                            <div class="invite-guide">
+                                <div class="invite-guide__header">
+                                    <svg class="icon icon--sm" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                    </svg>
+                                    <span>학생 초대 방법</span>
+                                </div>
+                                <ol class="invite-guide__list">
+                                    <li>위의 <strong>초대 링크</strong> 또는 <strong>초대 코드</strong>를 복사합니다</li>
+                                    <li>카카오톡, 이메일, 문자 등으로 학생들에게 공유합니다</li>
+                                    <li>학생이 링크로 접속하거나 코드를 입력하면 강의에 등록됩니다</li>
+                                </ol>
+                            </div>
+
+                            {/* 빠른 공유 버튼 */}
+                            <div class="invite-share">
+                                <label class="form-label">빠른 공유</label>
+                                <div class="invite-share__buttons">
+                                    <button class="invite-share__btn invite-share__btn--kakao">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 3C6.48 3 2 6.58 2 11c0 2.8 1.8 5.26 4.5 6.68-.16.56-.57 2.03-.66 2.35-.1.38.14.38.3.27.12-.08 1.92-1.3 2.72-1.84.7.1 1.42.16 2.14.16 5.52 0 10-3.58 10-8S17.52 3 12 3z"></path>
+                                        </svg>
+                                        카카오톡
+                                    </button>
+                                    <button class="invite-share__btn invite-share__btn--email">
+                                        <svg class="icon icon--sm" viewBox="0 0 24 24">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                            <polyline points="22,6 12,13 2,6"></polyline>
+                                        </svg>
+                                        이메일
+                                    </button>
+                                    <button class="invite-share__btn invite-share__btn--copy">
+                                        <svg class="icon icon--sm" viewBox="0 0 24 24">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                        전체 복사
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 강의 미선택 시 안내  */}
+                        <div class="invite-placeholder" style={{ display: modalCodeShown ? 'none' : 'block' }}>
+                            <div class="invite-placeholder__icon">
+                                <svg class="icon icon--lg" viewBox="0 0 24 24">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                </svg>
+                            </div>
+                            <p>초대할 강의를 선택하면<br />초대 코드와 링크가 표시됩니다</p>
+                        </div>
+                    </div>
+                    <div class="PT-STManagement-modal__footer">
+                        <button class="btn btn--secondary" onClick={() => setInviteStudentModalOpen(false)}>닫기</button>
+                    </div>
+                </div>
+            </div>
+
             <div className="app">
                 <PartnerSidebar />
 
@@ -15,7 +160,9 @@ export default function PartnerStudentManagement() {
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                             </button>
 
-                            <button className="btn btn--primary">
+                            <button className="btn partner-btn--primary"
+                                onClick={() => setInviteStudentModalOpen(true)}
+                            >
                                 <svg className="icon icon--sm" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
                                 학생 초대
                             </button>
